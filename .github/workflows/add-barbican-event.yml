@@ -1,0 +1,49 @@
+name: Add Barbican event
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Barbican event page URL'
+        required: true
+      name:
+        description: 'Display name (optional -- taken from the page title if left blank)'
+        required: false
+
+# Shared with check.yml and add-any-event.yml -- all three commit to the
+# same repo, and running them concurrently risks a push race between them.
+concurrency:
+  group: ticket-watcher-repo-writes
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EVENTS_FILE_PATH: docs/events.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Discover, verify, and add
+        run: node scripts/add-barbican-event.js "${{ inputs.url }}" "${{ inputs.name }}"
+
+      - name: Commit
+        run: |
+          git config user.name "ticket-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/events.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: add Barbican event via workflow"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push

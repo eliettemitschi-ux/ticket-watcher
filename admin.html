@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket Watcher — Admin</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Ticket Watcher <span class="admin-tag">admin</span></h1>
+    <p class="subtitle" id="subtitle">Watching for sold-out shows to open up.</p>
+    <p class="subtitle" id="countdown"></p>
+    <button type="button" id="test-notify-btn" class="btn">Send test notification</button>
+    <p class="hint" id="test-notify-hint"></p>
+  </header>
+
+  <main>
+    <section id="events"></section>
+
+    <section class="add-event">
+      <h2>Add an event</h2>
+      <form id="add-form">
+        <label>
+          Event page URL
+          <input type="url" name="url" placeholder="https://www.barbican.org.uk/whats-on/..." required />
+        </label>
+        <label>
+          Name
+          <input type="text" name="name" placeholder="Haruki Murakami's Jazz at Peter Cat" required />
+        </label>
+        <label>
+          Venue <span class="optional">(optional)</span>
+          <input type="text" name="venue" placeholder="Barbican" />
+        </label>
+        <label>
+          Only notify me for <span class="optional">(optional — e.g. "8.30pm". Leave blank to be notified about any date/time. Every date/time is checked and shown either way.)</span>
+          <input type="text" name="timeFilter" placeholder="8.30pm" />
+        </label>
+        <button type="submit">Add &amp; check now</button>
+      </form>
+      <p class="hint" id="add-hint"></p>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

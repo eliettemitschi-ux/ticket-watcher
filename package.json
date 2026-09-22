@@ -1,0 +1,22 @@
+{
+  "name": "ticket-watcher",
+  "version": "1.0.0",
+  "description": "Watches sold-out event pages (Barbican, Almeida, etc.) and notifies you the moment tickets become available.",
+  "private": true,
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node check.js",
+    "discover": "node discover.js",
+    "test": "node test/classifier.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-basic-auth": "^1.2.1",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^10.0.10",
+    "playwright": "^1.47.0"
+  }
+}

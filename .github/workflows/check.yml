@@ -1,0 +1,85 @@
+name: Check events
+
+on:
+  schedule:
+    # GitHub treats scheduled triggers as best-effort and can delay them
+    # under platform load -- this is the tightest interval GitHub allows
+    # (5 minutes), not a guarantee every run lands exactly 5 minutes apart.
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+# Shared with add-barbican-event.yml too -- both commit to the same repo,
+# and running them concurrently risks a push race between the two. Queue
+# rather than cancel, so a manually-triggered "add event" run never gets
+# silently dropped by an overlapping scheduled check.
+concurrency:
+  group: ticket-watcher-repo-writes
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # Comfortably above the worst-case seen in practice (Bob Dylan's
+    # queue-it-gated browser check alone can take ~100s with its own
+    # internal retry) plus Playwright/dependency setup time.
+    timeout-minutes: 8
+    env:
+      # Same store.js code as the local pm2 deployment, just pointed at
+      # docs/ -- see store.js's own comment on EVENTS_FILE_PATH for why:
+      # this makes the one file the checker writes the SAME file GitHub
+      # Pages serves as the dashboard's data, no separate copy step.
+      EVENTS_FILE_PATH: docs/events.json
+      NTFY_TOPIC: ${{ vars.NTFY_TOPIC }}
+      NTFY_SERVER: ${{ vars.NTFY_SERVER }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Only caches the browser BINARY download (the larger, slower part
+      # of "playwright install") -- the OS-level shared libraries
+      # (--with-deps) still install fresh every run since GitHub Actions
+      # runners are a clean VM each time, so this step still runs
+      # regardless of cache status; it just skips re-downloading Chromium
+      # itself when the cache hits.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run checks
+        run: node check.js
+
+      - name: Write status.json (the static dashboard's equivalent of /api/status)
+        run: |
+          node -e "
+            const fs = require('fs');
+            fs.writeFileSync('docs/status.json', JSON.stringify({
+              pollIntervalMinutes: 5,
+              ntfy: process.env.NTFY_TOPIC
+                ? { topic: process.env.NTFY_TOPIC, server: process.env.NTFY_SERVER || 'https://ntfy.sh' }
+                : null,
+            }, null, 2));
+          "
+
+      - name: Commit updated data
+        run: |
+          git config user.name "ticket-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/events.json docs/status.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: update event data"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push

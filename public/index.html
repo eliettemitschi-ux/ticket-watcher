@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket Watcher</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Ticket Watcher</h1>
+    <p class="subtitle" id="subtitle">Watching for sold-out shows to open up.</p>
+    <p class="subtitle" id="countdown"></p>
+    <button type="button" id="test-notify-btn" class="btn">Send test notification</button>
+    <p class="hint" id="test-notify-hint"></p>
+  </header>
+
+  <main>
+    <section id="events"></section>
+
+    <section class="explainer">
+      <h2>What is this?</h2>
+      <p>
+        This page watches a handful of currently <strong>sold-out</strong> shows,
+        gigs and screenings around London and checks each one every
+        ~10 minutes for tickets to actually open up &mdash; a returns
+        batch, a day-ticket release, a scheduled re-drop, anything. The
+        moment a watched date/time genuinely becomes bookable, a push
+        notification goes out immediately, so you don't have to keep
+        refreshing a venue's site yourself.
+      </p>
+
+      <h2>Get notified yourself</h2>
+      <p>
+        Anyone can subscribe to the same alerts this page sends &mdash; no
+        account or login needed, just the free <strong>ntfy</strong> app.
+      </p>
+      <ol class="ntfy-steps">
+        <li>
+          Install ntfy:
+          <a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone (App Store)</a>
+          &middot;
+          <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android (Google Play)</a>
+        </li>
+        <li>Open the app and tap <strong>+ (Subscribe to topic)</strong></li>
+        <li>
+          Enter this topic name exactly: <code id="ntfy-topic">loading…</code>
+        </li>
+      </ol>
+      <p class="hint">
+        No app, or on a laptop? Subscribe in a browser instead at
+        <a id="ntfy-web-link" href="#" target="_blank" rel="noopener">ntfy.sh/&lt;topic&gt;</a>
+        and leave that tab open.
+      </p>
+
+      <p class="shoutout">Let me know if I should add anything to the watchlist!!</p>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

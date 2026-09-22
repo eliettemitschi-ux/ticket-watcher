@@ -1,0 +1,53 @@
+[
+  {
+    "id": "seed-barbican-murakami-jazz",
+    "name": "Haruki Murakami's Jazz at Peter Cat",
+    "venue": "Barbican",
+    "url": "https://www.barbican.org.uk/whats-on/2026/event/haruki-murakamis-jazz-at-peter-cat",
+    "recipe": { "mode": "render" },
+    "timeFilter": "8.30pm",
+    "addedAt": "2026-09-18T00:00:00.000Z",
+    "performances": [],
+    "status": {
+      "state": "unknown",
+      "lastChecked": null,
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": null
+    }
+  },
+  {
+    "id": "seed-almeida-golden-boy",
+    "name": "Golden Boy",
+    "venue": "Almeida Theatre",
+    "url": "https://almeida.co.uk/whats-on/golden-boy/",
+    "recipe": { "mode": "render" },
+    "timeFilter": null,
+    "addedAt": "2026-09-18T00:00:00.000Z",
+    "performances": [],
+    "status": {
+      "state": "unknown",
+      "lastChecked": null,
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": null
+    }
+  },
+  {
+    "id": "seed-southbank-bob-dylan",
+    "name": "Bob Dylan",
+    "venue": "Southbank Centre",
+    "url": "https://www.southbankcentre.co.uk/whats-on/bob-dylan/",
+    "recipe": { "mode": "render" },
+    "timeFilter": null,
+    "addedAt": "2026-09-18T00:00:00.000Z",
+    "performances": [],
+    "status": {
+      "state": "unknown",
+      "lastChecked": null,
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": null
+    }
+  }
+]
