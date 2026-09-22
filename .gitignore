@@ -2,3 +2,10 @@ node_modules/
 .env
 tunnel-url.txt
 *.log
+
+# The local pm2 deployment's own runtime state -- unrelated to the
+# GitHub Actions deployment, which uses docs/events.json instead (see
+# store.js's EVENTS_FILE_PATH). Was tracked briefly at first; stopped
+# because it changes on every local check cycle and just caused
+# repeated push friction for no benefit -- it's local-only, not shared.
+data/events.json
