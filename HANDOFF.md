@@ -4,6 +4,53 @@ Paste this into a new Claude Code session opened on this same folder
 (`D:\codingwizard\Barbican magic`). Every file mentioned below is already
 saved there — nothing needs to be re-copied in.
 
+## ⚠️ Migrated to GitHub Actions on 2026-09-22 — read this first
+
+The user wanted the tracker to keep working even when their laptop is
+off/asleep, for free, with no domain. As of 2026-09-22 the SAME code now
+also runs as a public GitHub repo:
+**https://github.com/eliettemitschi-ux/ticket-watcher**
+**Live dashboard: https://eliettemitschi-ux.github.io/ticket-watcher/**
+
+- A scheduled workflow (`.github/workflows/check.yml`) runs `check.js`
+  every 5 minutes (GitHub's own minimum, best-effort timing), commits
+  the result to `docs/events.json`, and GitHub Pages serves `docs/` as
+  the static dashboard — the same file the checker writes IS the file
+  the page reads (see `store.js`'s `EVENTS_FILE_PATH` override).
+- Adding events: `.github/workflows/add-barbican-event.yml` (paste a
+  Barbican URL, fully automatic — see `scripts/add-barbican-event.js`)
+  and `.github/workflows/add-any-event.yml` (any URL, best-effort, reuses
+  `checkers/discover.js` — see `scripts/add-any-event.js`). Both are
+  "Run workflow" buttons on the repo's Actions tab.
+- Confirmed working end to end on first deploy: the very first scheduled
+  run caught a REAL Golden Boy availability change (28 Sept 2026,
+  7.30pm) and sent a real notification — verified independently against
+  the live Almeida site, not a fluke of the migration.
+- Repo variables `NTFY_TOPIC`/`NTFY_SERVER` are set (Settings → Secrets
+  and variables → Actions → Variables) — not secrets, deliberately,
+  since the topic is meant to be public (the dashboard itself tells
+  visitors to subscribe to it).
+- **The repo is public** — code, watched shows, and check history are
+  all visible to anyone. This was an explicit, informed tradeoff the
+  user chose (the only way to get persistent Playwright-based checks
+  for genuinely $0/forever) — don't make it private without asking,
+  that would break the free GitHub Actions minutes budget (private
+  repos only get 2,000 free min/month, nowhere near enough for a
+  5-minute cadence).
+- **Important open question, not yet resolved**: the ORIGINAL local
+  pm2 setup (below) is still running on the user's laptop too, meaning
+  BOTH systems are independently checking the same events right now --
+  which means duplicate push notifications for any real change until
+  one is turned off. Flagged to the user; next session should check
+  whether they've decided to stop the local pm2 processes (`pm2 stop
+  ticket-watcher ticket-watcher-tunnel ticket-watcher-tunnel-watchdog`)
+  now that GitHub Actions is confirmed working, or whether they want to
+  keep both running for a while as a trust-building overlap period.
+- `gh` (GitHub CLI) is installed at `C:\Program Files\GitHub CLI\gh.exe`
+  and authenticated as `eliettemitschi-ux` with `repo` + `workflow`
+  scopes (via `gh auth login`/`gh auth refresh`, device-code flow --
+  the user completed this in their browser both times).
+
 ## What this is
 
 A personal Node.js tool that watches sold-out event pages and sends
