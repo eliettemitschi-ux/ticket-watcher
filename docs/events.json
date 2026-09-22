@@ -540,37 +540,5 @@
       "lastError": null,
       "snippet": "Sold out"
     }
-  },
-  {
-    "id": "1586dc10",
-    "name": "TEST - end-to-end GitHub Actions notification check",
-    "venue": "Local fixture",
-    "url": "https://raw.githubusercontent.com/eliettemitschi-ux/ticket-watcher/master/docs/test-fixture.json",
-    "recipe": {
-      "mode": "api",
-      "apiUrl": "https://raw.githubusercontent.com/eliettemitschi-ux/ticket-watcher/master/docs/test-fixture.json",
-      "jsonPath": "available",
-      "availableWhen": {
-        "type": "truthy"
-      }
-    },
-    "timeFilter": null,
-    "addedAt": "2026-09-22T11:57:22.749Z",
-    "performances": [
-      {
-        "label": "TEST - end-to-end GitHub Actions notification check",
-        "state": "available",
-        "lastChecked": "2026-09-22T12:04:03.236Z",
-        "lastChanged": "2026-09-22T12:01:46.604Z",
-        "snippet": "true"
-      }
-    ],
-    "status": {
-      "state": "available",
-      "lastChecked": "2026-09-22T12:04:03.236Z",
-      "lastChanged": "2026-09-22T12:01:46.604Z",
-      "lastError": null,
-      "snippet": "TEST - end-to-end GitHub Actions notification check: true"
-    }
   }
 ]
