@@ -2,10 +2,18 @@ name: Check events
 
 on:
   schedule:
-    # GitHub treats scheduled triggers as best-effort and can delay them
-    # under platform load -- this is the tightest interval GitHub allows
-    # (5 minutes), not a guarantee every run lands exactly 5 minutes apart.
-    - cron: '*/5 * * * *'
+    # This is a BACKUP only, not the primary trigger -- GitHub's own
+    # `schedule:` trigger is documented as best-effort and was observed
+    # live (2026-09-22) firing every 11-17 minutes instead of the
+    # requested 5, a real platform limitation, not something fixable by
+    # tuning this file. The actual 5-minute cadence comes from
+    # cron-worker/ (a small, free Cloudflare Worker with a real Cron
+    # Trigger) calling this workflow's `workflow_dispatch` via GitHub's
+    # API every 5 minutes -- API-triggered runs start immediately,
+    # without GitHub's scheduling deprioritization. This hourly backup
+    # only matters if the Worker/Cloudflare account itself ever has a
+    # problem -- see HANDOFF.md.
+    - cron: '0 * * * *'
   workflow_dispatch: {}
 
 # Shared with add-barbican-event.yml too -- both commit to the same repo,

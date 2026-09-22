@@ -1,0 +1,22 @@
+# cron-worker -- a tiny, free Cloudflare Worker whose only job is to
+# trigger the "Check events" GitHub Actions workflow every 5 minutes.
+#
+# WHY THIS EXISTS: GitHub Actions' own `schedule:` cron trigger is
+# documented as "best-effort" and, in practice, was observed firing
+# every 11-17 minutes instead of the requested 5 (2026-09-22) -- a real,
+# known platform limitation (GitHub deprioritizes scheduled workflow
+# runs under load), not a bug in the workflow itself. An
+# API-triggered run (workflow_dispatch, via GitHub's REST API) fires
+# immediately, without that deprioritization -- this Worker just calls
+# that API on a real, precise Cloudflare Cron Trigger instead.
+#
+# Deploy with: npx wrangler deploy   (from this directory)
+# The GitHub token it needs is a SECRET, not in this file -- see
+# HANDOFF.md for how it was set (`wrangler secret put GITHUB_TOKEN`).
+
+name = "ticket-watcher-cron"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
