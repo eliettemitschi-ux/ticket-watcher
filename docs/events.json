@@ -39,7 +39,7 @@
     "id": "seed-almeida-golden-boy",
     "name": "Golden Boy",
     "venue": "Almeida Theatre",
-    "url": "https://almeida.co.uk/whats-on/golden-boy/",
+    "url": "https://almeida.co.uk/calendar/?e=golden-boy",
     "recipe": {
       "mode": "html-instances",
       "venue": "golden-boy",
