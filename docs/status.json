@@ -1,0 +1,7 @@
+{
+  "pollIntervalMinutes": 5,
+  "ntfy": {
+    "topic": "BARBICAN-1999",
+    "server": "https://ntfy.sh"
+  }
+}
