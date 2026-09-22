@@ -72,7 +72,13 @@ async function sendEmail({ subject, text, url }) {
  */
 async function notifyAvailable(event, performanceLabel) {
   const what = performanceLabel ? `${event.name} (${performanceLabel})` : event.name;
-  const title = `Tickets available: ${what}`;
+  // Optional -- set NOTIFY_SOURCE_TAG when running more than one deployment
+  // against the same notification channel at once (e.g. during the
+  // overlap window between the local pm2 setup and the GitHub Actions
+  // one), so a push makes it obvious which one actually sent it instead
+  // of leaving you guessing whether it's a duplicate.
+  const sourceTag = process.env.NOTIFY_SOURCE_TAG ? `[${process.env.NOTIFY_SOURCE_TAG}] ` : '';
+  const title = `${sourceTag}Tickets available: ${what}`;
   const message = `${event.venue ? event.venue + ' — ' : ''}${what} just changed from sold out to bookable.`;
 
   const results = {};

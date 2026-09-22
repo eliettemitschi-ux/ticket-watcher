@@ -34,6 +34,12 @@ jobs:
       EVENTS_FILE_PATH: docs/events.json
       NTFY_TOPIC: ${{ vars.NTFY_TOPIC }}
       NTFY_SERVER: ${{ vars.NTFY_SERVER }}
+      # Tags every push from this deployment "[GitHub]" so it's obvious
+      # which system sent it during the overlap with the local pm2
+      # deployment (tagged "[Laptop]") -- see HANDOFF.md. Remove once
+      # the local setup is retired, if you like, though it's harmless
+      # to leave permanently too.
+      NOTIFY_SOURCE_TAG: GitHub
     steps:
       - uses: actions/checkout@v4
 
