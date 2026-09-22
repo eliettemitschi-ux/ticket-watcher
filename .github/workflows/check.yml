@@ -95,5 +95,12 @@ jobs:
           git add docs/events.json docs/status.json
           git diff --cached --quiet && exit 0
           git commit -m "chore: update event data"
-          git pull --rebase origin "$GITHUB_REF_NAME"
+          # -X ours: if the same lines of the machine-generated JSON changed
+          # on both sides (a real race seen live 2026-09-22, when the old
+          # 5-min native schedule and a manual test run landed within a
+          # minute of each other), prefer THIS run's freshly-computed
+          # results rather than failing outright -- there's no manual
+          # editing of this file to lose, so "most recent check wins" is
+          # exactly the right, safe behaviour, not a risky data-loss fix.
+          git pull --rebase -X ours origin "$GITHUB_REF_NAME"
           git push

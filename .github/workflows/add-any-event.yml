@@ -60,5 +60,8 @@ jobs:
           git add docs/events.json
           git diff --cached --quiet && exit 0
           git commit -m "chore: add event via workflow"
-          git pull --rebase origin "$GITHUB_REF_NAME"
+          # -X ours: see check.yml's comment on the same line -- this is a
+          # machine-generated file, "most recent write wins" on a rare
+          # conflict is safe here, nothing manual to lose.
+          git pull --rebase -X ours origin "$GITHUB_REF_NAME"
           git push
