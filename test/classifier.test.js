@@ -21,6 +21,17 @@ const cases = [
   // Regression case: "book" appears inside a sold-out sentence and must
   // not be misread as an available-tickets signal.
   { text: 'This performance is sold out. Book onto our waiting list instead.', expect: 'sold_out' },
+  // Real bug found live (2026-09-23): Southbank Centre's "Correspondences"
+  // event page never shows an explicit "Book now"-style CTA, only a
+  // plain price -- without recognising this, a genuinely on-sale show
+  // read as "unknown" forever, including for the exact sold-out-then-
+  // available transition this tool exists to catch.
+  { text: 'Standard entry from £41 Ticket prices may be adjusted without notice to reflect demand.', expect: 'available' },
+  { text: 'Tickets from £15', expect: 'available' },
+  // A page that's genuinely sold out but still shows old pricing text
+  // nearby must still read sold_out -- sold-out patterns are checked
+  // first, this locks that priority in as a real guarantee, not luck.
+  { text: 'Standard entry from £41. Sold out -- join the waiting list.', expect: 'sold_out' },
 ];
 
 let failures = 0;

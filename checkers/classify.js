@@ -40,6 +40,19 @@ const AVAILABLE_PATTERNS = [
   /tickets?\s+available/i,
   /view\s+availability/i,
   /choose\s+a?\s*date/i,
+  // Real gap found live (2026-09-23): some pages (Southbank Centre's
+  // "Correspondences" event) never show an explicit "Book now"-style
+  // CTA in their rendered marketing-page text at all -- the only signal
+  // that seats are on sale is a plain price mention ("Tickets from
+  // £41", "Standard entry from £41"). Without this, a genuinely
+  // on-sale show read as "unknown" -- and worse, if it later sold out
+  // and then came BACK on sale (exactly the transition this tool
+  // exists to catch), it would have kept reading "unknown" forever
+  // too, silently missing the one notification that mattered. Safe to
+  // add: SOLD_OUT_PATTERNS is always checked first, so a page that's
+  // genuinely sold out but still shows old pricing text is still
+  // caught correctly as sold_out.
+  /(tickets?|entry)\s+(from|start(?:ing)?\s+(?:at|from))\s+£\d/i,
 ];
 
 // Phrases that mean "the page hasn't finished loading the real answer yet"
