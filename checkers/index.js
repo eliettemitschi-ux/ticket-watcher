@@ -75,7 +75,13 @@ async function checkEvent(event, opts = {}) {
   if (!opts.browser) {
     throw new Error(`Event "${event.name}" needs render mode but no browser was provided`);
   }
-  return checkRender(event.url, opts.browser, event.name);
+  // recipe.pageUrl lets a render-mode event check a different page than the
+  // one shown to the user -- e.g. Dua Lipa & Patti Smith: event.url is the
+  // venue's own "Book now" link (the right thing for a person to click),
+  // but that marketing page sits behind Cloudflare bot-verification that
+  // blocks GitHub Actions' datacenter IPs. The secure booking system's own
+  // overview page carries the same real availability text without it.
+  return checkRender(recipe.pageUrl || event.url, opts.browser, event.name);
 }
 
 module.exports = { checkEvent };
