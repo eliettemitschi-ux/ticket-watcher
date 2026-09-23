@@ -538,27 +538,28 @@
     "id": "21bc6441",
     "name": "Dua Lipa & Patti Smith: Bread of Angels",
     "venue": "Southbank Centre",
-    "url": "https://www.southbankcentre.co.uk/whats-on/dua-lipa-patti-smith-bread-of-angels/",
+    "url": "https://secure.southbankcentre.co.uk/141708/141709",
     "recipe": {
-      "mode": "render"
+      "mode": "render",
+      "pageUrl": "https://secure.southbankcentre.co.uk/overview/141708"
     },
     "timeFilter": null,
     "addedAt": "2026-09-23T09:48:32.858Z",
     "performances": [
       {
-        "label": "Dua Lipa & Patti Smith: Bread of Angels",
-        "state": "unknown",
-        "lastChecked": "2026-09-23T10:37:17.714Z",
-        "lastChanged": "2026-09-23T10:18:14.234Z",
-        "snippet": "www.southbankcentre.co.uk Performing security verification This website uses a security service to protect against malicious bots. This page is displayed while "
+        "label": "25 Oct 2026, 7.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-09-23T10:38:57.955Z",
+        "lastChanged": "2026-09-23T10:38:57.955Z",
+        "snippet": "Sold out"
       }
     ],
     "status": {
-      "state": "unknown",
-      "lastChecked": "2026-09-23T10:37:17.714Z",
+      "state": "sold_out",
+      "lastChecked": "2026-09-23T10:38:57.955Z",
       "lastChanged": null,
       "lastError": null,
-      "snippet": "www.southbankcentre.co.uk Performing security verification This website uses a security service to protect against malicious bots. This page is displayed while "
+      "snippet": "Sold out"
     }
   }
 ]
