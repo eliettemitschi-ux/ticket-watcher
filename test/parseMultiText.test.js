@@ -222,11 +222,17 @@ function check(name, actual, expected) {
     Art & exhibitions
     Tue 20 Oct – Sun 1 Nov 2026
     The global superstar and founder of the Service95 Book Club curates a line-up of her favourite writers
+
+    For your visit
+    Opening hours
+    25 Oct 2026
+    Sunday, 10am – 11pm Monday, closed.
   `;
   const result = parseInstancesFromText(text, 'Dua Lipa & Patti Smith: Bread of Angels').map((r) => ({ label: r.label, state: r.state }));
   check('Southbank cross-promo: only the one real performance found', result.length, 1);
   check('Southbank cross-promo: the real performance correctly reads sold out', result[0]?.state, 'sold_out');
   check('Southbank cross-promo: no bogus "1 Sep"/"1 Nov"/"20 Oct" entries leaked in', result.some((r) => /1 sep|1 nov|20 oct/i.test(r.label)), false);
+  check('Southbank cross-promo: no bogus opening-hours "10am"/"11pm" entries leaked in', result.some((r) => /10am|11pm/i.test(r.label)), false);
 }
 
 if (failures > 0) {

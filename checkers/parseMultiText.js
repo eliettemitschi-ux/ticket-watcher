@@ -129,10 +129,30 @@ function findTokens(re, text) {
 // text nearby (National Theatre's access performances do exactly this).
 // Drop any time token immediately preceded by one of these lead-in words.
 const PRE_SHOW_MARKERS = ['doors', 'touch tour'];
+
+// Venue OPENING HOURS ("Sunday, 10am – 11pm Monday, closed") are a
+// different shape of the same problem: real bug seen live (2026-09-23,
+// and matches noise seen earlier in Bob Dylan's pre-fix data too) on
+// Southbank Centre's "For your visit" section, which restates the
+// event's own date right before its building hours -- the date/time
+// windowing below then pairs that unrelated "10am"/"11pm" with the
+// event's real date, inventing two bogus extra "performances". The
+// word "closed" a little further along is the reliable tell (a real
+// showtime is never followed by "<weekday>, closed" -- that's uniquely
+// opening-hours phrasing), so this looks FORWARD from the time token
+// rather than backward like the markers above.
+const OPENING_HOURS_LOOKAHEAD = 40;
+function looksLikeOpeningHours(timeToken, text) {
+  const after = text.slice(timeToken.index, timeToken.index + OPENING_HOURS_LOOKAHEAD).toLowerCase();
+  return /\bclosed\b/.test(after);
+}
+
 function dropDoorsTimes(timeTokens, text) {
   return timeTokens.filter((t) => {
     const before = text.slice(Math.max(0, t.index - 20), t.index).toLowerCase();
-    return !PRE_SHOW_MARKERS.some((marker) => before.includes(marker));
+    if (PRE_SHOW_MARKERS.some((marker) => before.includes(marker))) return false;
+    if (looksLikeOpeningHours(t, text)) return false;
+    return true;
   });
 }
 
