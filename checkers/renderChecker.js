@@ -29,8 +29,8 @@ const SETTLE_MS = 1500; // extra grace period after networkidle for slow widgets
 // ones that were already done in 1.5s), re-read the text a couple more
 // times, a little further apart, but only for as long as every
 // performance we found still looks unresolved (pending/unknown).
-const EXTRA_SETTLE_ROUNDS = 3;
-const EXTRA_SETTLE_MS = 2500;
+const EXTRA_SETTLE_ROUNDS = 5;
+const EXTRA_SETTLE_MS = 3000;
 
 function stillUnresolved(performances) {
   return performances.every((p) => p.state === 'pending' || p.state === 'unknown');
