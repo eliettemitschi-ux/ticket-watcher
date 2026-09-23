@@ -44,8 +44,20 @@ const MAX_PERFORMANCES = 60; // sanity cap against garbage pages
 // text off at the first heading that looks like one of these sections --
 // every real venue page seen so far puts the actual event's own ticket
 // info before it, never after.
+//
+// "more info for" and "recently announced" cover Southbank Centre's own
+// reused cross-promo card component specifically -- real bug found live
+// (2026-09-23) on the Dua Lipa & Patti Smith event page, which correctly
+// read the real "Sold Out" performance but then also picked up a string
+// of bogus "unknown" entries from unrelated seasonal promo cards further
+// down the page ("More info for Autumn", "Find inspiring art..."). Those
+// unrelated "unknown" entries would otherwise drag the whole event's
+// aggregate dashboard badge down to "UNKNOWN" even though the one real
+// performance is genuinely sold out -- the same class of bug fixed
+// earlier for Barbican and National Theatre, just a different venue's
+// own template.
 const RELATED_SECTION_CUTOFF_RE =
-  /you\s+(might|may)\s+also\s+like|related\s+(events?|shows?|performances?)|similar\s+(events?|shows?)|recommended\s+for\s+you|more\s+(events?|shows?)\s+(like\s+this|you\s+might\s+(like|enjoy))/i;
+  /you\s+(might|may)\s+also\s+like|related\s+(events?|shows?|performances?)|similar\s+(events?|shows?)|recommended\s+for\s+you|more\s+(events?|shows?)\s+(like\s+this|you\s+might\s+(like|enjoy))|more\s+info\s+for|recently\s+announced/i;
 
 function trimAtRelatedSection(text) {
   const match = text.match(RELATED_SECTION_CUTOFF_RE);

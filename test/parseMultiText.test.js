@@ -192,6 +192,43 @@ function check(name, actual, expected) {
   check('NT duplicate-heading bug: 24 Sep correctly sold out', sep24?.state, 'sold_out');
 }
 
+// --- Case 8: Southbank Centre's real bug (2026-09-23) -- the event's own
+// real date/time correctly reads "Sold Out", but the page's reused
+// cross-promo card component ("More info for Autumn", "Recently
+// announced") further down bleeds in as several bogus "unknown"
+// performances, which would otherwise drag the whole event's aggregate
+// dashboard badge down to "unknown" even though it's genuinely sold out.
+{
+  const text = `
+    Dua Lipa & Patti Smith: Bread of Angels
+    Sun 25 Oct 2026, 7.30pm
+    More details for
+    Royal Festival Hall
+    Run time 1 hour and 15 minutes (approx)
+    Sold Out
+    Jump to sections on this page
+    Jump to
+    Overview
+    Times & tickets
+    Access
+    For your visit
+
+    More info for Autumn
+    Autumn
+    Mon 1 Sep – Sun 1 Nov
+    Find inspiring art and activities for all in the heart of London
+
+    Recently announced
+    Art & exhibitions
+    Tue 20 Oct – Sun 1 Nov 2026
+    The global superstar and founder of the Service95 Book Club curates a line-up of her favourite writers
+  `;
+  const result = parseInstancesFromText(text, 'Dua Lipa & Patti Smith: Bread of Angels').map((r) => ({ label: r.label, state: r.state }));
+  check('Southbank cross-promo: only the one real performance found', result.length, 1);
+  check('Southbank cross-promo: the real performance correctly reads sold out', result[0]?.state, 'sold_out');
+  check('Southbank cross-promo: no bogus "1 Sep"/"1 Nov"/"20 Oct" entries leaked in', result.some((r) => /1 sep|1 nov|20 oct/i.test(r.label)), false);
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);
