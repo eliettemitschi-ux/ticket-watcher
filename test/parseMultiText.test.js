@@ -235,6 +235,24 @@ function check(name, actual, expected) {
   check('Southbank cross-promo: no bogus opening-hours "10am"/"11pm" entries leaked in', result.some((r) => /10am|11pm/i.test(r.label)), false);
 }
 
+// --- Case 9: Soundwalk Collective's real bug (2026-09-23) -- the exact
+// same performance is printed twice with different day-of-month padding
+// ("4 Feb 2027" in the blurb, "04 Feb 2027" in the booking widget), which
+// must collapse into ONE performance, not two copies of the same slot.
+{
+  const text = `
+    Soundwalk Collective with Patti Smith: Correspondences
+    4 Feb 2027, 7.30pm
+    Tickets from £41
+    Run time 2 hours and 30 minutes (approx)
+    04 Feb 2027, 7.30pm
+    Standard entry from £41
+  `;
+  const result = parseInstancesFromText(text, 'Correspondences').map((r) => ({ label: r.label, state: r.state }));
+  check('Leading-zero dedup: exactly one performance (not two copies of 4 Feb)', result.length, 1);
+  check('Leading-zero dedup: correctly reads available', result[0]?.state, 'available');
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);

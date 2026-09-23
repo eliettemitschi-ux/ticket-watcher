@@ -101,10 +101,20 @@ function stripWeekdayDateAtTimeHeadings(text) {
   return text.replace(WEEKDAY_DATE_AT_TIME_HEADING_RE, '');
 }
 
+// Real bug found live (2026-09-23) on Soundwalk Collective's page: "4 Feb
+// 2027, 7.30pm" and "04 Feb 2027, 7.30pm" are the exact same performance
+// mentioned twice in different formats (once in a blurb, once in the
+// booking widget), but a bare leading-zero difference meant they normalized
+// to two different keys and survived as two separate "performances" for
+// the same slot -- doubling that entry's weight in the dashboard and, worse,
+// capable of showing one copy as sold_out and the other as available at
+// once. Stripping a leading zero off any 1-2 digit run collapses both
+// spellings of the same day-of-month onto one key.
 function normalizeLabel(label) {
   return label
     .toLowerCase()
     .replace(/[.:]/g, ' ')
+    .replace(/\b0(\d)\b/g, '$1')
     .replace(/\s+/g, ' ')
     .trim();
 }
