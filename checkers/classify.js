@@ -26,7 +26,9 @@ const SOLD_OUT_PATTERNS = [
   /this\s+(performance|show|event)\s+is\s+sold\s+out/i,
 ];
 
-const AVAILABLE_PATTERNS = [
+// A genuine call-to-action -- present only when a page is actually
+// letting you start a purchase, never just describing one.
+const STRONG_AVAILABLE_PATTERNS = [
   /book\s+(now|tickets?|online|your\s+seats?)/i,
   /choose\s+(your\s+)?seats?/i,
   /select\s+(your\s+)?(tickets?|performance|seats?)/i,
@@ -40,20 +42,44 @@ const AVAILABLE_PATTERNS = [
   /tickets?\s+available/i,
   /view\s+availability/i,
   /choose\s+a?\s*date/i,
-  // Real gap found live (2026-09-23): some pages (Southbank Centre's
-  // "Correspondences" event) never show an explicit "Book now"-style
-  // CTA in their rendered marketing-page text at all -- the only signal
-  // that seats are on sale is a plain price mention ("Tickets from
-  // £41", "Standard entry from £41"). Without this, a genuinely
-  // on-sale show read as "unknown" -- and worse, if it later sold out
-  // and then came BACK on sale (exactly the transition this tool
-  // exists to catch), it would have kept reading "unknown" forever
-  // too, silently missing the one notification that mattered. Safe to
-  // add: SOLD_OUT_PATTERNS is always checked first, so a page that's
-  // genuinely sold out but still shows old pricing text is still
-  // caught correctly as sold_out.
-  /(tickets?|entry)\s+(from|start(?:ing)?\s+(?:at|from))\s+£\d/i,
 ];
+
+// Weaker than the above: a plain price mention, with no CTA nearby. Real
+// gap found live (2026-09-23): some pages (Southbank Centre's
+// "Correspondences" event) never show an explicit "Book now"-style CTA
+// in their rendered marketing-page text at all -- the only signal that
+// seats are on sale is a plain price mention ("Tickets from £41",
+// "Standard entry from £41"). Without this, a genuinely on-sale show
+// read as "unknown" -- and worse, if it later sold out and then came
+// BACK on sale (exactly the transition this tool exists to catch), it
+// would have kept reading "unknown" forever too, silently missing the
+// one notification that mattered. Safe to add: SOLD_OUT_PATTERNS is
+// always checked first, so a page that's genuinely sold out but still
+// shows old pricing text is still caught correctly as sold_out. Kept
+// separate from the strong list because a price CAN be shown without
+// genuine availability -- see MEMBER_GATE_PATTERNS below.
+const WEAK_PRICE_AVAILABLE_PATTERN = /(tickets?|entry)\s+(from|start(?:ing)?\s+(?:at|from))\s+£\d/i;
+
+const AVAILABLE_PATTERNS = [...STRONG_AVAILABLE_PATTERNS, WEAK_PRICE_AVAILABLE_PATTERN];
+
+// Real false positive found live (2026-09-24): Southbank Centre shows a
+// price ("Standard entry from £51") for a show that's still genuinely
+// member-only presale, days before the public can actually book it --
+// "On sale to Members... Get presale access". The weak price pattern
+// above would misread that as "available" the moment it's checked,
+// sending a false "tickets are on sale" notification to someone who
+// isn't a member and genuinely cannot book. Once real general sale
+// opens, venues consistently replace this gating copy with an actual
+// CTA (confirmed against Dua Lipa's own page once it went on sale) --
+// so this only needs to suppress the WEAK price-only signal, never a
+// STRONG one, which means a page that's genuinely bookable AND still
+// mentions membership elsewhere (a members' discount blurb, say) isn't
+// wrongly held back.
+const MEMBER_GATE_PATTERNS = [/on\s+sale\s+to\s+members/i, /get\s+presale\s+access/i, /members[’']?\s+presale/i];
+
+function isMemberGated(text) {
+  return MEMBER_GATE_PATTERNS.some((re) => re.test(text));
+}
 
 // Phrases that mean "the page hasn't finished loading the real answer yet"
 // -- worth recognising explicitly so callers can retry rather than log a
@@ -98,12 +124,29 @@ function classify(text) {
     };
   }
 
-  const availableMatch = firstMatch(clean, AVAILABLE_PATTERNS);
-  if (availableMatch) {
+  const strongMatch = firstMatch(clean, STRONG_AVAILABLE_PATTERNS);
+  if (strongMatch) {
     return {
       state: 'available',
-      matched: availableMatch,
-      snippet: snippetAround(clean, availableMatch),
+      matched: strongMatch,
+      snippet: snippetAround(clean, strongMatch),
+    };
+  }
+
+  const weakPriceMatch = clean.match(WEAK_PRICE_AVAILABLE_PATTERN);
+  if (weakPriceMatch && !isMemberGated(clean)) {
+    return {
+      state: 'available',
+      matched: weakPriceMatch[0],
+      snippet: snippetAround(clean, weakPriceMatch[0]),
+    };
+  }
+  if (weakPriceMatch && isMemberGated(clean)) {
+    const gateMatch = firstMatch(clean, MEMBER_GATE_PATTERNS);
+    return {
+      state: 'pending',
+      matched: gateMatch,
+      snippet: snippetAround(clean, gateMatch),
     };
   }
 
@@ -119,4 +162,12 @@ function classify(text) {
   return { state: 'unknown', matched: null, snippet: clean.slice(0, 160) };
 }
 
-module.exports = { classify, SOLD_OUT_PATTERNS, AVAILABLE_PATTERNS, PENDING_PATTERNS };
+module.exports = {
+  classify,
+  SOLD_OUT_PATTERNS,
+  AVAILABLE_PATTERNS,
+  STRONG_AVAILABLE_PATTERNS,
+  WEAK_PRICE_AVAILABLE_PATTERN,
+  MEMBER_GATE_PATTERNS,
+  PENDING_PATTERNS,
+};

@@ -32,6 +32,20 @@ const cases = [
   // nearby must still read sold_out -- sold-out patterns are checked
   // first, this locks that priority in as a real guarantee, not luck.
   { text: 'Standard entry from £41. Sold out -- join the waiting list.', expect: 'sold_out' },
+  // Real false positive found live (2026-09-24): Southbank Centre shows a
+  // price for a show that's still genuinely member-only presale, days
+  // before the public can book it -- the weak price-only signal above
+  // must NOT fire while member-gating copy is present, or it sends a
+  // false "on sale" notification to someone who can't actually book.
+  { text: 'On sale to Members. Get presale access. Standard entry from £51.', expect: 'pending' },
+  // But a real CTA always wins, even next to member-related copy
+  // elsewhere on the page (e.g. a members' discount blurb) -- only the
+  // WEAK price-only signal gets suppressed by member-gating text.
+  { text: 'Members get 10% off. Book now for Standard entry from £51.', expect: 'available' },
+  // Once general sale genuinely opens, the gating copy is gone and only
+  // the price remains -- must read available again, same as before this
+  // fix existed.
+  { text: 'Standard entry from £51 Ticket prices may be adjusted without notice to reflect demand.', expect: 'available' },
 ];
 
 let failures = 0;

@@ -714,5 +714,34 @@
       "snippet": "24 September 2026, 6:30 pm: er 2026 6:30 pm £120 + £4 booking fee Book tickets Fri 25 September 2026"
     },
     "ntfyTopic": "BARBICAN-1999-electra-persona-2b66"
+  },
+  {
+    "id": "9d1b330d",
+    "name": "Soundwalk Collective with Patti Smith: Correspondences",
+    "venue": "Southbank Centre",
+    "url": "https://www.southbankcentre.co.uk/whats-on/soundwalk-collective-with-patti-smith-correspondences/",
+    "recipe": {
+      "mode": "render"
+    },
+    "ntfyTopic": "BARBICAN-1999-soundwalk-collective-with-patti-smith-co-9d1b",
+    "timeFilter": null,
+    "maxPrice": null,
+    "addedAt": "2026-09-24T12:05:42.138Z",
+    "performances": [
+      {
+        "label": "4 Feb 2027, 7.30pm",
+        "state": "pending",
+        "lastChecked": "2026-09-24T12:05:42.166Z",
+        "lastChanged": "2026-09-24T12:05:42.166Z",
+        "snippet": "On sale to Members. General sale Fri 25 Sep, 10am."
+      }
+    ],
+    "status": {
+      "state": "pending",
+      "lastChecked": "2026-09-24T12:05:42.166Z",
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": "On sale to Members. General sale Fri 25 Sep, 10am."
+    }
   }
 ]
