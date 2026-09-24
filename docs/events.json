@@ -743,5 +743,36 @@
       "lastError": null,
       "snippet": "4 Feb 2027, 7.30pm: rt, installation and cinematic experience. More details for Royal Festival Hall Tickets from £51 View more time and price information Run time 2 hours and 30 minutes (approx)"
     }
+  },
+  {
+    "id": "9f0c1ccd",
+    "name": "Ronnie Scott's 100th Birthday",
+    "venue": "Barbican",
+    "url": "https://www.barbican.org.uk/whats-on/2027/event/ronnie-scotts-100th-birthday",
+    "recipe": {
+      "mode": "html-instances",
+      "venue": "barbican",
+      "instancesUrl": "https://www.barbican.org.uk/node/227713/instances"
+    },
+    "ntfyTopic": "BARBICAN-1999-ronnie-scott-s-100th-birthday-9f0c",
+    "timeFilter": null,
+    "maxPrice": null,
+    "addedAt": "2026-09-24T15:26:08.687Z",
+    "performances": [
+      {
+        "label": "28 Jan 2027, 7.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-09-24T15:26:08.703Z",
+        "lastChanged": "2026-09-24T15:26:08.703Z",
+        "snippet": "Sold out"
+      }
+    ],
+    "status": {
+      "state": "sold_out",
+      "lastChecked": "2026-09-24T15:26:08.703Z",
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": "Sold out"
+    }
   }
 ]

@@ -7,7 +7,7 @@
 // Boy's own per-performance endpoints (see HANDOFF.md).
 
 const assert = require('assert');
-const { extractInstances, formatLabel } = require('../checkers/htmlInstancesChecker');
+const { extractInstances, formatLabel, isGeneralPresaleGated } = require('../checkers/htmlInstancesChecker');
 
 const BARBICAN_FRAGMENT = `
   <div class="instance-listing">
@@ -86,6 +86,43 @@ check(
   'extractInstances does not let the distant "Join" tab\'s unrelated "sold-out" copy poison a real, available performance',
   extractInstances(BARBICAN_SINGLE_INSTANCE_WITH_JOIN_TAB_NOISE),
   [{ datetime: '2026-09-22T18:20:00Z', soldOut: false }]
+);
+
+// Real investigation live (2026-09-24) on Barbican's Ronnie Scott's 100th
+// Birthday: its per-performance booking link carries class
+// "btn-login-to-book" during a members-only presale window, which looked
+// at first like a reliable "not really open yet" signal -- until it
+// turned up on Church of Sound 10th Birthday too, a fully on-sale event
+// with no presale gate at all. That class just means "log in to
+// checkout" on every Barbican booking link, unrelated to membership
+// gating -- using it would have made every Barbican event read as
+// perpetually "not really available". The real signal is the booking
+// overlay's own "General" tier row, present only during a presale
+// window and absent once (or if) the event is fully on public sale.
+const RONNIE_SCOTT_PRESALE_FRAGMENT = `
+  <div class="_row _row-priority" data-identifier="general">
+    <div class="_column _column-booking-status">
+      <h3 class="_title _title-priority-row">General</h3>
+      <p>
+        Book from 10.00am, Fri 25 Sep
+      </p>
+    </div>
+  </div>
+`;
+check('isGeneralPresaleGated: true for a real members-presale "General" row', isGeneralPresaleGated(RONNIE_SCOTT_PRESALE_FRAGMENT), true);
+
+const FULLY_ON_SALE_FRAGMENT = `
+  <div class="instance-listing">
+    <div class="instance-time"><p class="instance-time__time"><time datetime="2026-11-21T20:30:00Z">8.30pm</time></p></div>
+    <div class="instance-listing__button">
+      <a href="https://tickets.barbican.org.uk/choose-seats/3631201" class="btn btn-login-to-book"><span>Book tickets</span></a>
+    </div>
+  </div>
+`;
+check(
+  'isGeneralPresaleGated: false for a fully on-sale event (no "General" tier row, even with the same login-to-book class)',
+  isGeneralPresaleGated(FULLY_ON_SALE_FRAGMENT),
+  false
 );
 
 check('formatLabel formats a Z-suffixed ISO datetime on the hour', formatLabel('2026-11-21T17:00:00Z'), '21 Nov 2026, 5pm');

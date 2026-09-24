@@ -29,6 +29,24 @@ const USER_AGENT =
 
 const SOLD_OUT_RE = /sold[\s-]*out/i;
 
+// Real false lead investigated live (2026-09-24) on Barbican's Ronnie
+// Scott's 100th Birthday: its per-performance button carries class
+// "btn-login-to-book" during a members-only presale window, which looked
+// at first like a reliable "not really available yet" signal. It isn't
+// -- checked against Church of Sound 10th Birthday, a fully, currently
+// on-sale event with no presale gate at all, and its "Book tickets" link
+// carries the EXACT SAME class. It's just Barbican's standard "log in to
+// complete checkout" requirement on every booking link, nothing to do
+// with membership gating. The real, structural signal lives one level
+// up: the booking overlay's own "General" tier row, which spells out in
+// plain text when the public can actually book ("Book from 10.00am, Fri
+// 25 Sep" during presale; "Booking available" once it opens).
+const GENERAL_PRESALE_GATE_RE = /General[\s\S]{0,300}?Book\s+from\s+\d/i;
+
+function isGeneralPresaleGated(html) {
+  return GENERAL_PRESALE_GATE_RE.test(html);
+}
+
 // How far past a performance's own <time> tag to look for its sold-out
 // marker. Real bug found live: Barbican's per-node instances response
 // ends with a "Join" (membership) tab whose own marketing copy says
@@ -92,7 +110,7 @@ async function fetchGoldenBoyInstances(recipe) {
   if (!res.ok) throw new Error(`HTTP ${res.status} from ${ajaxUrl}`);
   const json = await res.json();
   const fragments = Array.isArray(json.instances) ? json.instances : [];
-  return fragments.flatMap(extractInstances);
+  return { instances: fragments.flatMap(extractInstances), generalPresaleGated: false };
 }
 
 async function fetchBarbicanInstances(recipe) {
@@ -115,7 +133,7 @@ async function fetchBarbicanInstances(recipe) {
   } catch {
     // Already plain HTML (or something unexpected) -- use as-is.
   }
-  return extractInstances(html);
+  return { instances: extractInstances(html), generalPresaleGated: isGeneralPresaleGated(html) };
 }
 
 const FETCHERS = {
@@ -133,18 +151,22 @@ async function checkHtmlInstances(recipe) {
     return { state: 'error', error: `Unknown html-instances venue "${recipe.venue}"` };
   }
   try {
-    const instances = await fetcher(recipe);
+    const { instances, generalPresaleGated } = await fetcher(recipe);
     if (instances.length === 0) {
       return { state: 'error', error: 'No performance instances found in API response' };
     }
     return instances.map(({ datetime, soldOut }) => ({
       label: formatLabel(datetime),
-      state: soldOut ? 'sold_out' : 'available',
-      snippet: soldOut ? 'Sold out' : 'Not marked sold out',
+      state: soldOut ? 'sold_out' : generalPresaleGated ? 'pending' : 'available',
+      snippet: soldOut
+        ? 'Sold out'
+        : generalPresaleGated
+          ? 'Members-only presale -- not yet open to the public'
+          : 'Not marked sold out',
     }));
   } catch (err) {
     return { state: 'error', error: err.message };
   }
 }
 
-module.exports = { checkHtmlInstances, extractInstances, formatLabel };
+module.exports = { checkHtmlInstances, extractInstances, formatLabel, isGeneralPresaleGated };
