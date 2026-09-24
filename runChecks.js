@@ -15,15 +15,63 @@ const { chromium } = require('playwright');
 const { launchBrowser } = require('./browser');
 const store = require('./store');
 const { checkEvent } = require('./checkers');
-const { normalizeLabel } = require('./checkers/parseMultiText');
+const { normalizeLabel, parseDateFromLabel } = require('./checkers/parseMultiText');
 const { notifyAvailable } = require('./notify');
 
 // Same gating rule everywhere an event has a timeFilter set (e.g.
 // "8.30pm"): only performances whose label contains it are worth waking
 // someone up for.
-function shouldNotify(label, timeFilter) {
+function timeFilterAllows(label, timeFilter) {
   if (!timeFilter) return true;
   return normalizeLabel(label).includes(normalizeLabel(timeFilter));
+}
+
+const PRICE_RE = /£\s*(\d+(?:\.\d{2})?)/;
+
+// event.maxPrice (GBP) gates a notification by whatever price text
+// happens to be in the performance's own snippet (see classify.js's
+// snippetAround -- for venues like National Theatre, the price sits
+// right next to the booking button/status, so it's reliably captured
+// there without a dedicated price-scraping step). A performance whose
+// price can't be found still notifies: this tool exists to catch
+// availability, and silently swallowing a real one because the text
+// didn't happen to carry a price would be a worse failure than an
+// occasional notification above budget.
+function priceAllows(perf, maxPrice) {
+  if (!maxPrice) return true;
+  const snippet = perf.snippet || '';
+  const m = PRICE_RE.exec(snippet);
+  if (!m) return true;
+  return Number(m[1]) <= maxPrice;
+}
+
+// Global, applies to every event regardless of venue: performances whose
+// date falls in one of these ranges (inclusive) don't notify, because
+// the user can't make those dates. Everything outside the range(s)
+// still notifies normally, and the dashboard still shows the real
+// status either way -- this only gates the alert, same as timeFilter.
+function dateAllows(label, blockedDateRanges) {
+  if (!blockedDateRanges || blockedDateRanges.length === 0) return true;
+  const date = parseDateFromLabel(label);
+  if (!date) return true; // no date to check against -- don't block on a guess
+  return !blockedDateRanges.some(({ start, end }) => {
+    const s = new Date(`${start}T00:00:00Z`);
+    const e = new Date(`${end}T23:59:59Z`);
+    return date >= s && date <= e;
+  });
+}
+
+function shouldNotify(perf, event, settings) {
+  if (!timeFilterAllows(perf.label, event.timeFilter)) {
+    return { allowed: false, reason: `doesn't match the "${event.timeFilter}" time filter` };
+  }
+  if (!priceAllows(perf, event.maxPrice)) {
+    return { allowed: false, reason: `price is above the £${event.maxPrice} cap` };
+  }
+  if (!dateAllows(perf.label, settings?.blockedDateRanges)) {
+    return { allowed: false, reason: 'falls in a blocked date range' };
+  }
+  return { allowed: true };
 }
 
 /**
@@ -56,6 +104,7 @@ async function runAllChecks(log) {
   }
 
   let notifiedCount = 0;
+  const settings = store.getSettings();
 
   try {
     for (const event of events) {
@@ -87,8 +136,9 @@ async function runAllChecks(log) {
       );
 
       for (const perf of newlyAvailable) {
-        if (!shouldNotify(perf.label, updated.timeFilter)) {
-          logFn(`  "${perf.label}" is now available but doesn't match the "${updated.timeFilter}" filter -- not notifying`);
+        const verdict = shouldNotify(perf, updated, settings);
+        if (!verdict.allowed) {
+          logFn(`  "${perf.label}" is now available but ${verdict.reason} -- not notifying`);
           continue;
         }
         const label = updated.performances.length > 1 ? perf.label : undefined;
@@ -107,4 +157,4 @@ async function runAllChecks(log) {
   return { checked: events.length, notified: notifiedCount };
 }
 
-module.exports = { runAllChecks, shouldNotify };
+module.exports = { runAllChecks, shouldNotify, timeFilterAllows, priceAllows, dateAllows };

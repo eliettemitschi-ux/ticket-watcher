@@ -24,6 +24,31 @@ const EVENTS_FILE = process.env.EVENTS_FILE_PATH
   : path.join(__dirname, 'data', 'events.json');
 const DATA_DIR = path.dirname(EVENTS_FILE);
 
+// Sibling to whichever events file is active, so the same
+// EVENTS_FILE_PATH override that lets one codebase serve both
+// deployments (see above) carries settings along with it automatically.
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+
+function getSettings() {
+  if (!fs.existsSync(SETTINGS_FILE)) return { blockedDateRanges: [] };
+  try {
+    const parsed = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8') || '{}');
+    return { blockedDateRanges: [], ...parsed };
+  } catch (err) {
+    throw new Error(`settings.json is not valid JSON (${err.message}).`);
+  }
+}
+
+function setBlockedDateRanges(ranges) {
+  const settings = getSettings();
+  settings.blockedDateRanges = ranges || [];
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const tmpFile = SETTINGS_FILE + '.tmp' + process.pid;
+  fs.writeFileSync(tmpFile, JSON.stringify(settings, null, 2));
+  fs.renameSync(tmpFile, SETTINGS_FILE);
+  return settings;
+}
+
 function ensureDataFile() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(EVENTS_FILE)) {
@@ -68,7 +93,7 @@ function getEvent(id) {
   return readAll().find((e) => e.id === id) || null;
 }
 
-function addEvent({ name, venue, url, recipe, timeFilter }) {
+function addEvent({ name, venue, url, recipe, timeFilter, maxPrice }) {
   const events = readAll();
   const event = {
     id: newId(),
@@ -81,6 +106,13 @@ function addEvent({ name, venue, url, recipe, timeFilter }) {
     // ever trigger a notification. Every performance is still checked and
     // shown on the dashboard regardless; this only gates the alert.
     timeFilter: timeFilter || null,
+    // Optional price cap in GBP -- when set, only performances whose
+    // snippet mentions a price at or below it will ever trigger a
+    // notification. A performance with no extractable price still
+    // notifies (failing open, since blocking it entirely risks silently
+    // missing a genuinely cheap ticket the whole tool exists to catch) --
+    // see runChecks.js's priceAllows().
+    maxPrice: maxPrice || null,
     addedAt: new Date().toISOString(),
     // One entry per date/time found on the page (almost always more than
     // one for a full run, exactly one for a single-performance show).
@@ -146,6 +178,15 @@ function setTimeFilter(id, timeFilter) {
   const idx = events.findIndex((e) => e.id === id);
   if (idx === -1) throw new Error(`No event with id ${id}`);
   events[idx].timeFilter = timeFilter || null;
+  writeAll(events);
+  return events[idx];
+}
+
+function setMaxPrice(id, maxPrice) {
+  const events = readAll();
+  const idx = events.findIndex((e) => e.id === id);
+  if (idx === -1) throw new Error(`No event with id ${id}`);
+  events[idx].maxPrice = maxPrice || null;
   writeAll(events);
   return events[idx];
 }
@@ -243,6 +284,9 @@ module.exports = {
   updateStatus,
   setRecipe,
   setTimeFilter,
+  setMaxPrice,
+  getSettings,
+  setBlockedDateRanges,
   updatePerformances,
   recordCheckError,
 };

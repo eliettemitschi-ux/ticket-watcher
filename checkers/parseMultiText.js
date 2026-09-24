@@ -25,6 +25,29 @@ const DATE_RE = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTHS})\\.?(?:\
 // "8.30pm", "8:30 pm", "5pm", "20:30"
 const TIME_RE = /\b(\d{1,2})[:.]?(\d{2})?\s*(am|pm)\b|\b([01]\d|2[0-3]):([0-5]\d)\b/gi;
 
+const MONTH_INDEX = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
+  may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8, oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11,
+};
+
+// Pulls the first date out of a performance label ("07 October 2026, 1:00
+// pm" -> Date(2026-10-07)) for callers that need to reason about WHEN a
+// performance is, not just classify its text -- e.g. runChecks.js's
+// blocked-date-range gate. Returns null rather than guessing when no
+// year is present (a bare "12 Dec" is ambiguous across seasons, and every
+// real label seen so far always carries one -- see DATE_RE above).
+function parseDateFromLabel(label) {
+  const re = new RegExp(DATE_RE.source, 'i');
+  const m = re.exec(label || '');
+  if (!m || !m[3]) return null;
+  const day = Number(m[1]);
+  const month = MONTH_INDEX[m[2].toLowerCase()];
+  const year = Number(m[3]);
+  if (month === undefined) return null;
+  return new Date(Date.UTC(year, month, day));
+}
+
 // Deliberately tiny: any bigger and one slot's lookback starts re-reading
 // text that rightfully belongs to the PREVIOUS slot's forward-looking
 // window (e.g. "13 Nov -- Sold Out / 14 Nov -- Book tickets" -- a lookback
@@ -288,6 +311,7 @@ module.exports = {
   trimAtRelatedSection,
   trimBeforeDatesHeading,
   stripWeekdayDateAtTimeHeadings,
+  parseDateFromLabel,
   DATE_RE,
   TIME_RE,
 };
