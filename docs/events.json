@@ -345,7 +345,8 @@
       "lastError": null,
       "snippet": "41 performances checked"
     },
-    "ntfyTopic": "BARBICAN-1999-golden-boy-seed"
+    "ntfyTopic": "BARBICAN-1999-golden-boy-seed",
+    "maxPrice": 50
   },
   {
     "id": "719b893e",
@@ -713,7 +714,8 @@
       "lastError": null,
       "snippet": "25 September 2026, 7:00 pm: er 2026 7:00 pm £120 + £4 booking fee Book tickets Sat 26 September 2026"
     },
-    "ntfyTopic": "BARBICAN-1999-electra-persona-2b66"
+    "ntfyTopic": "BARBICAN-1999-electra-persona-2b66",
+    "maxPrice": 50
   },
   {
     "id": "9d1b330d",
