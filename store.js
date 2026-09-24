@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { normalizeLabel } = require('./checkers/parseMultiText');
+const { topicForEvent } = require('./notify');
 
 // EVENTS_FILE_PATH lets the exact same checker/store code serve a second
 // deployment (the GitHub Actions + Pages setup) without forking any
@@ -95,12 +96,18 @@ function getEvent(id) {
 
 function addEvent({ name, venue, url, recipe, timeFilter, maxPrice }) {
   const events = readAll();
+  const id = newId();
   const event = {
-    id: newId(),
+    id,
     name,
     venue: venue || null,
     url,
     recipe: recipe || { mode: 'render' },
+    // Computed once, here, and never recomputed -- see notify.js's
+    // topicForEvent() for why stability matters (a subscriber's saved
+    // link must keep working forever). null when ntfy isn't configured
+    // at all (NTFY_TOPIC unset).
+    ntfyTopic: topicForEvent(name, id),
     // Optional substring (e.g. "8.30pm") -- when set, only performances
     // whose label contains it (matched loosely, see normalizeLabel) will
     // ever trigger a notification. Every performance is still checked and
@@ -189,6 +196,21 @@ function setMaxPrice(id, maxPrice) {
   events[idx].maxPrice = maxPrice || null;
   writeAll(events);
   return events[idx];
+}
+
+// One-off backfill for events added before per-event ntfy topics
+// existed -- addEvent() computes this for every new event on its own.
+function backfillNtfyTopics() {
+  const events = readAll();
+  let filled = 0;
+  for (const event of events) {
+    if (!event.ntfyTopic) {
+      event.ntfyTopic = topicForEvent(event.name, event.id);
+      filled += 1;
+    }
+  }
+  if (filled > 0) writeAll(events);
+  return { filled, total: events.length };
 }
 
 // The main update path now that every checker returns an array of
@@ -285,6 +307,7 @@ module.exports = {
   setRecipe,
   setTimeFilter,
   setMaxPrice,
+  backfillNtfyTopics,
   getSettings,
   setBlockedDateRanges,
   updatePerformances,

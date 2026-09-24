@@ -35,12 +35,20 @@ function timeAgo(iso) {
   return `${Math.round(hours / 24)}d ago`;
 }
 
+// Filled in by loadStatusLine() once /api/status has answered; defaults
+// to the same fallback used everywhere else in this codebase so a card
+// rendered before that first response still gets a working link.
+let ntfyServer = 'https://ntfy.sh';
+
 function eventCard(event) {
   const state = event.status?.state || 'unknown';
   const label = STATE_LABELS[state] || state;
   const checkedText = timeAgo(event.status?.lastChecked);
   const errorLine = event.status?.lastError
     ? `<div class="event-meta" style="color:var(--sold-out)">Last error: ${escapeHtml(event.status.lastError)}</div>`
+    : '';
+  const subscribeLink = event.ntfyTopic
+    ? `<a class="event-subscribe" href="${ntfyServer}/${encodeURIComponent(event.ntfyTopic)}" target="_blank" rel="noopener">🔔 Notify me for just this show</a>`
     : '';
 
   return `
@@ -53,6 +61,7 @@ function eventCard(event) {
           Checked ${checkedText} · mode: ${event.recipe?.mode || 'render'}
         </div>
         ${errorLine}
+        ${subscribeLink}
       </div>
       <div class="event-actions">
         <button data-action="check" data-id="${event.id}">Recheck now</button>
@@ -86,6 +95,8 @@ async function loadStatusLine() {
     subtitle.textContent = channels.length
       ? `Checking every ~${data.pollIntervalMinutes} min · notifying via ${channels.join(' & ')}`
       : `Checking every ~${data.pollIntervalMinutes} min · no notification channel configured yet (see .env)`;
+
+    if (data.ntfy?.server) ntfyServer = data.ntfy.server;
 
     // Only present on the viewer page (index.html) -- the "Get notified
     // yourself" section that tells people which ntfy topic to subscribe to.

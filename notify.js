@@ -16,11 +16,28 @@ function emailConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.NOTIFY_EMAIL_TO);
 }
 
-async function sendNtfy({ title, message, url }) {
-  if (!ntfyConfigured()) return { skipped: true };
-  const server = (process.env.NTFY_SERVER || 'https://ntfy.sh').replace(/\/$/, '');
-  const topic = process.env.NTFY_TOPIC;
+// Derives a per-event ntfy topic from the shared base topic, so anyone
+// can subscribe to just one show instead of everything -- no accounts,
+// just a second free topic name. Slugified from the event's own name for
+// readability (e.g. "BARBICAN-1999-golden-boy-a1b2"), with a short slice
+// of the event's id appended so two similarly-named shows (or the same
+// show re-added later) can never collide onto the same topic. Computed
+// once at addEvent() time and stored on the event -- stable forever
+// after, so a link someone's already subscribed to keeps working even if
+// this slugify logic changes later.
+function topicForEvent(name, id) {
+  const base = process.env.NTFY_TOPIC;
+  if (!base) return null;
+  const slug = String(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+  return `${base}-${slug}-${id.slice(0, 4)}`;
+}
 
+async function postNtfy(topic, { title, message, url }) {
+  const server = (process.env.NTFY_SERVER || 'https://ntfy.sh').replace(/\/$/, '');
   const res = await fetch(`${server}/${topic}`, {
     method: 'POST',
     headers: {
@@ -33,6 +50,22 @@ async function sendNtfy({ title, message, url }) {
   });
   if (!res.ok) throw new Error(`ntfy responded ${res.status}`);
   return { sent: true };
+}
+
+async function sendNtfy({ title, message, url, ntfyTopic }) {
+  if (!ntfyConfigured()) return { skipped: true };
+  const baseResult = await postNtfy(process.env.NTFY_TOPIC, { title, message, url });
+  // The per-event topic is best-effort: a subscriber-only feature, not
+  // the primary channel -- its failure shouldn't make the whole
+  // notification look like it failed when the main topic went out fine.
+  if (ntfyTopic) {
+    try {
+      await postNtfy(ntfyTopic, { title, message, url });
+    } catch {
+      /* logged by the caller via the returned result if it wants to */
+    }
+  }
+  return baseResult;
 }
 
 let cachedTransporter = null;
@@ -83,7 +116,7 @@ async function notifyAvailable(event, performanceLabel) {
 
   const results = {};
   try {
-    results.ntfy = await sendNtfy({ title, message, url: event.url });
+    results.ntfy = await sendNtfy({ title, message, url: event.url, ntfyTopic: event.ntfyTopic });
   } catch (err) {
     results.ntfy = { error: err.message };
   }
@@ -95,4 +128,4 @@ async function notifyAvailable(event, performanceLabel) {
   return results;
 }
 
-module.exports = { notifyAvailable, sendNtfy, sendEmail, ntfyConfigured, emailConfigured };
+module.exports = { notifyAvailable, sendNtfy, sendEmail, ntfyConfigured, emailConfigured, topicForEvent };

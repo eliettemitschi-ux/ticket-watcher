@@ -18,8 +18,14 @@ const assert = require('assert');
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ticket-watcher-test-'));
 fs.mkdirSync(path.join(tmpRoot, 'checkers'), { recursive: true });
 fs.copyFileSync(path.join(__dirname, '../store.js'), path.join(tmpRoot, 'store.js'));
+fs.copyFileSync(path.join(__dirname, '../notify.js'), path.join(tmpRoot, 'notify.js'));
 fs.copyFileSync(path.join(__dirname, '../checkers/parseMultiText.js'), path.join(tmpRoot, 'checkers/parseMultiText.js'));
 fs.copyFileSync(path.join(__dirname, '../checkers/classify.js'), path.join(tmpRoot, 'checkers/classify.js'));
+// notify.js (required by store.js, for topicForEvent()) itself requires
+// node-fetch/nodemailer -- a junction to the real node_modules lets that
+// resolve without a slow full copy. Junctions don't need elevation on
+// Windows, unlike symlinks.
+fs.symlinkSync(path.join(__dirname, '../node_modules'), path.join(tmpRoot, 'node_modules'), 'junction');
 
 const store = require(path.join(tmpRoot, 'store.js'));
 
@@ -44,6 +50,10 @@ const event = store.addEvent({
 
 check('addEvent: timeFilter stored', event.timeFilter, '8:30pm');
 check('addEvent: performances starts empty', event.performances, []);
+// NTFY_TOPIC isn't set in this test process, so topicForEvent() returns
+// null -- covered properly in test/notify.test.js instead, this just
+// confirms addEvent() doesn't crash when it's unset.
+check('addEvent: ntfyTopic is null when NTFY_TOPIC is unset', event.ntfyTopic, null);
 
 // --- First sighting: two performances, both sold out. Should NOT appear
 // in newlyAvailable (no prior baseline to have "changed" from).

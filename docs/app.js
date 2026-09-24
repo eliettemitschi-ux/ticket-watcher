@@ -32,12 +32,20 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Filled in by loadStatusLine() once status.json has answered; defaults
+// to the same fallback used everywhere else in this codebase so a card
+// rendered before that first response still gets a working link.
+let ntfyServer = 'https://ntfy.sh';
+
 function eventCard(event) {
   const state = event.status?.state || 'unknown';
   const label = STATE_LABELS[state] || state;
   const checkedText = timeAgo(event.status?.lastChecked);
   const errorLine = event.status?.lastError
     ? `<div class="event-meta" style="color:var(--sold-out)">Last error: ${escapeHtml(event.status.lastError)}</div>`
+    : '';
+  const subscribeLink = event.ntfyTopic
+    ? `<a class="event-subscribe" href="${ntfyServer}/${encodeURIComponent(event.ntfyTopic)}" target="_blank" rel="noopener">🔔 Notify me for just this show</a>`
     : '';
 
   return `
@@ -48,6 +56,7 @@ function eventCard(event) {
         <span class="badge ${state}">${label}</span>
         <div class="event-meta">Checked ${checkedText}</div>
         ${errorLine}
+        ${subscribeLink}
       </div>
     </div>
   `;
@@ -68,6 +77,8 @@ async function loadStatusLine() {
     const data = await res.json();
     const subtitle = document.getElementById('subtitle');
     subtitle.textContent = `Checking every ~${data.pollIntervalMinutes} min · notifying via push (ntfy)`;
+
+    if (data.ntfy?.server) ntfyServer = data.ntfy.server;
 
     const topicEl = document.getElementById('ntfy-topic');
     const webLinkEl = document.getElementById('ntfy-web-link');
