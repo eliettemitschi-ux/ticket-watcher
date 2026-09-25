@@ -253,6 +253,31 @@ function check(name, actual, expected) {
   check('Leading-zero dedup: correctly reads available', result[0]?.state, 'available');
 }
 
+// --- Case 10: Man to Man's real bug (2026-09-25) -- two compounding
+// issues on the same page. First, the run's own header ("Fri 25 Sept -
+// Sat 24 Oct") has a weekday name inside the range gap, which used to
+// stop it merging into one span and split it into two separate date
+// tokens instead -- one of which had no nearby status text and read
+// "unknown", dragging the whole event's aggregate badge down even though
+// it's genuinely sold out. Second, a paragraph of alternative-access
+// promotional copy further down ("book from 9am", "app at 10am, Tue -
+// Sat") was read as two more bogus showtimes.
+{
+  const text = `
+    Man to Man
+    Fri 25 Sept – Sat 24 Oct
+    Sold out
+    More info
+    Ticket Update: Tickets for Man to Man are currently sold-out. There are still some ways to get tickets:
+    £15 Mondays: Every Monday, all Royal Court tickets are £15. Available to book from 9am on the day (online only).
+    TodayTix Rush: Try your luck with £25 Rush tickets through the TodayTix app at 10am, Tue - Sat.
+  `;
+  const result = parseInstancesFromText(text, 'Man to Man').map((r) => ({ label: r.label, state: r.state }));
+  check('Man to Man: the weekday-prefixed run header merges into one span, not two', result.length, 1);
+  check('Man to Man: correctly reads sold out (not unknown)', result[0]?.state, 'sold_out');
+  check('Man to Man: no bogus "9am"/"10am" promotional-copy entries leaked in', result.some((r) => /9am|10am/i.test(r.label)), false);
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);

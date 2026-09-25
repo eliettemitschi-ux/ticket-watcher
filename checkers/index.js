@@ -14,6 +14,7 @@ const { checkApi } = require('./apiChecker');
 const { checkRender } = require('./renderChecker');
 const { checkHtmlInstances } = require('./htmlInstancesChecker');
 const { checkIntercept } = require('./interceptChecker');
+const { checkSohoplace } = require('./sohoplaceChecker');
 
 function wrapSingle(result, label) {
   if (result.state === 'error') return result;
@@ -52,6 +53,18 @@ async function checkEvent(event, opts = {}) {
     const fallback = await checkRender(event.url, opts.browser, event.name);
     if (fallback.state === 'error') return fallback;
     return fallback.map((p) => ({ ...p, note: `html-instances recipe failed (${result.error}), used render fallback` }));
+  }
+
+  if (recipe.mode === 'sohoplace-api') {
+    const result = await checkSohoplace(recipe);
+    if (Array.isArray(result)) return result;
+    // Same fallback principle as the other structured-API modes -- an
+    // endpoint/shape change shouldn't degrade straight to a permanent
+    // error when the always-works render mode can still say something.
+    if (!opts.browser) return result;
+    const fallback = await checkRender(event.url, opts.browser, event.name);
+    if (fallback.state === 'error') return fallback;
+    return fallback.map((p) => ({ ...p, note: `sohoplace-api recipe failed (${result.error}), used render fallback` }));
   }
 
   if (recipe.mode === 'intercept-api') {

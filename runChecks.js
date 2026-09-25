@@ -26,7 +26,12 @@ function timeFilterAllows(label, timeFilter) {
   return normalizeLabel(label).includes(normalizeLabel(timeFilter));
 }
 
-const PRICE_RE = /£\s*(\d+(?:\.\d{2})?)/;
+// Real gap found live (2026-09-25): @sohoplace's own API reports prices
+// with a single decimal digit ("£18.5", not "£18.50") -- requiring
+// exactly two digits after the point missed that price entirely,
+// silently falling back through to just the whole-pound part ("18") by
+// luck rather than reading the true value. \d{1,2} covers both shapes.
+const PRICE_RE = /£\s*(\d+(?:\.\d{1,2})?)/;
 
 // event.maxPrice (GBP) gates a notification by whatever price text
 // happens to be in the performance's own snippet (see classify.js's

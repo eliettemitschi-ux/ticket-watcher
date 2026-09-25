@@ -702,5 +702,729 @@
     },
     "ntfyTopic": "BARBICAN-1999-electra-persona-2b66",
     "maxPrice": 50
+  },
+  {
+    "id": "5a701a92",
+    "name": "Who's Afraid of Virginia Woolf?",
+    "venue": "@sohoplace",
+    "url": "https://sohoplace.org/shows/whos-afraid-of-virginia-woolf-2026/",
+    "recipe": {
+      "mode": "sohoplace-api",
+      "eventTemplateCode": "SPVWF01M",
+      "promoCode": "WAC",
+      "months": [
+        "2026/09/01",
+        "2026/10/01",
+        "2026/11/01",
+        "2026/12/01"
+      ]
+    },
+    "ntfyTopic": "BARBICAN-1999-who-s-afraid-of-virginia-woolf-5a70",
+    "timeFilter": null,
+    "maxPrice": 50,
+    "addedAt": "2026-09-25T10:52:45.469Z",
+    "performances": [
+      {
+        "label": "25 Sept 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "26 Sept 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "28 Sept 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "29 Sept 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "1 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "2 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "3 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "3 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "5 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "6 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "7 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "7 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "8 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "9 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "10 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "10 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "13 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "14 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "14 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "15 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "16 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "17 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "17 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "19 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "20 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "21 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "21 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "22 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "23 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "24 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "24 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "26 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "27 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "28 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "28 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "29 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "30 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "31 Oct 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "31 Oct 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "2 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "3 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "4 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "4 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "5 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "6 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "7 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "7 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "9 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "10 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "11 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "11 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "12 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "13 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "14 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "14 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "16 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "17 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "18 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "18 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "19 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "20 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "21 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "21 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "23 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "24 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "25 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "25 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "26 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "27 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "28 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "28 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "30 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "1 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "2 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "2 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "3 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "4 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "5 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "5 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "7 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "8 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "9 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "9 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "10 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "11 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "12 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "12 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "14 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "15 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "16 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "16 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "17 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "18 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "19 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      },
+      {
+        "label": "19 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-09-25T10:52:53.473Z",
+        "lastChanged": "2026-09-25T10:52:53.473Z",
+        "snippet": "Low availability, from £18.5"
+      }
+    ],
+    "status": {
+      "state": "available",
+      "lastChecked": "2026-09-25T10:52:53.473Z",
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": "25 Sept 2026, 7pm: Low availability, from £18.5"
+    }
+  },
+  {
+    "id": "3ee8a42c",
+    "name": "Man to Man",
+    "venue": "Royal Court Theatre",
+    "url": "https://royalcourttheatre.com/events/man-to-man/",
+    "recipe": {
+      "mode": "render"
+    },
+    "ntfyTopic": "BARBICAN-1999-man-to-man-3ee8",
+    "timeFilter": null,
+    "maxPrice": 50,
+    "addedAt": "2026-09-25T10:52:45.504Z",
+    "performances": [
+      {
+        "label": "25 Sept - 24 Oct",
+        "state": "sold_out",
+        "lastChecked": "2026-09-25T10:52:53.491Z",
+        "lastChanged": "2026-09-25T10:52:53.491Z",
+        "snippet": "Sold out"
+      }
+    ],
+    "status": {
+      "state": "sold_out",
+      "lastChecked": "2026-09-25T10:52:53.491Z",
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": "Sold out"
+    }
   }
 ]

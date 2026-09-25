@@ -24,6 +24,12 @@ function check(name, actual, expected) {
   // returns appeared at £120 and £92, both above a £50 cap -- both
   // should be correctly blocked, not just one.
   check('priceAllows: real NT snippet at £92, blocked by £50 cap', priceAllows({ snippet: 'er 2026 1:00 pm £92 + £4 booking fee Book tickets Wed 07 October 2026' }, 50), false);
+  // Real gap found live (2026-09-25): @sohoplace's API reports prices
+  // with a single decimal digit ("£18.5"), not always two ("£18.50") --
+  // the price regex must handle both shapes, not just the £X.XX one
+  // every other venue seen so far happens to use.
+  check('priceAllows: one-decimal-digit price format is parsed correctly (under cap)', priceAllows({ snippet: 'Low availability, from £18.5' }, 50), true);
+  check('priceAllows: one-decimal-digit price format is parsed correctly (over cap)', priceAllows({ snippet: 'Low availability, from £62.5' }, 50), false);
 }
 
 // --- dateAllows: the global blocked-date-range gate ---

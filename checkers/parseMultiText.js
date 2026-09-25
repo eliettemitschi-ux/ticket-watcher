@@ -79,8 +79,18 @@ const MAX_PERFORMANCES = 60; // sanity cap against garbage pages
 // performance is genuinely sold out -- the same class of bug fixed
 // earlier for Barbican and National Theatre, just a different venue's
 // own template.
+// "ways to get tickets" / "ticket update" covers the Royal Court's own
+// pattern specifically -- real bug found live (2026-09-25) on Man to
+// Man's page, which correctly read the real "Sold out" status up top but
+// then picked up a whole paragraph of promotional booking-WINDOW times
+// further down ("book from 9am", "app at 10am, Tue - Sat") as if they
+// were real showtimes. Those bogus entries would otherwise drag the
+// whole event's aggregate dashboard badge down to "unknown" even though
+// it's genuinely sold out -- same class of bug as the ones above, just a
+// paragraph of alternative-access promotional copy instead of a related-
+// shows rail or cross-promo cards.
 const RELATED_SECTION_CUTOFF_RE =
-  /you\s+(might|may)\s+also\s+like|related\s+(events?|shows?|performances?)|similar\s+(events?|shows?)|recommended\s+for\s+you|more\s+(events?|shows?)\s+(like\s+this|you\s+might\s+(like|enjoy))|more\s+info\s+for|recently\s+announced/i;
+  /you\s+(might|may)\s+also\s+like|related\s+(events?|shows?|performances?)|similar\s+(events?|shows?)|recommended\s+for\s+you|more\s+(events?|shows?)\s+(like\s+this|you\s+might\s+(like|enjoy))|more\s+info\s+for|recently\s+announced|(?:other\s+)?ways\s+to\s+get\s+tickets|ticket\s+update/i;
 
 function trimAtRelatedSection(text) {
   const match = text.match(RELATED_SECTION_CUTOFF_RE);
@@ -203,7 +213,15 @@ function dropDoorsTimes(timeTokens, text) {
 // whole span -- a page that puts real per-date status text between two
 // dates (Golden Boy's "12 November 2026 -- Sold Out / 13 November...")
 // has far more than a bare separator in that gap, so it's untouched.
-const RANGE_GAP_RE = /^\s*(-|–|—|to)\s*$/i;
+// Real gap found live (2026-09-25) on Man to Man's "Fri 25 Sept – Sat 24
+// Oct" run header: DATE_RE itself only ever matches the day+month(+year)
+// part, never the weekday prefix, so that gap is actually " – Sat "
+// (dash plus a leading weekday abbreviation for the SECOND date), not a
+// bare separator -- which the original version of this regex didn't
+// tolerate despite the comment below already describing exactly this
+// "Thu 3 Dec - Tue 8 Dec 2026" shape as the target. An optional trailing
+// weekday name closes that gap.
+const RANGE_GAP_RE = /^\s*(-|–|—|to)\s*((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\w*)?\s*$/i;
 
 function mergeDateRanges(dateTokens, text) {
   if (dateTokens.length < 2) return dateTokens;
