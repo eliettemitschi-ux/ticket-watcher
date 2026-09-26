@@ -131,8 +131,11 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Archived events (tickets already secured) are hidden from the main
+// list by default -- pass ?archived=true for the "Archive" view instead.
 app.get('/api/events', (req, res) => {
-  res.json(store.listEvents());
+  const wantArchived = req.query.archived === 'true';
+  res.json(store.listEvents().filter((e) => Boolean(e.archived) === wantArchived));
 });
 
 // Fires a real notification on every configured channel right now, using a
@@ -277,6 +280,26 @@ app.delete('/api/events/:id', requireAuth, (req, res) => {
   const removed = store.removeEvent(req.params.id);
   if (!removed) return res.status(404).json({ error: 'No such event.' });
   res.status(204).end();
+});
+
+// Archive: tickets already secured, nothing left to watch for. Hides the
+// event from the main list and stops it being checked/notified (see
+// runChecks.js), but keeps its title around under "Archive" as a
+// personal record -- unarchive brings it back into normal rotation.
+app.post('/api/events/:id/archive', requireAuth, (req, res) => {
+  try {
+    res.json(store.setArchived(req.params.id, true));
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+});
+
+app.post('/api/events/:id/unarchive', requireAuth, (req, res) => {
+  try {
+    res.json(store.setArchived(req.params.id, false));
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => {

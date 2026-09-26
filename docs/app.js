@@ -64,7 +64,10 @@ function eventCard(event) {
 
 async function loadEvents() {
   const res = await fetch('./events.json', { cache: 'no-store' });
-  const events = await res.json();
+  const allEvents = await res.json();
+  // Archived (tickets already secured) is a personal record kept in the
+  // data file, not something worth showing on the shared page.
+  const events = allEvents.filter((e) => !e.archived);
   const container = document.getElementById('events');
   container.innerHTML = events.length
     ? events.map(eventCard).join('')

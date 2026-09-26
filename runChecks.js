@@ -94,7 +94,11 @@ function shouldNotify(perf, event, settings) {
 async function runAllChecks(log) {
   const logFn = log || ((...args) => console.log(`[${new Date().toISOString()}]`, ...args));
 
-  const events = store.listEvents();
+  // Archived events (tickets already secured) are skipped entirely --
+  // no check, no notification, nothing left to watch for. They stay in
+  // the data file so their title survives under "Archive" as a personal
+  // record, just out of the active rotation.
+  const events = store.listEvents().filter((e) => !e.archived);
   if (events.length === 0) {
     logFn('No events configured yet -- add one from the dashboard or with discover.js.');
     return { checked: 0, notified: 0 };

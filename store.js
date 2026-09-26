@@ -120,6 +120,14 @@ function addEvent({ name, venue, url, recipe, timeFilter, maxPrice }) {
     // missing a genuinely cheap ticket the whole tool exists to catch) --
     // see runChecks.js's priceAllows().
     maxPrice: maxPrice || null,
+    // Set once tickets are actually secured: archived events are hidden
+    // from the main dashboard and skipped entirely by runAllChecks() (no
+    // more checks, no more notifications -- there's nothing left to
+    // watch for), but kept in the data file (not deleted) so the title
+    // stays visible under "Archive" as a personal record of what was
+    // successfully tracked down. See setArchived() below.
+    archived: false,
+    archivedAt: null,
     addedAt: new Date().toISOString(),
     // One entry per date/time found on the page (almost always more than
     // one for a full run, exactly one for a single-performance show).
@@ -142,6 +150,16 @@ function removeEvent(id) {
   const next = events.filter((e) => e.id !== id);
   writeAll(next);
   return next.length !== events.length;
+}
+
+function setArchived(id, archived) {
+  const events = readAll();
+  const idx = events.findIndex((e) => e.id === id);
+  if (idx === -1) throw new Error(`No event with id ${id}`);
+  events[idx].archived = Boolean(archived);
+  events[idx].archivedAt = archived ? new Date().toISOString() : null;
+  writeAll(events);
+  return events[idx];
 }
 
 // Updates one event's status. Returns { event, changed } where `changed`
@@ -307,6 +325,7 @@ module.exports = {
   setRecipe,
   setTimeFilter,
   setMaxPrice,
+  setArchived,
   backfillNtfyTopics,
   getSettings,
   setBlockedDateRanges,

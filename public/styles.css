@@ -69,6 +69,20 @@ main {
   padding: 8px 24px 64px;
 }
 
+.archive-link {
+  text-align: right;
+  margin: 0 0 8px;
+}
+.archive-link a {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+.archive-link a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .event-card {
   background: linear-gradient(180deg, var(--panel-hover), var(--panel));
   border: 1px solid var(--border);

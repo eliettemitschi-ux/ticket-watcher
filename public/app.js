@@ -65,7 +65,27 @@ function eventCard(event) {
       </div>
       <div class="event-actions">
         <button data-action="check" data-id="${event.id}">Recheck now</button>
+        <button data-action="archive" data-id="${event.id}">Archive</button>
         <button data-action="delete" data-id="${event.id}" class="danger">Remove</button>
+      </div>
+    </div>
+  `;
+}
+
+// The archive view is read-only history (got tickets, nothing left to
+// watch for) -- just a title/venue and an Unarchive escape hatch if
+// something was archived by mistake, no recheck/subscribe noise.
+function archivedCard(event) {
+  const archivedText = timeAgo(event.archivedAt);
+  return `
+    <div class="event-card" data-id="${event.id}">
+      <div class="event-main">
+        <p class="event-name"><a href="${event.url}" target="_blank" rel="noopener">${escapeHtml(event.name)}</a></p>
+        ${event.venue ? `<p class="event-venue">${escapeHtml(event.venue)}</p>` : ''}
+        <div class="event-meta">Archived ${archivedText}</div>
+      </div>
+      <div class="event-actions">
+        <button data-action="unarchive" data-id="${event.id}">Unarchive</button>
       </div>
     </div>
   `;
@@ -75,13 +95,25 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Toggled by the "Archive" link in the header -- flips loadEvents()
+// between the active watch list and the read-only archive view.
+let showingArchive = false;
+
 async function loadEvents() {
-  const res = await fetch('/api/events');
+  const res = await fetch(`/api/events?archived=${showingArchive}`);
   const events = await res.json();
   const container = document.getElementById('events');
-  container.innerHTML = events.length
-    ? events.map(eventCard).join('')
-    : '<div class="empty-state">No events yet — add one below.</div>';
+  if (showingArchive) {
+    container.innerHTML = events.length
+      ? events.map(archivedCard).join('')
+      : '<div class="empty-state">No archived shows yet — archive one once you\'ve got tickets.</div>';
+  } else {
+    container.innerHTML = events.length
+      ? events.map(eventCard).join('')
+      : '<div class="empty-state">No events yet — add one below.</div>';
+  }
+  const archiveLink = document.getElementById('archive-toggle');
+  if (archiveLink) archiveLink.textContent = showingArchive ? '← Back to watch list' : '📦 Archive';
 }
 
 async function loadStatusLine() {
@@ -121,7 +153,7 @@ document.getElementById('events').addEventListener('click', async (e) => {
   const { action, id } = btn.dataset;
   btn.disabled = true;
   const originalText = btn.textContent;
-  btn.textContent = action === 'check' ? 'Checking…' : 'Removing…';
+  btn.textContent = { check: 'Checking…', delete: 'Removing…', archive: 'Archiving…', unarchive: 'Restoring…' }[action] || originalText;
 
   try {
     if (action === 'check') {
@@ -133,6 +165,10 @@ document.getElementById('events').addEventListener('click', async (e) => {
         return;
       }
       await fetchWithTimeout(`/api/events/${id}`, { method: 'DELETE' }, 60000);
+    } else if (action === 'archive') {
+      await fetchWithTimeout(`/api/events/${id}/archive`, { method: 'POST' }, 20000);
+    } else if (action === 'unarchive') {
+      await fetchWithTimeout(`/api/events/${id}/unarchive`, { method: 'POST' }, 20000);
     }
   } catch (err) {
     alert(
@@ -215,6 +251,12 @@ document.getElementById('test-notify-btn').addEventListener('click', async () =>
     btn.disabled = false;
     btn.textContent = original;
   }
+});
+
+document.getElementById('archive-toggle')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  showingArchive = !showingArchive;
+  loadEvents();
 });
 
 loadEvents();

@@ -115,6 +115,20 @@ check('addEvent: ntfyTopic is null when NTFY_TOPIC is unset', event.ntfyTopic, n
   check('recordCheckError: lastError recorded', updated.status.lastError, 'browser crashed');
 }
 
+// --- setArchived: tickets secured, hide from the active list but keep
+// the record (title, venue, everything) for personal history.
+{
+  check('new event: archived defaults to false', event.archived, false);
+  const archived = store.setArchived(event.id, true);
+  check('setArchived(true): archived flag set', archived.archived, true);
+  check('setArchived(true): archivedAt timestamp recorded', typeof archived.archivedAt, 'string');
+  check('setArchived(true): the rest of the record is untouched', archived.name, 'Test Show');
+
+  const unarchived = store.setArchived(event.id, false);
+  check('setArchived(false): archived flag cleared', unarchived.archived, false);
+  check('setArchived(false): archivedAt cleared back to null', unarchived.archivedAt, null);
+}
+
 fs.rmSync(tmpRoot, { recursive: true, force: true });
 
 if (failures > 0) {
