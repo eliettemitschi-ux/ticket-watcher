@@ -29,7 +29,19 @@ const SETTLE_MS = 1500; // extra grace period after networkidle for slow widgets
 // ones that were already done in 1.5s), re-read the text a couple more
 // times, a little further apart, but only for as long as every
 // performance we found still looks unresolved (pending/unknown).
-const EXTRA_SETTLE_ROUNDS = 5;
+// Real case investigated live (2026-09-25/26): Royal Court's Man to Man
+// consistently reads "Just a moment... we're verifying you are human"
+// from GitHub Actions' datacenter IPs, every single cycle -- the
+// existing budget here (~16.5s total) never clears it. Bumped further
+// since Cloudflare's own copy says the check itself "may take a few
+// seconds" (implying auto-resolution is expected, just needs longer than
+// we were giving it) -- but this is a bounded, honest improvement, not a
+// guaranteed fix: if this is IP-reputation-based rather than just slow,
+// as suspected for at least one other venue this project tracks, no
+// amount of waiting fixes it. Fails safe either way (unknown, not a
+// false positive) -- the local deployment's residential IP isn't
+// affected by this at all.
+const EXTRA_SETTLE_ROUNDS = 8;
 const EXTRA_SETTLE_MS = 3000;
 
 function stillUnresolved(performances) {
