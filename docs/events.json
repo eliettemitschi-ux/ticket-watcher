@@ -1270,7 +1270,7 @@
       "state": "available",
       "lastChecked": "2026-09-30T17:05:46.210Z",
       "lastChanged": "2026-09-29T12:41:34.187Z",
-      "lastError": "request to https://ticketing.sohoplace.org/api/consumer/eventinventory/2020461?promoCode=WAC failed, reason: read ECONNRESET",
+      "lastError": null,
       "snippet": "3 Oct 2026, 1.30pm: Real seats available, from £47.5"
     }
   },
