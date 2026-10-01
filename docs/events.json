@@ -466,138 +466,96 @@
     "addedAt": "2026-09-24T09:10:16.035Z",
     "performances": [
       {
-        "label": "26 September 2026, 1:00 pm",
-        "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-26T10:02:21.915Z",
-        "snippet": "er 2026 1:00 pm + £4 booking fee Sold out Sat 26 September 2026"
-      },
-      {
-        "label": "26 September 2026, 7:00 pm",
-        "state": "available",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-26T10:21:47.525Z",
-        "snippet": "er 2026 7:00 pm £120 + £4 booking fee Book tickets Mon 28 September 2026"
-      },
-      {
-        "label": "28 September 2026, 7:00 pm",
-        "state": "available",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-26T10:21:47.525Z",
-        "snippet": "er 2026 7:00 pm £120 + £4 booking fee Book tickets Tue 29 September 2026"
-      },
-      {
-        "label": "29 September 2026, 6:30 pm",
-        "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-25T17:32:53.765Z",
-        "snippet": "er 2026 6:30 pm + £4 booking fee Sold out Wed 30 September 2026"
-      },
-      {
-        "label": "30 September 2026, 1:00 pm",
-        "state": "available",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-26T10:21:47.525Z",
-        "snippet": "er 2026 1:00 pm £120 + £4 booking fee Book tickets Wed 30 September 2026"
-      },
-      {
-        "label": "30 September 2026, 7:00 pm",
-        "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-25T14:22:53.097Z",
-        "snippet": "er 2026 7:00 pm Captioned + £4 booking fee Sold out Thu 01 October 2026"
-      },
-      {
         "label": "01 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T14:22:53.097Z",
         "snippet": "er 2026 7:00 pm BSL Interpreted + £4 booking fee Sold out Fri 02 October 2026"
       },
       {
         "label": "02 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T22:03:01.802Z",
         "snippet": "er 2026 7:00 pm + £4 booking fee Sold out Sat 03 October 2026"
       },
       {
         "label": "03 October 2026, 1:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T13:02:51.429Z",
         "snippet": "er 2026 1:00 pm + £4 booking fee Sold out Sat 03 October 2026"
       },
       {
         "label": "03 October 2026, 7:00 pm",
-        "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-25T12:52:58.413Z",
-        "snippet": "er 2026 7:00 pm + £4 booking fee Sold out Mon 05 October 2026"
+        "state": "available",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
+        "lastChanged": "2026-10-01T12:00:51.079Z",
+        "snippet": "er 2026 7:00 pm £120 + £4 booking fee Book tickets Mon 05 October 2026"
       },
       {
         "label": "05 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T13:02:51.429Z",
         "snippet": "er 2026 7:00 pm + £4 booking fee Sold out Tue 06 October 2026"
       },
       {
         "label": "06 October 2026, 6:30 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-26T04:01:44.305Z",
         "snippet": "er 2026 6:30 pm + £4 booking fee Sold out Wed 07 October 2026"
       },
       {
         "label": "07 October 2026, 1:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-24T19:32:26.247Z",
         "snippet": "er 2026 1:00 pm + £4 booking fee Sold out Wed 07 October 2026"
       },
       {
         "label": "07 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T02:02:54.911Z",
         "snippet": "er 2026 7:00 pm Relaxed performance + £4 booking fee Sold out Thu 08 October 2026"
       },
       {
         "label": "08 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-24T10:02:59.866Z",
         "snippet": "er 2026 7:00 pm Touch Tour at 5.30pm Audio described + £4 booking fee Sold out Fri 09 October 2026"
       },
       {
         "label": "09 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T11:22:52.349Z",
         "snippet": "er 2026 7:00 pm + £4 booking fee Sold out Sat 10 October 2026"
       },
       {
         "label": "10 October 2026, 1:00 pm",
-        "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
-        "lastChanged": "2026-09-26T10:21:47.525Z",
-        "snippet": "er 2026 1:00 pm + £4 booking fee Sold out Sat 10 October 2026"
+        "state": "available",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
+        "lastChanged": "2026-10-01T12:00:51.079Z",
+        "snippet": "er 2026 1:00 pm £120 + £4 booking fee Book tickets Sat 10 October 2026"
       },
       {
         "label": "10 October 2026, 7:00 pm",
         "state": "sold_out",
-        "lastChecked": "2026-09-26T10:52:07.695Z",
+        "lastChecked": "2026-10-01T12:00:51.079Z",
         "lastChanged": "2026-09-25T19:02:53.990Z",
         "snippet": "er 2026 7:00 pm Last performance + £4 booking fee Sold out Footer Information © National Theatre The Royal National Theatre is a registere"
       }
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-09-26T10:52:07.695Z",
-      "lastChanged": "2026-09-26T10:21:47.525Z",
+      "lastChecked": "2026-10-01T12:00:51.079Z",
+      "lastChanged": "2026-10-01T12:00:51.079Z",
       "lastError": null,
-      "snippet": "26 September 2026, 7:00 pm: er 2026 7:00 pm £120 + £4 booking fee Book tickets Mon 28 September 2026"
+      "snippet": "03 October 2026, 7:00 pm: er 2026 7:00 pm £120 + £4 booking fee Book tickets Mon 05 October 2026"
     },
     "ntfyTopic": "BARBICAN-1999-electra-persona-2b66",
     "maxPrice": 60,
