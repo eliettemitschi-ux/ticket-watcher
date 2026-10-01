@@ -54,6 +54,7 @@ check('addEvent: performances starts empty', event.performances, []);
 // null -- covered properly in test/notify.test.js instead, this just
 // confirms addEvent() doesn't crash when it's unset.
 check('addEvent: ntfyTopic is null when NTFY_TOPIC is unset', event.ntfyTopic, null);
+check('addEvent: excludeFromMain defaults to false', event.excludeFromMain, false);
 
 // --- First sighting: two performances, both sold out. Should NOT appear
 // in newlyAvailable (no prior baseline to have "changed" from).
@@ -127,6 +128,17 @@ check('addEvent: ntfyTopic is null when NTFY_TOPIC is unset', event.ntfyTopic, n
   const unarchived = store.setArchived(event.id, false);
   check('setArchived(false): archived flag cleared', unarchived.archived, false);
   check('setArchived(false): archivedAt cleared back to null', unarchived.archivedAt, null);
+}
+
+// --- setExcludeFromMain: watch a show and let it be subscribed to
+// per-event, without ever pushing to the shared topic.
+{
+  const excluded = store.setExcludeFromMain(event.id, true);
+  check('setExcludeFromMain(true): flag set', excluded.excludeFromMain, true);
+  check('setExcludeFromMain(true): the rest of the record is untouched', excluded.name, 'Test Show');
+
+  const included = store.setExcludeFromMain(event.id, false);
+  check('setExcludeFromMain(false): flag cleared', included.excludeFromMain, false);
 }
 
 fs.rmSync(tmpRoot, { recursive: true, force: true });

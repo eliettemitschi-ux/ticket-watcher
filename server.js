@@ -163,7 +163,7 @@ app.post('/api/test-notify', requireAuth, async (req, res) => {
 });
 
 app.post('/api/events', requireAuth, async (req, res) => {
-  const { url, name, venue, timeFilter, maxPrice } = req.body || {};
+  const { url, name, venue, timeFilter, maxPrice, excludeFromMain } = req.body || {};
   if (!url || !name) {
     return res.status(400).json({ error: 'Both "url" and "name" are required.' });
   }
@@ -174,7 +174,7 @@ app.post('/api/events', requireAuth, async (req, res) => {
     browser = await withTimeout(launchBrowser(chromium), 20000, 'Launching the browser');
     const { recipe } = await withTimeout(discoverRecipe(url, browser), 45000, 'Loading the event page');
 
-    const event = store.addEvent({ name, venue, url, recipe, timeFilter, maxPrice });
+    const event = store.addEvent({ name, venue, url, recipe, timeFilter, maxPrice, excludeFromMain });
 
     // Run a real check straight away (rather than just trusting
     // discoverRecipe's one-shot read) so the dashboard shows the actual
@@ -247,12 +247,13 @@ app.post('/api/events/:id/check', requireAuth, async (req, res) => {
 // Change (or clear) which performance's label an event's notifications
 // are gated to, without re-checking or touching anything else.
 app.patch('/api/events/:id', requireAuth, (req, res) => {
-  const { timeFilter, maxPrice } = req.body || {};
+  const { timeFilter, maxPrice, excludeFromMain } = req.body || {};
   try {
     let updated = store.getEvent(req.params.id);
     if (!updated) throw new Error(`No event with id ${req.params.id}`);
     if (timeFilter !== undefined) updated = store.setTimeFilter(req.params.id, timeFilter);
     if (maxPrice !== undefined) updated = store.setMaxPrice(req.params.id, maxPrice);
+    if (excludeFromMain !== undefined) updated = store.setExcludeFromMain(req.params.id, excludeFromMain);
     res.json(updated);
   } catch (err) {
     res.status(404).json({ error: err.message });

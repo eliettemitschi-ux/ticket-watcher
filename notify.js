@@ -52,9 +52,15 @@ async function postNtfy(topic, { title, message, url }) {
   return { sent: true };
 }
 
-async function sendNtfy({ title, message, url, ntfyTopic }) {
+async function sendNtfy({ title, message, url, ntfyTopic, excludeFromMain }) {
   if (!ntfyConfigured()) return { skipped: true };
-  const baseResult = await postNtfy(process.env.NTFY_TOPIC, { title, message, url });
+  // excludeFromMain (event.excludeFromMain) lets a show be watched and
+  // made subscribable via its own per-event topic without ever pushing to
+  // the shared topic the user themself is on -- e.g. a show they already
+  // have tickets to but want to re-watch purely so a friend can subscribe.
+  const baseResult = excludeFromMain
+    ? { skipped: true }
+    : await postNtfy(process.env.NTFY_TOPIC, { title, message, url });
   // The per-event topic is best-effort: a subscriber-only feature, not
   // the primary channel -- its failure shouldn't make the whole
   // notification look like it failed when the main topic went out fine.
@@ -116,7 +122,13 @@ async function notifyAvailable(event, performanceLabel) {
 
   const results = {};
   try {
-    results.ntfy = await sendNtfy({ title, message, url: event.url, ntfyTopic: event.ntfyTopic });
+    results.ntfy = await sendNtfy({
+      title,
+      message,
+      url: event.url,
+      ntfyTopic: event.ntfyTopic,
+      excludeFromMain: event.excludeFromMain,
+    });
   } catch (err) {
     results.ntfy = { error: err.message };
   }

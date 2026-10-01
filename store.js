@@ -94,7 +94,7 @@ function getEvent(id) {
   return readAll().find((e) => e.id === id) || null;
 }
 
-function addEvent({ name, venue, url, recipe, timeFilter, maxPrice }) {
+function addEvent({ name, venue, url, recipe, timeFilter, maxPrice, excludeFromMain }) {
   const events = readAll();
   const id = newId();
   const event = {
@@ -120,6 +120,14 @@ function addEvent({ name, venue, url, recipe, timeFilter, maxPrice }) {
     // missing a genuinely cheap ticket the whole tool exists to catch) --
     // see runChecks.js's priceAllows().
     maxPrice: maxPrice || null,
+    // When true, this event's notifications are left out of the shared
+    // topic (the one the user themself is subscribed to) -- it's still
+    // checked every cycle, still shown on the dashboard, and still pushes
+    // to its own per-event ntfyTopic above, just never to the main one.
+    // For a show the user wants to make subscribable to a friend without
+    // getting pinged about it themselves -- see setExcludeFromMain() and
+    // notify.js's sendNtfy().
+    excludeFromMain: Boolean(excludeFromMain),
     // Set once tickets are actually secured: archived events are hidden
     // from the main dashboard and skipped entirely by runAllChecks() (no
     // more checks, no more notifications -- there's nothing left to
@@ -212,6 +220,15 @@ function setMaxPrice(id, maxPrice) {
   const idx = events.findIndex((e) => e.id === id);
   if (idx === -1) throw new Error(`No event with id ${id}`);
   events[idx].maxPrice = maxPrice || null;
+  writeAll(events);
+  return events[idx];
+}
+
+function setExcludeFromMain(id, excludeFromMain) {
+  const events = readAll();
+  const idx = events.findIndex((e) => e.id === id);
+  if (idx === -1) throw new Error(`No event with id ${id}`);
+  events[idx].excludeFromMain = Boolean(excludeFromMain);
   writeAll(events);
   return events[idx];
 }
@@ -325,6 +342,7 @@ module.exports = {
   setRecipe,
   setTimeFilter,
   setMaxPrice,
+  setExcludeFromMain,
   setArchived,
   backfillNtfyTopics,
   getSettings,
