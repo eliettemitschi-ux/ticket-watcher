@@ -470,7 +470,7 @@
         "state": "available",
         "lastChecked": "2026-10-02T00:17:50.404Z",
         "lastChanged": "2026-10-01T19:37:36.871Z",
-        "snippet": "er 2026 7:00 pm £92£120 + £4 booking fee Book tickets Sat 03 October 2026"
+        "snippet": "er 2026 7:00 pm £92 + £4 booking fee Book tickets Sat 03 October 2026"
       },
       {
         "label": "03 October 2026, 1:00 pm",
@@ -548,7 +548,7 @@
       "lastChecked": "2026-10-02T00:17:50.404Z",
       "lastChanged": "2026-10-01T23:54:38.917Z",
       "lastError": null,
-      "snippet": "02 October 2026, 7:00 pm: er 2026 7:00 pm £92£120 + £4 booking fee Book tickets Sat 03 October 2026"
+      "snippet": "02 October 2026, 7:00 pm: er 2026 7:00 pm £92 + £4 booking fee Book tickets Sat 03 October 2026"
     },
     "ntfyTopic": "BARBICAN-1999-electra-persona-2b66",
     "maxPrice": 60,
