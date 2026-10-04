@@ -54,6 +54,17 @@ const text = JSON.stringify({ 'esmé/x': 'on', 'a’b': 'off' });
 check('base64: round-trips accents and curly quotes', owner.base64ToUtf8(owner.utf8ToBase64(text)), text);
 check('base64: tolerates the newlines GitHub puts in content', owner.base64ToUtf8(owner.utf8ToBase64('hello').replace(/(.{4})/g, '$1\n')), 'hello');
 
+// --- token diagnosis: each failure must say what to do ---------------------------
+const full = 'github_pat_' + 'A'.repeat(82);
+check('diagnose: a good token passes', owner.diagnoseToken(full, 200, 200), null);
+check('diagnose: a good token passes before the first scan exists (file 404)', owner.diagnoseToken(full, 200, 404), null);
+check('diagnose: no answer from GitHub reads as a connection problem', /reach GitHub/.test(owner.diagnoseToken(full, null, null)), true);
+check('diagnose: something that is not a token', /doesn't look like a GitHub token/.test(owner.diagnoseToken('hello world', 401, null)), true);
+check('diagnose: a cut-off token names its length', owner.diagnoseToken('github_pat_' + 'A'.repeat(19), 401, null).includes('cut off (30 characters'), true);
+check('diagnose: 401 means invalid or expired', /not valid or has expired/.test(owner.diagnoseToken(full, 401, null)), true);
+check('diagnose: 404 means the private repo was not selected', /tick ticket-watcher-private/.test(owner.diagnoseToken(full, 404, null)), true);
+check('diagnose: repo visible but files forbidden means Contents permission', /Contents to 'Read and write'/.test(owner.diagnoseToken(full, 200, 403)), true);
+
 // --- markup safety ---------------------------------------------------------------------
 const nasty = { key: 'k', title: '<img src=x onerror=alert(1)>', venue: 'V', url: 'javascript:alert(1)', state: 'not_on_sale', opens: null, days: [], reasons: [], qualifies: false, manual: false };
 const html = owner.upcomingCard(nasty, {}, Date.now());

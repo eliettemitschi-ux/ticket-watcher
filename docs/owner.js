@@ -155,7 +155,20 @@
       </div>`;
   }
 
-  const helpers = { autoEligible, effectiveEligible, nextSelection, withSelection, sortKey, utf8ToBase64, base64ToUtf8, opensLine, upcomingCard, openedCard };
+  // Turns what GitHub answered into a plain-English reason, or null if the
+  // token is fine. repoStatus / fileStatus are HTTP codes (null = no answer).
+  function diagnoseToken(token, repoStatus, fileStatus) {
+    if (repoStatus === null || repoStatus === undefined) return "Couldn't reach GitHub. Check your connection and try again.";
+    if (!/^(github_pat_|ghp_)/.test(token)) return "That doesn't look like a GitHub token. It should start with github_pat_ . Copy it again from GitHub.";
+    if (token.startsWith('github_pat_') && token.length < 80) return `That looks cut off (${token.length} characters; a full token is about 93). Copy the whole thing again.`;
+    if (repoStatus === 401) return 'GitHub says this token is not valid or has expired (401). Generate a new one and paste the whole thing.';
+    if (repoStatus === 404) return "The token is valid but can't see the private repo (404). When creating it, under Repository access choose 'Only select repositories' and tick ticket-watcher-private.";
+    if (repoStatus !== 200) return `GitHub refused this token (${repoStatus}).`;
+    if (fileStatus === 401 || fileStatus === 403) return "The token can see the repo but isn't allowed to read its files. Under Permissions, set Contents to 'Read and write'.";
+    return null;
+  }
+
+  const helpers = { diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, sortKey, utf8ToBase64, base64ToUtf8, opensLine, upcomingCard, openedCard };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -241,9 +254,17 @@
         const candidate = input.value.trim();
         if (!candidate) return;
         msg.textContent = 'Checking…';
-        const res = await fetch(API, { headers: { Authorization: `Bearer ${candidate}`, Accept: 'application/vnd.github+json' } }).catch(() => null);
-        if (res && res.ok) { setToken(candidate); done(true); }
-        else msg.textContent = res ? "That token didn't work for the private data repo." : "Couldn't reach GitHub. Check your connection.";
+        const headers = { Authorization: `Bearer ${candidate}`, Accept: 'application/vnd.github+json' };
+        // Two checks, so the message can say exactly what's wrong: can the
+        // token see the repo at all, and can it read the repo's files?
+        const repo = await fetch(API, { headers }).catch(() => null);
+        const file = repo && repo.ok
+          ? await fetch(`${API}/contents/scanner.json`, { headers: { ...headers, Accept: 'application/vnd.github.raw+json' } }).catch(() => null)
+          : null;
+        const problem = diagnoseToken(candidate, repo && repo.status, file && file.status);
+        if (problem) { msg.textContent = problem; return; }
+        setToken(candidate);
+        done(true);
       });
       dlg.showModal();
       input.focus();

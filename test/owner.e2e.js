@@ -13,7 +13,10 @@ const ROOT = path.resolve(__dirname, '..', 'docs');
 const PORT = 4188;
 const BASE = `http://localhost:${PORT}/`;
 const API = 'https://api.github.com/repos/eliettemitschi-ux/ticket-watcher-private';
-const GOOD = 'github_pat_GOOD';
+const tok = (s) => ('github_pat_' + s).padEnd(93, 'x');
+const GOOD = tok('GOOD');
+const NOREPO = tok('NOREPO'); // valid token, but the private repo wasn't selected when it was created
+const NOFILES = tok('NOFILES'); // sees the repo, but Contents permission missing
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -62,6 +65,12 @@ function fakeGitHub() {
     gh.requests.push(`${req.method()} ${url.pathname.replace('/repos/eliettemitschi-ux/ticket-watcher-private', '')}`);
     const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    const path0 = url.pathname.replace('/repos/eliettemitschi-ux/ticket-watcher-private', '');
+    if (auth === `Bearer ${NOREPO}`) return route.fulfill({ status: 404, headers: cors, body: '{"message":"Not Found"}' });
+    if (auth === `Bearer ${NOFILES}`) {
+      if (path0 === '' || path0 === '/') return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: '{"private":true}' });
+      return route.fulfill({ status: 403, headers: cors, body: '{"message":"Resource not accessible by personal access token"}' });
+    }
     if (gh.rejectAll || auth !== `Bearer ${GOOD}`) return route.fulfill({ status: 401, headers: cors, body: '{"message":"Bad credentials"}' });
     const p = url.pathname.replace('/repos/eliettemitschi-ux/ticket-watcher-private', '');
     if (p === '' || p === '/') return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: '{"private":true}' });
@@ -105,10 +114,17 @@ function fakeGitHub() {
   await page.goto(BASE + '#owner', { waitUntil: 'networkidle' });
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForSelector('#owner-token-input');
-  await page.fill('#owner-token-input', 'github_pat_WRONG');
-  await page.click('#owner-token-save');
-  await page.waitForFunction(() => /didn.t work/.test(document.getElementById('owner-token-msg').textContent));
-  check('unlock: a wrong token is refused with a message', await page.locator('#owner-tabs').count(), 0);
+  const tryToken = async (value, pattern) => {
+    await page.fill('#owner-token-input', value);
+    await page.click('#owner-token-save');
+    await page.waitForFunction((src) => new RegExp(src).test(document.getElementById('owner-token-msg').textContent), pattern);
+    return page.locator('#owner-token-msg').textContent();
+  };
+  check('unlock: an invalid token says it is invalid or expired', /not valid or has expired/.test(await tryToken(tok('WRONG'), 'not valid or has expired')), true);
+  check('unlock: a cut-off token says so', /cut off/.test(await tryToken('github_pat_short', 'cut off')), true);
+  check('unlock: a token for the wrong repo says which repo to tick', /tick ticket-watcher-private/.test(await tryToken(NOREPO, 'tick ticket-watcher-private')), true);
+  check('unlock: a token without file permission says which permission', /Contents to/.test(await tryToken(NOFILES, 'Contents to')), true);
+  check('unlock: none of those unlocked anything', await page.locator('#owner-tabs').count(), 0);
   check('unlock: and nothing is stored', await page.evaluate(() => localStorage.getItem('twOwnerToken')), null);
 
   // 3. Good token.
