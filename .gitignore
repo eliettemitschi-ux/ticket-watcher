@@ -10,3 +10,4 @@ tunnel-url.txt
 # repeated push friction for no benefit -- it's local-only, not shared.
 data/events.json
 data/settings.json
+private-data/

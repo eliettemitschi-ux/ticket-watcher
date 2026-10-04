@@ -1,0 +1,28 @@
+{
+  "barbican": {
+    "monthsAhead": 12,
+    "artforms": {
+      "6": "Classical music",
+      "11": "Contemporary music",
+      "21": "Theatre & dance"
+    }
+  },
+  "watchlist": [],
+  "limitedRunMaxDates": 3,
+  "minSignals": 2,
+  "confirmReadings": 2,
+  "recheckOnSaleAfterHours": 24,
+  "forgetUnseenAfterDays": 45,
+  "nationalTheatre": {
+    "excludeTitlePattern": "tour",
+    "sitemapUrl": "https://www.nationaltheatre.org.uk/season-sitemap.xml",
+    "maxPageFetchesPerRun": 30,
+    "pageRecheckHours": 6
+  },
+  "limitedRunByVenue": {
+    "National Theatre": 0
+  },
+  "headsUpHoursBefore": 2,
+  "selectionsFile": "private-data/selections.json",
+  "manual": []
+}

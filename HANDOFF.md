@@ -339,6 +339,23 @@ everything reading "unknown"), the playbook that worked here was:
    `runChecks.js` / `server.js`'s `needsBrowser` checks if it's an
    HTTP-only mode) with a render-mode fallback on error.
 
+## Upcoming-shows scanner (built 2026-10-02..04) -- PRIVATE to the owner
+
+Looks AHEAD at Barbican + National Theatre for shows announced but not yet on sale. Separate from the watchlist; own ntfy topic `<NTFY_TOPIC>-scanner`.
+
+**Privacy architecture (important):** this repo and its GitHub Pages site are PUBLIC, so none of the scanner's data lives here. It lives in the PRIVATE repo `eliettemitschi-ux/ticket-watcher-private` (files: `scanner.json` written by Actions, `selections.json` written from the owner's phone, optional `config.json` with personal watchlist/manual shows). `check.yml` checks that repo out at `private-data/` using a write-only-to-that-repo DEPLOY KEY stored as the Actions secret `SCANNER_DEPLOY_KEY` (public half registered on the private repo; the private half was deleted locally). `run-scanner.js` refuses to read/write anything under `docs/`.
+
+**Owner UI:** a hidden "Scanner" tab inside the public page (`docs/owner.js`, loaded only if the device holds a token, the URL ends `#owner`, or the Settings title is tapped 5 times). It reads/writes the private repo through the GitHub API with a fine-grained personal access token (Contents: read+write, ONLY the private repo) kept in that browser's localStorage. Visitors without the token never even download `owner.js`. Ticks are saved to `selections.json` and honoured on the scanner's next run. Rotate the token by creating a new one and using "Lock this device" then unlocking again.
+
+- Run: `node scripts/run-scanner.js [--dry-run]`. Runs as steps inside `check.yml` (continue-on-error, 2-min timeout) so it rides the Cloudflare Worker's 5-minute dispatch. Locally, set `SCANNER_FILE_PATH`/`SCANNER_SELECTIONS_PATH` to somewhere outside `docs/`.
+- Code: `scanner/` (adapters `barbican.js`, `nationalTheatre.js` (ticketing JSON feed), `ntAnnouncements.js` (sitemap + production pages); pure logic `decide.js`, `qualify.js`, `dates.js`, `time.js`, `messages.js`; settings `config.json`). Tests: `test/scanner.test.js` with real captured fixtures in `test/fixtures/`.
+- Three alerts per flagged show, each once: announced, heads-up (2h before a published opening time, never before 7am London; date-only = 8am that day), on sale now (needs 2 consecutive bookable readings).
+- First run per venue is a silent baseline. Shows already on sale at first sight ("surprise drops") are ignored on purpose.
+- Gotchas learned the hard way: Barbican answers not-yet-on-sale events with HTTP 500 + "unexpected error" (an outage looks identical, so a live show can never fall back to "not on sale"); some Barbican presale pages show a "general sale from" time that slides forward on every load (ignored if within -1h/+30min of now); NT availability must be read from public mode-of-sale 11 rows only (running shows keep standing promo allocations such as mode 124); NT UK-tour pages carry other venues' dates and are excluded; www.nationaltheatre.org.uk needs browser-like headers.
+- Hand-add a show with a known opening: put `manual: [{ "title": "...", "venue": "National Theatre", "opensAt": "2026-11-03 10:00" }]` (London time) and any `watchlist: ["Mescal"]` in the PRIVATE repo's `config.json` (only watchlist, manual, minSignals, limitedRunMaxDates, headsUpHoursBefore can be overridden there). A manual show links itself to the live listing by title when tickets appear.
+- Tick/untick overrides: `selections.json` in the private repo, `{ "<record key>": "on" | "off" }`. Absent = automatic (flagged shows alert, others don't).
+- Tests: `node test/scanner.test.js`, `node test/owner.test.js`, and `node test/owner.e2e.js` (headless browser against a fake GitHub API).
+
 ## Files
 
 Everything is already saved in `D:\codingwizard\Barbican magic`.

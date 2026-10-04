@@ -76,6 +76,43 @@ jobs:
       - name: Run checks
         run: node check.js
 
+      # --- Upcoming-shows scanner (private) -------------------------------
+      # Looks ahead at Barbican + National Theatre (see scripts/run-scanner.js).
+      # Its data is PRIVATE: it lives in a separate private repo, reached with
+      # a write-only-to-that-repo deploy key, and is never written into this
+      # public repo or its docs/ folder. Every step here is continue-on-error
+      # so a problem can never fail or delay the main watchlist check above.
+      - name: Check out private scanner data
+        id: private-data
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: eliettemitschi-ux/ticket-watcher-private
+          ssh-key: ${{ secrets.SCANNER_DEPLOY_KEY }}
+          path: private-data
+
+      - name: Run on-sale scanner
+        if: steps.private-data.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 2
+        run: node scripts/run-scanner.js
+
+      - name: Save scanner data to the private repo
+        if: steps.private-data.outcome == 'success'
+        continue-on-error: true
+        working-directory: private-data
+        run: |
+          git config user.name "ticket-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ ! -f scanner.json ]; then exit 0; fi
+          git add scanner.json
+          git diff --cached --quiet && exit 0
+          git commit -m "scan"
+          # selections.json is written from the owner's phone (a different
+          # file), so a plain rebase is enough here.
+          git pull --rebase origin main
+          git push origin HEAD:main
+
       - name: Write status.json (the static dashboard's equivalent of /api/status)
         run: |
           node -e "

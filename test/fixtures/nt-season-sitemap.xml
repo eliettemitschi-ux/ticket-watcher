@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?><?xml-stylesheet type='text/xsl' href='https://www.nationaltheatre.org.uk/plugins/google-sitemap-generator/sitemap.xsl'?><!-- sitemap-generator-url='http://www.arnebrachhold.de' sitemap-generator-version='4.1.24' -->
+<!-- generated-on='October 2, 2026 6:08 pm' -->
+<urlset xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd' xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>	<url>
+		<loc>https://www.nationaltheatre.org.uk/productions/othello/</loc>
+		<lastmod>2025-11-18T11:57:49+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.9</priority>
+	</url>
+<url>
+		<loc>https://www.nationaltheatre.org.uk/productions/jack-absolute-flies-again/</loc>
+		<lastmod>2026-07-15T14:32:03+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.9</priority>
+	</url>
+<url>
+		<loc>https://www.nationaltheatre.org.uk/productions/the-crucible/</loc>
+		<lastmod>2024-01-03T10:03:35+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.9</priority>
+	</url>
+<url>
+		<loc>https://www.nationaltheatre.org.uk/productions/west-side-story/</loc>
+		<lastmod>2026-10-02T10:51:00+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.9</priority>
+	</url>
+</urlset>

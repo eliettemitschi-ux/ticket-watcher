@@ -36,12 +36,20 @@ function topicForEvent(name, id) {
   return `${base}-${slug}-${id.slice(0, 4)}`;
 }
 
+// HTTP headers must be plain ASCII; a show title like "Esmé" or one with a
+// curly apostrophe would make fetch throw. ntfy accepts RFC 2047 encoded
+// header values, so anything non-ASCII is sent in that form.
+function headerSafe(value) {
+  const s = String(value);
+  return /^[\x20-\x7E]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s, 'utf8').toString('base64')}?=`;
+}
+
 async function postNtfy(topic, { title, message, url }) {
   const server = (process.env.NTFY_SERVER || 'https://ntfy.sh').replace(/\/$/, '');
   const res = await fetch(`${server}/${topic}`, {
     method: 'POST',
     headers: {
-      Title: title,
+      Title: headerSafe(title),
       Priority: 'urgent',
       Tags: 'ticket',
       ...(url ? { Click: url } : {}),
@@ -140,4 +148,4 @@ async function notifyAvailable(event, performanceLabel) {
   return results;
 }
 
-module.exports = { notifyAvailable, sendNtfy, sendEmail, ntfyConfigured, emailConfigured, topicForEvent };
+module.exports = { notifyAvailable, sendNtfy, postNtfy, sendEmail, ntfyConfigured, emailConfigured, topicForEvent, headerSafe };

@@ -193,3 +193,45 @@ if (settingsBtn && settingsDialog) {
     if (event.target === settingsDialog) settingsDialog.close();
   });
 }
+
+// --- Owner access ----------------------------------------------------------
+// A private extra tab, invisible to everyone else. It loads only when this
+// device already holds the owner's token, when the address ends in #owner, or
+// after five quick taps on the Settings heading.
+
+function loadOwner(askForToken) {
+  const start = () => window.TWOwner.start({ prompt: askForToken });
+  if (window.TWOwner) {
+    start();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = './owner.js';
+  script.onload = start;
+  document.head.appendChild(script);
+}
+
+let hasOwnerToken = false;
+try {
+  hasOwnerToken = Boolean(localStorage.getItem('twOwnerToken'));
+} catch {
+  /* storage unavailable (private browsing) */
+}
+if (hasOwnerToken) loadOwner(false);
+if (location.hash === '#owner') loadOwner(true);
+
+const settingsTitle = document.getElementById('settings-title');
+if (settingsTitle && settingsDialog) {
+  let taps = 0;
+  let tapTimer = null;
+  settingsTitle.addEventListener('click', () => {
+    taps += 1;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 1500);
+    if (taps >= 5) {
+      taps = 0;
+      settingsDialog.close();
+      loadOwner(true);
+    }
+  });
+}
