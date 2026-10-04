@@ -16,8 +16,17 @@ const SHELL = [
 ];
 const NETWORK_TIMEOUT_MS = 4000;
 
+// Saved at install too, so a first-time visitor who goes offline straight
+// away still sees data. Best-effort: a blip here must not fail the install.
+const DATA = ['./events.json', './status.json'];
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(SHELL).then(() => Promise.allSettled(DATA.map((url) => cache.add(url)))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
