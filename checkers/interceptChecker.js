@@ -74,32 +74,15 @@ async function attemptIntercept(recipe, browser) {
     // production seasons we actually asked for in the URL) -- prefer
     // whichever captured response actually contains one of them.
     const wanted = new Set((productionSeasonIds || []).map(String));
-    const arrays = seen.filter((j) => Array.isArray(j));
+    const lists = seen.map(seasonsFrom).filter(Boolean);
     const match =
-      arrays.find((seasons) => seasons.some((s) => wanted.has(String(s.productionSeasonId)))) || arrays[0];
+      lists.find((seasons) => seasons.some((s) => wanted.has(String(s.productionSeasonId)))) || lists[0];
 
     if (!match) {
-      return { state: 'error', error: `No JSON response matching "${apiUrlPattern}" was observed` };
+      return { state: 'error', error: `No usable JSON response matching "${apiUrlPattern}" was observed` };
     }
 
-    const seasons = wanted.size ? match.filter((s) => wanted.has(String(s.productionSeasonId))) : match;
-    const multi = seasons.length > 1;
-    const performances = [];
-    for (const season of seasons) {
-      for (const perf of season.performances || []) {
-        const msg = perf.performanceStatusMessage || '';
-        const soldOut = !perf.isOnSale && !perf.hasLimitedSeatingAvailable && /sold\s*out/i.test(msg);
-        const label = multi
-          ? `${season.productionTitle}, ${perf.displayDate}, ${perf.displayTime}`
-          : `${perf.displayDate}, ${perf.displayTime}`;
-        performances.push({
-          label,
-          state: soldOut ? 'sold_out' : 'available',
-          snippet: msg || (soldOut ? 'Sold out' : 'On sale'),
-        });
-      }
-    }
-
+    const performances = performancesFromSeasons(match, wanted);
     if (performances.length === 0) {
       return { state: 'error', error: `${apiUrlPattern} response had no performances for the configured production season(s)` };
     }
@@ -111,4 +94,36 @@ async function attemptIntercept(recipe, browser) {
   }
 }
 
-module.exports = { checkIntercept };
+// The productionseasons response has come in two shapes. Originally a bare
+// array of seasons; since about 29 Sep 2026 it is wrapped:
+// { productions: [...], ga4DatalayerItems: [...] }. Missing the new shape made
+// Bob Dylan read "unknown" for days, because the check quietly fell back to
+// the weaker render mode, which is blocked from GitHub's servers.
+function seasonsFrom(json) {
+  if (Array.isArray(json)) return json;
+  if (json && Array.isArray(json.productions)) return json.productions;
+  return null;
+}
+
+function performancesFromSeasons(allSeasons, wanted) {
+  const seasons = wanted && wanted.size ? allSeasons.filter((s) => wanted.has(String(s.productionSeasonId))) : allSeasons;
+  const multi = seasons.length > 1;
+  const performances = [];
+  for (const season of seasons) {
+    for (const perf of season.performances || []) {
+      const msg = perf.performanceStatusMessage || '';
+      const soldOut = !perf.isOnSale && !perf.hasLimitedSeatingAvailable && /sold\s*out/i.test(msg);
+      const label = multi
+        ? `${season.productionTitle}, ${perf.displayDate}, ${perf.displayTime}`
+        : `${perf.displayDate}, ${perf.displayTime}`;
+      performances.push({
+        label,
+        state: soldOut ? 'sold_out' : 'available',
+        snippet: msg || (soldOut ? 'Sold out' : 'On sale'),
+      });
+    }
+  }
+  return performances;
+}
+
+module.exports = { checkIntercept, seasonsFrom, performancesFromSeasons };

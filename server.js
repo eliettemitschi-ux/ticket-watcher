@@ -16,7 +16,7 @@ const { chromium } = require('playwright');
 const { launchBrowser } = require('./browser');
 
 const store = require('./store');
-const { checkEvent } = require('./checkers');
+const { checkEvent, BROWSERLESS_MODES } = require('./checkers');
 const { discoverRecipe } = require('./checkers/discover');
 const { runAllChecks, shouldNotify } = require('./runChecks');
 const { notifyAvailable, ntfyConfigured, emailConfigured } = require('./notify');
@@ -209,11 +209,11 @@ app.post('/api/events/:id/check', requireAuth, async (req, res) => {
   try {
     const mode = event.recipe?.mode || 'render';
     console.log(`[check] "${event.name}" (mode: ${mode}) ...`);
-    const needsBrowser = mode !== 'api' && mode !== 'html-instances';
+    const needsBrowser = !BROWSERLESS_MODES.has(mode);
     if (needsBrowser) browser = await withTimeout(launchBrowser(chromium), 20000, 'Launching the browser');
 
     let result = await withTimeout(checkEvent(event, { browser }), 60000, 'Checking the event page');
-    if (result.state === 'error' && (mode === 'api' || mode === 'html-instances')) {
+    if (result.state === 'error' && BROWSERLESS_MODES.has(mode)) {
       if (!browser) browser = await withTimeout(launchBrowser(chromium), 20000, 'Launching the browser');
       result = await withTimeout(checkEvent(event, { browser }), 60000, 'Checking the event page');
     }

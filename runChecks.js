@@ -14,7 +14,7 @@
 const { chromium } = require('playwright');
 const { launchBrowser } = require('./browser');
 const store = require('./store');
-const { checkEvent } = require('./checkers');
+const { checkEvent, BROWSERLESS_MODES } = require('./checkers');
 const { normalizeLabel, parseDateFromLabel } = require('./checkers/parseMultiText');
 const { notifyAvailable } = require('./notify');
 
@@ -120,12 +120,12 @@ async function runAllChecks(log) {
       let result;
       try {
         const mode = event.recipe?.mode;
-        const needsBrowser = mode !== 'api' && mode !== 'html-instances';
+        const needsBrowser = !BROWSERLESS_MODES.has(mode);
         result = await checkEvent(event, { browser: needsBrowser ? await getBrowser() : undefined });
         // api / html-instances modes can still fall back to render on
         // failure -- checkers/index.js handles that itself, but it needs a
         // browser to do so.
-        if (result?.state === 'error' && (mode === 'api' || mode === 'html-instances')) {
+        if (result?.state === 'error' && BROWSERLESS_MODES.has(mode)) {
           result = await checkEvent(event, { browser: await getBrowser() });
         }
       } catch (err) {

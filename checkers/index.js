@@ -15,6 +15,11 @@ const { checkRender } = require('./renderChecker');
 const { checkHtmlInstances } = require('./htmlInstancesChecker');
 const { checkIntercept } = require('./interceptChecker');
 const { checkSohoplace } = require('./sohoplaceChecker');
+const { checkRoyalCourt } = require('./royalCourtChecker');
+
+// Recipe modes that read a plain HTTP API and so don't need a browser launched
+// for them (callers retry with a browser only if the API check itself errors).
+const BROWSERLESS_MODES = new Set(['api', 'html-instances', 'sohoplace-api', 'royal-court-api']);
 
 function wrapSingle(result, label) {
   if (result.state === 'error') return result;
@@ -67,6 +72,17 @@ async function checkEvent(event, opts = {}) {
     return fallback.map((p) => ({ ...p, note: `sohoplace-api recipe failed (${result.error}), used render fallback` }));
   }
 
+  if (recipe.mode === 'royal-court-api') {
+    const result = await checkRoyalCourt(recipe);
+    if (Array.isArray(result)) return result;
+    // Same principle as the other API modes: if the endpoint changes, fall
+    // back to reading the rendered page rather than erroring forever.
+    if (!opts.browser) return result;
+    const fallback = await checkRender(event.url, opts.browser, event.name);
+    if (fallback.state === 'error') return fallback;
+    return fallback.map((p) => ({ ...p, note: `royal-court-api recipe failed (${result.error}), used render fallback` }));
+  }
+
   if (recipe.mode === 'intercept-api') {
     if (!opts.browser) {
       throw new Error(`Event "${event.name}" needs a browser for intercept-api mode`);
@@ -97,4 +113,4 @@ async function checkEvent(event, opts = {}) {
   return checkRender(recipe.pageUrl || event.url, opts.browser, event.name);
 }
 
-module.exports = { checkEvent };
+module.exports = { checkEvent, BROWSERLESS_MODES };

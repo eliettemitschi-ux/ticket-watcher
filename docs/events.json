@@ -1180,7 +1180,8 @@
     "venue": "Royal Court Theatre",
     "url": "https://royalcourttheatre.com/events/man-to-man/",
     "recipe": {
-      "mode": "render"
+      "mode": "royal-court-api",
+      "eventId": 45811
     },
     "ntfyTopic": "BARBICAN-1999-man-to-man-3ee8",
     "timeFilter": null,
