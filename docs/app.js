@@ -63,8 +63,13 @@ function eventCard(event) {
 }
 
 async function loadEvents() {
-  const res = await fetch('./events.json', { cache: 'no-store' });
-  const allEvents = await res.json();
+  let allEvents;
+  try {
+    const res = await fetch('./events.json', { cache: 'no-store' });
+    allEvents = await res.json();
+  } catch {
+    return; // offline or a blip: leave whatever is already on screen
+  }
   // Archived (tickets already secured) is a personal record kept in the
   // data file, not something worth showing on the shared page.
   const events = allEvents.filter((e) => !e.archived);
@@ -99,3 +104,92 @@ async function loadStatusLine() {
 loadEvents();
 loadStatusLine();
 setInterval(loadEvents, 30000);
+
+// --- Installable app + settings ------------------------------------------
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {
+    /* installing as an app is a nicety; the page works without it */
+  });
+}
+
+const offlineNote = document.getElementById('offline-note');
+function syncOffline() {
+  if (offlineNote) offlineNote.hidden = navigator.onLine;
+}
+window.addEventListener('online', () => {
+  syncOffline();
+  loadEvents();
+  loadStatusLine();
+});
+window.addEventListener('offline', syncOffline);
+syncOffline();
+
+function detectPlatform() {
+  const ua = navigator.userAgent || '';
+  // iPadOS 13+ identifies as a Mac but has a touch screen.
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'desktop';
+}
+
+function isInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+let deferredInstallPrompt = null;
+const settingsDialog = document.getElementById('settings-dialog');
+const installBtn = document.getElementById('install-btn');
+const installStatus = document.getElementById('install-status');
+
+function renderInstallState() {
+  if (!settingsDialog) return;
+  const platform = detectPlatform();
+  if (isInstalled()) {
+    installStatus.textContent = "✅ You're already using the installed app.";
+  } else if (deferredInstallPrompt) {
+    installStatus.textContent = 'Your browser can install this with one tap:';
+  } else {
+    installStatus.textContent = 'Follow the steps for your device below.';
+  }
+  installBtn.hidden = !deferredInstallPrompt || isInstalled();
+  // Open the section that matches this device; leave the others closed.
+  for (const id of ['ios', 'android', 'desktop']) {
+    const el = document.getElementById(`install-${id}`);
+    if (el) el.open = id === platform;
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  renderInstallState();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (installStatus) installStatus.textContent = '✅ Installed. Look for the icon on your home screen.';
+  if (installBtn) installBtn.hidden = true;
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice.catch(() => {});
+    deferredInstallPrompt = null;
+    renderInstallState();
+  });
+}
+
+const settingsBtn = document.getElementById('settings-btn');
+if (settingsBtn && settingsDialog) {
+  settingsBtn.addEventListener('click', () => {
+    renderInstallState();
+    if (typeof settingsDialog.showModal === 'function') settingsDialog.showModal();
+    else settingsDialog.setAttribute('open', '');
+  });
+  // Tapping the dimmed area outside the panel closes it.
+  settingsDialog.addEventListener('click', (event) => {
+    if (event.target === settingsDialog) settingsDialog.close();
+  });
+}

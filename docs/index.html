@@ -4,13 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Eliette's Magical London Cultural Scene Hack</title>
+  <meta name="theme-color" content="#0d0f14" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="London Hack" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <header>
+    <div class="header-bar">
+      <button type="button" id="settings-btn" class="settings-btn" aria-haspopup="dialog">⚙️ Settings</button>
+    </div>
     <h1>Eliette's Magical London Cultural Scene Hack</h1>
     <p class="subtitle" id="subtitle">Watching for sold-out shows to open up.</p>
   </header>
+
+  <p id="offline-note" class="offline-note" hidden>You're offline &mdash; showing the last saved data.</p>
 
   <p class="golden-note">
     Hey lucky friend, you've received my golden link 🔗 — because these are shows
@@ -79,6 +92,49 @@
       </p>
     </section>
   </main>
+
+  <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+    <form method="dialog" class="settings-close"><button type="submit" aria-label="Close settings">✕</button></form>
+    <h2 id="settings-title">Settings</h2>
+
+    <h3>Install as an app</h3>
+    <p>
+      Add this page to your home screen and it opens full-screen like a normal
+      app, with its own icon. No app store and no account. Notifications still
+      come from the free <strong>ntfy</strong> app, installing doesn't change that.
+    </p>
+    <p id="install-status" class="hint"></p>
+    <button type="button" id="install-btn" class="install-btn" hidden>Install now</button>
+
+    <details id="install-ios">
+      <summary>iPhone / iPad</summary>
+      <ol>
+        <li>Open this page in <strong>Safari</strong> (links opened inside WhatsApp, Instagram or Mail won't offer it: tap the <strong>⋯</strong> or compass icon and choose <em>Open in Safari</em> first).</li>
+        <li>Tap the <strong>Share</strong> button (a square with an arrow pointing up), or the <strong>⋯</strong> menu, then <strong>Share</strong>.</li>
+        <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+        <li>Leave <strong>Open as Web App</strong> switched on if you see it, then tap <strong>Add</strong>.</li>
+      </ol>
+    </details>
+
+    <details id="install-android">
+      <summary>Android</summary>
+      <ol>
+        <li>Open this page in <strong>Chrome</strong> (if it opened inside WhatsApp or another app, tap <strong>⋮</strong> and choose <em>Open in Chrome</em>).</li>
+        <li>Tap the <strong>⋮</strong> menu at the top right.</li>
+        <li>Tap <strong>Install app</strong> (on some phones it's called <strong>Add to Home screen</strong>).</li>
+        <li>Tap <strong>Install</strong>.</li>
+      </ol>
+      <p class="hint">Samsung Internet: tap the <strong>☰</strong> menu, then <strong>Add page to</strong>, then <strong>Home screen</strong>.</p>
+    </details>
+
+    <details id="install-desktop">
+      <summary>Computer (Chrome or Edge)</summary>
+      <ol>
+        <li>Look for the small <strong>install icon</strong> at the right end of the address bar and click it.</li>
+        <li>Or open the browser menu and choose <strong>Install</strong> / <strong>Apps &rarr; Install this site as an app</strong>.</li>
+      </ol>
+    </details>
+  </dialog>
 
   <script src="./app.js"></script>
 </body>

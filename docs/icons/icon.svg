@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs><clipPath id="clip"><rect width="512" height="512" rx="112"/></clipPath></defs>
+  <g clip-path="url(#clip)"><rect width="512" height="512" fill="url(#bg)"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b1530"/><stop offset="1" stop-color="#0d0f14"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3cf86"/><stop offset="1" stop-color="#d99a35"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#7c9eff" stop-opacity="0.35"/><stop offset="1" stop-color="#7c9eff" stop-opacity="0"/></radialGradient>
+    <mask id="ticketMask"><rect width="512" height="512" fill="#fff"/><circle cx="96" cy="256" r="30" fill="#000"/><circle cx="416" cy="256" r="30" fill="#000"/></mask>
+  </defs>
+  <circle cx="256" cy="256" r="230" fill="url(#glow)"/>
+  <g mask="url(#ticketMask)"><rect x="96" y="168" width="320" height="176" rx="26" fill="url(#gold)"/></g>
+  <line x1="330" y1="190" x2="330" y2="322" stroke="#1b1530" stroke-width="5" stroke-dasharray="3 13" stroke-linecap="round" opacity="0.55"/>
+  <path d="M212 196 L226 246 L276 260 L226 274 L212 324 L198 274 L148 260 L198 246 Z" fill="#1b1530"/>
+  <g fill="#cfdcff"><path d="M392 112 l5 15 15 5 -15 5 -5 15 -5 -15 -15 -5 15 -5z"/><path d="M118 384 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4z" opacity="0.8"/><circle cx="420" cy="396" r="4" opacity="0.7"/><circle cx="100" cy="132" r="3.5" opacity="0.6"/></g></g></svg>
