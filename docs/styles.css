@@ -416,3 +416,22 @@ input:focus { outline: none; border-color: var(--accent); }
 }
 .link-btn:hover { opacity: 1; color: var(--text); }
 .settings-dialog h2 { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+
+/* --- Owner scanner: filters and the compact list --- */
+.owner-filters { margin: 8px 0 4px; }
+.owner-filters .owner-input { margin: 0 0 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chip {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 999px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer;
+}
+.chip.active { color: var(--text); border-color: var(--accent); background: rgba(124, 158, 255, 0.12); }
+.owner-list { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--panel); }
+.owner-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.owner-row:last-child { border-bottom: 0; }
+.owner-row input { width: 22px; height: 22px; padding: 0; margin-top: 2px; accent-color: var(--accent); flex: none; }
+.owner-row-main { min-width: 0; }
+.owner-row-title { color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+.owner-row-title:hover { color: var(--accent); }
+.owner-row-sub { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
+.owner-row-sub .badge { font-size: 0.68rem; padding: 2px 8px; margin-left: 2px; }

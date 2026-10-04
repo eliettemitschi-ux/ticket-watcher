@@ -5,8 +5,11 @@
 // GitHub repo and is read through the GitHub API with a token that only exists
 // in this browser. Visitors without the token see no trace of any of this.
 //
-// Ticks (the per-show alert on/off) are saved back to that same private repo
-// as selections.json, which the scanner reads on its next run.
+// The tab lists every show the scanner knows about. Ticking a show puts it in
+// "Watching": a show that isn't on sale yet alerts you when it opens; a show
+// that is on sale alerts you when sold-out dates get tickets back. Ticks are
+// saved to that same private repo as selections.json, which the scanner reads
+// on its next run.
 
 (function (root) {
   'use strict';
@@ -28,9 +31,13 @@
     return /^https:\/\//.test(url || '') ? url : '#';
   }
 
-  // Would this show alert with NO override from you? (hand-added shows alert by default)
+  const isWaiting = (record) => WAITING.has(record.state);
+
+  // Would this show alert with NO override from you? Only shows that haven't
+  // opened yet can be flagged automatically; on-sale shows alert only if you
+  // tick them.
   function autoEligible(record) {
-    return Boolean(record.manual || record.qualifies);
+    return isWaiting(record) && Boolean(record.manual || record.qualifies);
   }
 
   // Alert state once your override is applied.
@@ -55,12 +62,58 @@
     return next;
   }
 
+  // Which of the three buckets a show falls in.
+  function statusOf(record) {
+    if (isWaiting(record)) return 'upcoming';
+    return record.state === 'sold_out' ? 'sold_out' : 'on_sale';
+  }
+
+  const STATUS_LABEL = { upcoming: 'Not on sale yet', sold_out: 'Sold out', on_sale: 'On sale' };
+
+  // What ticking a show means, in words.
+  function watchLabel(record) {
+    return isWaiting(record)
+      ? 'Alerts when it goes on sale, with a heads-up before'
+      : 'Alerts when sold-out dates get tickets back';
+  }
+
+  function matchesQuery(record, query) {
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return true;
+    const hay = `${record.title || ''} ${record.venue || ''} ${(record.tags || []).join(' ')}`.toLowerCase();
+    return q.split(/\s+/).every((word) => hay.includes(word));
+  }
+
+  function filterRecords(records, { query = '', venue = 'all', status = 'all' } = {}) {
+    return records.filter(
+      (r) => matchesQuery(r, query) && (venue === 'all' || r.venue === venue) && (status === 'all' || statusOf(r) === status)
+    );
+  }
+
   // Soonest known opening first; month-only next; unknown last.
   function sortKey(record) {
     const o = record.opens;
     if (!o) return 3e15;
     if (o.precision === 'month') return 2e15 + new Date(o.at).getTime() / 1000;
     return new Date(o.at).getTime();
+  }
+
+  const ORDER = { upcoming: 0, sold_out: 1, on_sale: 2 };
+
+  // Watching on top; everything else below, not-yet-on-sale first (soonest
+  // opening first), then sold out, then on sale (each A to Z).
+  function groupRecords(records, selections) {
+    const open = records.filter((r) => !r.alertedAt);
+    const watching = open.filter((r) => effectiveEligible(r, selections));
+    const rest = open.filter((r) => !effectiveEligible(r, selections));
+    const order = (a, b) => {
+      const sa = statusOf(a);
+      const sb = statusOf(b);
+      if (sa !== sb) return ORDER[sa] - ORDER[sb];
+      if (sa === 'upcoming') return sortKey(a) - sortKey(b);
+      return String(a.title).localeCompare(String(b.title));
+    };
+    return { watching: watching.sort(order), rest: rest.sort(order) };
   }
 
   function utf8ToBase64(text) {
@@ -115,30 +168,54 @@
     if (sel === 'on') return 'You ticked this';
     if (sel === 'off') return 'You unticked this';
     if (record.manual) return 'Added by you';
-    if (record.qualifies) return `Flagged: ${(record.reasons || []).map(escapeHtml).join('; ')}`;
+    if (autoEligible(record)) return `Flagged: ${(record.reasons || []).map(escapeHtml).join('; ')}`;
     return "Doesn't match your criteria";
   }
 
-  function upcomingCard(record, selections, nowMs) {
-    const on = effectiveEligible(record, selections);
+  function datesNote(record) {
+    const n = (record.days || []).length;
+    return n ? ` · ${n} date${n === 1 ? '' : 's'}` : '';
+  }
+
+  function badge(record) {
+    const s = statusOf(record);
+    const cls = s === 'upcoming' ? 'pending' : s === 'sold_out' ? 'sold_out' : 'available';
+    const text = s === 'upcoming' && record.state === 'gated' ? 'Presale / general sale pending' : STATUS_LABEL[s];
+    return `<span class="badge ${cls}">${text}</span>`;
+  }
+
+  // Full card, used in "Watching".
+  function watchingCard(record, selections, nowMs) {
     const members =
       record.opens && record.opens.membersAt && new Date(record.opens.membersAt) < new Date(record.opens.at)
         ? `<div class="event-meta">Members' presale ${fmtDay(record.opens.membersAt)}</div>`
         : '';
-    const dates = (record.days || []).length ? ` · ${record.days.length} date${record.days.length === 1 ? '' : 's'} listed` : '';
+    const when = isWaiting(record) ? `<div class="event-meta">${opensLine(record.opens, nowMs)}</div>${members}` : '';
     return `
-      <div class="event-card${on ? '' : ' dim'}">
+      <div class="event-card">
         <div class="event-main">
           <p class="event-name"><a href="${escapeHtml(safeUrl(record.url))}" target="_blank" rel="noopener">${escapeHtml(record.title)}</a></p>
-          <p class="event-venue">${escapeHtml(record.venue)}${dates}</p>
-          <span class="badge pending">${record.state === 'gated' ? 'Presale / general sale pending' : 'Not on sale yet'}</span>
-          <div class="event-meta">${opensLine(record.opens, nowMs)}</div>
-          ${members}
+          <p class="event-venue">${escapeHtml(record.venue)}${datesNote(record)}</p>
+          ${badge(record)}
+          ${when}
           <label class="alarm-toggle">
-            <input type="checkbox" data-key="${escapeHtml(record.key)}" ${on ? 'checked' : ''} />
+            <input type="checkbox" data-key="${escapeHtml(record.key)}" checked />
             <span>🔔 Alert me</span>
-            <small>${reasonText(record, selections)}</small>
+            <small>${watchLabel(record)} · ${reasonText(record, selections)}</small>
           </label>
+        </div>
+      </div>`;
+  }
+
+  // One compact line, used in the long list.
+  function compactRow(record, nowMs) {
+    const extra = isWaiting(record) ? ` · ${opensLine(record.opens, nowMs)}` : '';
+    return `
+      <div class="owner-row">
+        <input type="checkbox" data-key="${escapeHtml(record.key)}" aria-label="Alert me about ${escapeHtml(record.title)}" />
+        <div class="owner-row-main">
+          <a class="owner-row-title" href="${escapeHtml(safeUrl(record.url))}" target="_blank" rel="noopener">${escapeHtml(record.title)}</a>
+          <div class="owner-row-sub">${escapeHtml(record.venue)}${datesNote(record)} ${badge(record)}${extra}</div>
         </div>
       </div>`;
   }
@@ -168,7 +245,11 @@
     return null;
   }
 
-  const helpers = { diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, sortKey, utf8ToBase64, base64ToUtf8, opensLine, upcomingCard, openedCard };
+  const helpers = {
+    diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, statusOf, watchLabel,
+    matchesQuery, filterRecords, groupRecords, sortKey, utf8ToBase64, base64ToUtf8, opensLine,
+    watchingCard, compactRow, openedCard,
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -278,8 +359,15 @@
   let sha = null;
   let timer = null;
   let started = false;
+  const view = { query: '', venue: 'all', status: 'all' };
 
   const $ = (id) => document.getElementById(id);
+
+  function chipsHtml(name, options, current) {
+    return options
+      .map(([value, label]) => `<button type="button" class="chip${value === current ? ' active' : ''}" data-${name}="${escapeHtml(value)}">${escapeHtml(label)}</button>`)
+      .join('');
+  }
 
   function buildChrome() {
     if ($('owner-tabs')) return;
@@ -287,30 +375,54 @@
     nav.id = 'owner-tabs';
     nav.className = 'owner-tabs';
     nav.innerHTML = '<button type="button" data-tab="watchlist" class="active">Watchlist</button><button type="button" data-tab="scanner">Scanner</button>';
-    const header = document.querySelector('header');
-    header.insertAdjacentElement('afterend', nav);
+    document.querySelector('header').insertAdjacentElement('afterend', nav);
 
-    const view = document.createElement('section');
-    view.id = 'owner-view';
-    view.className = 'owner-view';
-    view.hidden = true;
-    view.innerHTML = `
+    const section = document.createElement('section');
+    section.id = 'owner-view';
+    section.className = 'owner-view';
+    section.hidden = true;
+    section.innerHTML = `
       <p class="subtitle" id="owner-subtitle">Loading…</p>
       <p class="hint" id="owner-msg"></p>
-      <h2 class="section-title">Coming up <span class="count" id="owner-upcoming-count"></span></h2>
-      <p class="hint">Tick the shows you want an alert for. Flagged ones are ticked for you; untick any you don't want. Changes apply within about 5 minutes.</p>
-      <section id="owner-upcoming"></section>
+      <div class="owner-filters">
+        <input type="search" id="owner-search" class="owner-input" placeholder="Search shows…" autocomplete="off" />
+        <div class="chips" id="owner-venue-chips"></div>
+        <div class="chips" id="owner-status-chips"></div>
+      </div>
+      <h2 class="section-title">Watching <span class="count" id="owner-watching-count"></span></h2>
+      <p class="hint">Tick any show below and it moves up here. A show that isn't on sale yet alerts you when it opens; one that is on sale alerts you when sold-out dates get tickets back. Changes apply within about 5 minutes.</p>
+      <section id="owner-watching"></section>
+      <h2 class="section-title">All shows <span class="count" id="owner-rest-count"></span></h2>
+      <section id="owner-rest" class="owner-list"></section>
       <h2 class="section-title">Already opened <span class="count" id="owner-opened-count"></span></h2>
       <section id="owner-opened"></section>
       <p class="hint"><button type="button" class="settings-btn" id="owner-lock">Lock this device</button></p>`;
-    nav.insertAdjacentElement('afterend', view);
+    nav.insertAdjacentElement('afterend', section);
 
     nav.addEventListener('click', (e) => {
       const tab = e.target.closest('button[data-tab]');
       if (tab) showTab(tab.dataset.tab);
     });
-    view.addEventListener('change', onTick);
+    section.addEventListener('change', onTick);
+    section.addEventListener('click', onChip);
+    $('owner-search').addEventListener('input', (e) => { view.query = e.target.value; render(); });
     $('owner-lock').addEventListener('click', lock);
+    renderChips();
+  }
+
+  function renderChips() {
+    const venues = [['all', 'All venues'], ...Array.from(new Set(Object.values((state && state.events) || {}).map((r) => r.venue))).sort().map((v) => [v, v])];
+    $('owner-venue-chips').innerHTML = chipsHtml('venue', venues, view.venue);
+    $('owner-status-chips').innerHTML = chipsHtml('status', [['all', 'Any status'], ['upcoming', 'Not on sale yet'], ['sold_out', 'Sold out'], ['on_sale', 'On sale']], view.status);
+  }
+
+  function onChip(event) {
+    const chip = event.target.closest('button.chip');
+    if (!chip) return;
+    if (chip.dataset.venue !== undefined) view.venue = chip.dataset.venue;
+    if (chip.dataset.status !== undefined) view.status = chip.dataset.status;
+    renderChips();
+    render();
   }
 
   function showTab(name) {
@@ -334,16 +446,22 @@
   function render() {
     if (!state) return;
     const now = Date.now();
-    const events = Object.values(state.events || {});
-    const upcoming = events.filter((e) => WAITING.has(e.state) && !e.alertedAt).sort((a, b) => sortKey(a) - sortKey(b));
-    const opened = events.filter((e) => e.alertedAt).sort((a, b) => new Date(b.alertedAt) - new Date(a.alertedAt));
-    const withAlert = upcoming.filter((e) => effectiveEligible(e, selections)).length;
-    $('owner-subtitle').textContent = `Last scan ${timeAgo(state.updatedAt, now)} · ${upcoming.length} upcoming, ${withAlert} with an alert`;
-    $('owner-upcoming-count').textContent = `(${upcoming.length})`;
+    const all = Object.values(state.events || {}).filter((e) => e.state !== 'expired');
+    const opened = all.filter((e) => e.alertedAt).sort((a, b) => new Date(b.alertedAt) - new Date(a.alertedAt));
+    const shown = filterRecords(all, view);
+    const { watching, rest } = groupRecords(shown, selections);
+    const watchingTotal = groupRecords(all, selections).watching.length;
+
+    $('owner-subtitle').textContent = `Last scan ${timeAgo(state.updatedAt, now)} · ${all.length} shows tracked · ${watchingTotal} watched`;
+    $('owner-watching-count').textContent = `(${watching.length})`;
+    $('owner-rest-count').textContent = `(${rest.length})`;
     $('owner-opened-count').textContent = `(${opened.length})`;
-    $('owner-upcoming').innerHTML = upcoming.length
-      ? upcoming.map((e) => upcomingCard(e, selections, now)).join('')
-      : '<div class="empty-state">Nothing announced and waiting to go on sale right now.</div>';
+    $('owner-watching').innerHTML = watching.length
+      ? watching.map((e) => watchingCard(e, selections, now)).join('')
+      : `<div class="empty-state">${view.query || view.venue !== 'all' || view.status !== 'all' ? 'No watched shows match.' : 'Nothing watched yet. Tick a show below.'}</div>`;
+    $('owner-rest').innerHTML = rest.length
+      ? rest.map((e) => compactRow(e, now)).join('')
+      : '<div class="empty-state">No shows match.</div>';
     $('owner-opened').innerHTML = opened.length
       ? opened.map((e) => openedCard(e, now)).join('')
       : '<div class="empty-state">No shows have opened since the scanner started.</div>';
@@ -359,6 +477,7 @@
       selections = sel.selections;
       sha = sel.sha;
       setMessage('', false);
+      renderChips();
       render();
     } catch (err) {
       if (err.status === 401 || err.status === 403) {

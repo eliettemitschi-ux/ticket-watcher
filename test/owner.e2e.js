@@ -50,10 +50,21 @@ const scan = {
   events: {
     flagged: rec('flagged', 'Flagged Show', { qualifies: true, reasons: ['short run (1 date)', 'presale / general-sale gate'], opens: { at: iso(3 * 86400000), precision: 'exact' } }),
     plain: rec('plain', 'Plain Show', { state: 'not_on_sale', opens: { at: iso(30 * 86400000), precision: 'month', label: 'November 2026' } }),
-    live: rec('live', 'Already On Sale', { state: 'bookable' }),
+    sold: rec('sold', 'Sold Out Show', { state: 'sold_out', venue: 'National Theatre', days: ['a', 'b', 'c'] }),
+    live: rec('live', 'Already On Sale', { state: 'bookable', days: ['d', 'e'] }),
     opened: rec('opened', 'Opened Show', { state: 'bookable', alertedAt: iso(-3600000) }),
   },
 };
+
+// Polls until a condition holds (the page re-renders asynchronously).
+async function until(fn, ms = 8000) {
+  const t = Date.now();
+  while (Date.now() - t < ms) {
+    if (await fn()) return true;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  throw new Error('timed out waiting for: ' + fn.toString().slice(0, 120));
+}
 
 // Fake GitHub: private repo contents + a log of every request.
 function fakeGitHub() {
@@ -131,53 +142,89 @@ function fakeGitHub() {
   await page.fill('#owner-token-input', GOOD);
   await page.click('#owner-token-save');
   await page.waitForSelector('#owner-view:not([hidden])');
-  await page.waitForSelector('#owner-upcoming .event-card');
+  await page.waitForSelector('#owner-watching .event-card');
+  const watchingTitles = () => page.locator('#owner-watching .event-name').allTextContents();
+  const listTitles = () => page.locator('#owner-rest .owner-row-title').allTextContents();
   check('unlock: the right token stores itself on this device', await page.evaluate(() => localStorage.getItem('twOwnerToken')), GOOD);
-  check('scanner tab: shows only upcoming shows (3 of the 4 records are hidden/opened)', await page.locator('#owner-upcoming .event-card').count(), 2);
+  check('scanner tab: a flagged upcoming show starts in Watching', await watchingTitles(), ['Flagged Show']);
+  check('scanner tab: every other show is in the full list, upcoming first, then sold out, then on sale', await listTitles(), ['Plain Show', 'Sold Out Show', 'Already On Sale']);
   check('scanner tab: the show that already opened is listed separately', await page.locator('#owner-opened .event-card').count(), 1);
-  check('scanner tab: soonest opening is listed first', await page.locator('#owner-upcoming .event-name').first().textContent(), 'Flagged Show');
-  check('scanner tab: a flagged show starts ticked', await page.locator('input[data-key="flagged"]').isChecked(), true);
-  check('scanner tab: an unflagged show starts unticked', await page.locator('input[data-key="plain"]').isChecked(), false);
+  check('scanner tab: a watched show is ticked', await page.locator('input[data-key="flagged"]').isChecked(), true);
+  check('scanner tab: the others start unticked', await page.locator('input[data-key="plain"]').isChecked(), false);
   check('scanner tab: the watchlist is hidden while on the scanner tab', await page.locator('main').isHidden(), true);
 
-  // 4. Ticks and exactly what gets saved.
-  await page.check('input[data-key="plain"]');
-  await page.waitForFunction(() => /Saved/.test(document.getElementById('owner-msg').textContent));
-  check('tick: ticking an unflagged show saves "on"', gh.puts[gh.puts.length - 1].saved, { plain: 'on' });
+  // Search and filters.
+  await page.fill('#owner-search', 'sold');
+  await until(async () => (await listTitles()).length === 1);
+  check('search: typing narrows the list', await listTitles(), ['Sold Out Show']);
+  await page.fill('#owner-search', 'nothing matches this');
+  await until(async () => (await listTitles()).length === 0);
+  check('search: no match says so', await page.locator('#owner-rest .empty-state').count(), 1);
+  await page.fill('#owner-search', '');
+  await page.click('#owner-status-chips .chip[data-status="on_sale"]');
+  await until(async () => (await listTitles()).length === 1);
+  check('filter: the "On sale" chip', await listTitles(), ['Already On Sale']);
+  await page.click('#owner-status-chips .chip[data-status="all"]');
+  await page.click('#owner-venue-chips .chip[data-venue="National Theatre"]');
+  await until(async () => (await listTitles()).length === 1);
+  check('filter: the venue chip', await listTitles(), ['Sold Out Show']);
+  await page.click('#owner-venue-chips .chip[data-venue="all"]');
+  await until(async () => (await listTitles()).length === 3);
+
+  // 4. Ticks, what gets saved, and the show moving up into Watching.
+  await page.click('input[data-key="plain"]');
+  await until(() => gh.puts.length === 1);
+  check('tick: ticking an upcoming show saves "on"', gh.puts[0].saved, { plain: 'on' });
   check('tick: the first save creates the file (no sha)', gh.puts[0].sentSha, null);
+  await until(async () => (await watchingTitles()).length === 2);
+  check('tick: the show moves up into Watching', await watchingTitles(), ['Flagged Show', 'Plain Show']);
+  check('tick: and leaves the full list', await listTitles(), ['Sold Out Show', 'Already On Sale']);
 
-  await page.uncheck('input[data-key="flagged"]');
-  await page.waitForFunction(() => document.querySelectorAll('.event-card.dim').length === 1 && /Saved/.test(document.getElementById('owner-msg').textContent));
-  check('tick: unticking a flagged show saves "off" alongside', gh.puts[gh.puts.length - 1].saved, { plain: 'on', flagged: 'off' });
-  check('tick: later saves quote the current file version', gh.puts[gh.puts.length - 1].sentSha, 'sha1');
+  await page.click('input[data-key="sold"]');
+  await until(() => gh.puts.length === 2);
+  check('tick: ticking a SOLD-OUT show saves "on" too (watched for returns)', gh.puts[1].saved, { plain: 'on', sold: 'on' });
+  check('tick: later saves quote the current file version', gh.puts[1].sentSha, 'sha1');
+  await until(async () => (await watchingTitles()).length === 3);
+  check('tick: it joins Watching, after the upcoming ones', await watchingTitles(), ['Flagged Show', 'Plain Show', 'Sold Out Show']);
 
-  await page.check('input[data-key="flagged"]');
-  await page.waitForFunction(() => Array.from(document.querySelectorAll('input[data-key]')).every((b) => b.checked));
-  await page.waitForFunction(() => /Saved/.test(document.getElementById('owner-msg').textContent));
-  check('tick: re-ticking a flagged show clears its override', gh.puts[gh.puts.length - 1].saved, { plain: 'on' });
+  await page.click('input[data-key="flagged"]');
+  await until(() => gh.puts.length === 3);
+  check('tick: unticking a flagged show saves "off" alongside', gh.puts[2].saved, { plain: 'on', sold: 'on', flagged: 'off' });
+  await until(async () => (await listTitles()).includes('Flagged Show'));
+  check('tick: it drops back into the full list', (await watchingTitles()).includes('Flagged Show'), false);
 
-  await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-tab.png') });
+  await page.click('input[data-key="flagged"]');
+  await until(() => gh.puts.length === 4);
+  check('tick: re-ticking a flagged show clears its override', gh.puts[3].saved, { plain: 'on', sold: 'on' });
+
+  await page.click('input[data-key="sold"]');
+  await until(() => gh.puts.length === 5);
+  check('tick: unticking a watched sold-out show clears its override', gh.puts[4].saved, { plain: 'on' });
+  await until(async () => (await watchingTitles()).length === 2);
+
+  await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-tab.png'), fullPage: true });
 
   // 5. Persistence: a reload keeps the device unlocked and shows the saved ticks.
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('#owner-tabs');
   check('reload: the tabs are back without unlocking again', await page.locator('#owner-tabs button').count(), 2);
   await page.click('#owner-tabs button[data-tab="scanner"]');
-  await page.waitForSelector('#owner-upcoming .event-card');
-  check('reload: the saved tick is still ticked', await page.locator('input[data-key="plain"]').isChecked(), true);
+  await page.waitForSelector('#owner-watching .event-card');
+  check('reload: the saved tick is still in Watching', await watchingTitles(), ['Flagged Show', 'Plain Show']);
   await page.click('#owner-tabs button[data-tab="watchlist"]');
   check('tabs: switching back shows the normal watchlist', await page.locator('main').isVisible(), true);
 
   // 6. A failing save changes nothing.
   await page.click('#owner-tabs button[data-tab="scanner"]');
-  await page.waitForSelector('#owner-upcoming .event-card');
+  await page.waitForSelector('#owner-watching .event-card');
   const putsBefore = gh.puts.length;
   await context.route('**/contents/selections.json', (route) => (route.request().method() === 'PUT' ? route.fulfill({ status: 500, headers: { 'access-control-allow-origin': '*' }, body: '{}' }) : route.fallback()));
-  await page.click('input[data-key="plain"]'); // a plain click: uncheck() would fight the page's revert
+  await page.click('input[data-key="plain"]');
   await page.waitForFunction(() => /Couldn.t save/.test(document.getElementById('owner-msg').textContent));
   check('failed save: a message is shown', await page.locator('#owner-msg').textContent().then((t) => /Nothing was changed/.test(t)), true);
-  check('failed save: the box goes back to ticked', await page.locator('input[data-key="plain"]').isChecked(), true);
+  check('failed save: the show goes back to Watching, ticked', await watchingTitles(), ['Flagged Show', 'Plain Show']);
   check('failed save: nothing was written', gh.puts.length, putsBefore);
+
 
   // 7. A rejected token (expired / revoked).
   gh.rejectAll = true;

@@ -14,11 +14,22 @@ function reasonsLine(record) {
   return record.reasons && record.reasons.length ? `Flagged: ${record.reasons.join('; ')}` : record.selection === 'on' ? 'You ticked this show' : '';
 }
 
-/** @returns {{title:string, message:string}} */
-function alertMessage(kind, record) {
+/**
+ * @param {object} [extra]  for 'returns': { performances: [{label, price?}] }
+ * @returns {{title:string, message:string}}
+ */
+function alertMessage(kind, record, extra = {}) {
   const lines = [];
   let title;
-  if (kind === 'announced') {
+  if (kind === 'returns') {
+    const perfs = extra.performances || [];
+    title = `Tickets back: ${record.title}`;
+    const shown = perfs.slice(0, 4).map((p) => p.label).join(', ');
+    const more = perfs.length > 4 ? ` and ${perfs.length - 4} more` : '';
+    lines.push(`${record.venue} · ${perfs.length} date${perfs.length === 1 ? '' : 's'} with tickets: ${shown}${more}`);
+    const prices = perfs.map((p) => p.price).filter((x) => typeof x === 'number');
+    if (prices.length) lines.push(`From £${Math.min(...prices)}`);
+  } else if (kind === 'announced') {
     title = `${record.venue}: new show announced - ${record.title}`;
     lines.push(describeOpens(record.opens));
   } else if (kind === 'headsUp') {

@@ -10,6 +10,7 @@
 // discovery and the status read, so there is no separate read step.
 
 const fetch = require('node-fetch');
+const { formatLondonShort } = require('./time');
 
 const API = 'https://events.nationaltheatre.org.uk/api/v1';
 const VENUE = 'National Theatre';
@@ -49,6 +50,21 @@ function classifyEvent(event) {
   return { state: 'sold_out', publicFrom: null };
 }
 
+// Per-date availability for one event: a date is available when any PUBLIC
+// price row still has seats. Used to spot sold-out dates getting tickets back.
+function performancesOf(event) {
+  return (event.instances || []).map((i) => {
+    const open = (i.prices || []).filter((r) => String(r.mos) === PUBLIC_MOS && pct(r) > 0);
+    const prices = open.map((r) => parseFloat(r.price)).filter(Number.isFinite);
+    return {
+      key: String(i._id),
+      label: formatLondonShort(Date.parse(i.datetime)),
+      available: open.length > 0,
+      price: prices.length ? Math.min(...prices) : null,
+    };
+  });
+}
+
 function listingFor(event) {
   const instances = event.instances || [];
   const days = [...new Set(instances.map((i) => String(i.datetime).slice(0, 10)))].sort();
@@ -58,7 +74,7 @@ function listingFor(event) {
     key: `nt-${event._id}`,
     venue: VENUE,
     url: `https://events.nationaltheatre.org.uk/events/${event._id}`,
-    nodeId: null,
+    nodeId: String(event._id),
     title: event.title,
     tags: [event.venueLabel].filter(Boolean),
     text: '',
@@ -67,6 +83,7 @@ function listingFor(event) {
     reading: {
       state: classified.state,
       generalSaleText: classified.publicFrom ? `from £${classified.publicFrom}` : null,
+      performances: performancesOf(event),
     },
     bookingUrl: instances[0] && instances[0].bookingURL,
   };
@@ -91,4 +108,12 @@ async function crawl(config) {
   return listings;
 }
 
-module.exports = { crawl, classifyEvent, listingFor, VENUE, PUBLIC_MOS };
+// Fresh reading of one event, used to double-check a "tickets are back" signal
+// before alerting (see scripts/run-scanner.js).
+async function confirm(listing) {
+  const event = await getJson(`${API}/events/${listing.nodeId}`);
+  const classified = classifyEvent(event);
+  return { state: classified.state, generalSaleText: classified.publicFrom ? `from £${classified.publicFrom}` : null, performances: performancesOf(event) };
+}
+
+module.exports = { crawl, confirm, classifyEvent, listingFor, performancesOf, VENUE, PUBLIC_MOS };

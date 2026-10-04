@@ -113,7 +113,25 @@ function nextRecord(prev, reading, ctx) {
     }
   }
 
-  return { record, alert };
+  // Returns: for shows you've explicitly ticked, remember each date's status
+  // and flag any date that is available now but wasn't before (sold out
+  // earlier, or a brand-new date). Needs a previous reading to compare with, so
+  // the first reading after ticking is a silent baseline. Shows that are still
+  // waiting to open are covered by the 'open' alert instead.
+  const returns = [];
+  if (record.selection === 'on' && reading.performances) {
+    const live = reading.state === 'bookable' || reading.state === 'sold_out';
+    const wasLive = base.state === 'bookable' || base.state === 'sold_out';
+    if (base.perf && live && wasLive && !baselineRun) {
+      for (const p of reading.performances) if (p.available && base.perf[p.key] !== 'available') returns.push(p);
+    }
+    record.perf = {};
+    for (const p of reading.performances) record.perf[p.key] = p.available ? 'available' : 'sold_out';
+  } else if (record.perf) {
+    delete record.perf;
+  }
+
+  return { record, alert, returns };
 }
 
 /**

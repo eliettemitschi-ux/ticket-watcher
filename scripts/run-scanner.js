@@ -43,7 +43,10 @@ const SELECTIONS_FILE = path.resolve(ROOT, process.env.SCANNER_SELECTIONS_PATH |
 const DRY_RUN = process.argv.includes('--dry-run');
 
 for (const file of [STATE_FILE, SELECTIONS_FILE]) {
-  if (!path.relative(path.join(ROOT, 'docs'), file).startsWith('..')) {
+  const rel = path.relative(path.join(ROOT, 'docs'), file);
+  // Inside docs/ only if the relative path stays below it (a file on another
+  // drive comes back as an absolute path, which is outside).
+  if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) {
     console.error(`Refusing to use ${file}: scanner data must never be inside the public docs/ folder.`);
     process.exit(1);
   }
@@ -110,9 +113,12 @@ function manualListings(venue) {
   return out;
 }
 
-function needsRead(prev, nowMs) {
+function needsRead(prev, nowMs, selection) {
   if (!prev || !prev.state) return true;
   if (isWaiting(prev.state)) return true;
+  // A show you've ticked is watched for tickets coming back, so it is re-read
+  // every cycle (not just daily like untouched on-sale shows).
+  if (selection === 'on' && (prev.state === 'bookable' || prev.state === 'sold_out')) return true;
   if (prev.state === 'bookable' && prev.wasWaiting && !prev.alertedAt && (prev.bookableStreak || 0) < config.confirmReadings) return true;
   const ageHours = (nowMs - new Date(prev.lastChecked || 0).getTime()) / 3600000;
   return ageHours >= config.recheckOnSaleAfterHours;
@@ -152,7 +158,8 @@ async function processVenue(source, crawled, pending, state, baselineRun, select
   const all = new Map([...pending, ...crawled]);
   const entries = [...all.values()];
 
-  const toRead = entries.filter((l) => !l.reading && needsRead(events[l.key], nowMs));
+  const selectionFor = (l) => selections[l.key] || (l.manual || (events[l.key] && events[l.key].manual) ? 'on' : 'auto');
+  const toRead = entries.filter((l) => !l.reading && needsRead(events[l.key], nowMs, selectionFor(l)));
   console.log(`${venue}: ${crawled.size} listed, ${pending.size} announced/added${baselineRun ? ' (BASELINE: recording only, no alerts)' : ''}; reading status for ${toRead.length}`);
 
   const readings = new Map();
@@ -168,7 +175,7 @@ async function processVenue(source, crawled, pending, state, baselineRun, select
   const alerts = [];
   for (const l of entries) {
     const prev = events[l.key] || null;
-    const selection = selections[l.key] || (l.manual || (prev && prev.manual) ? 'on' : 'auto');
+    const selection = selectionFor(l);
     if (!readings.has(l.key)) {
       // Not re-read this cycle: refresh listing fields only. lastChecked and
       // the streak must stay untouched or the daily re-check never fires.
@@ -178,8 +185,25 @@ async function processVenue(source, crawled, pending, state, baselineRun, select
       continue;
     }
     const silent = baselineRun || Boolean(l.silent && !prev);
-    const { record, alert } = nextRecord(prev, readings.get(l.key), { now, baselineRun: silent, config, listing: l, qualifyFn, selection });
+    const { record, alert, returns = [] } = nextRecord(prev, readings.get(l.key), { now, baselineRun: silent, config, listing: l, qualifyFn, selection });
     events[l.key] = record;
+
+    // Sold-out dates that have tickets again. Re-check once right away so a
+    // venue glitch doesn't cause a false alert, then alert only for dates the
+    // second look confirms; unconfirmed dates stay "sold out" for next time.
+    if (returns.length) {
+      let confirmed = [];
+      try {
+        const fresh = source.confirm ? await source.confirm(l) : await source.read(l);
+        const stillOpen = new Set((fresh.performances || []).filter((p) => p.available).map((p) => p.key));
+        confirmed = returns.filter((p) => stillOpen.has(p.key));
+      } catch {
+        confirmed = [];
+      }
+      const confirmedKeys = new Set(confirmed.map((p) => p.key));
+      for (const p of returns) if (!confirmedKeys.has(p.key) && record.perf) record.perf[p.key] = 'sold_out';
+      if (confirmed.length) alerts.push({ record, kind: 'returns', extra: { performances: confirmed } });
+    }
 
     const kinds = dueAlerts(record, nowMs, config, silent);
     if (kinds.includes('announced') && kinds.includes('headsUp')) kinds.splice(kinds.indexOf('announced'), 1);
@@ -248,8 +272,8 @@ async function main() {
   }
 
   const topic = scannerTopic();
-  for (const { record, kind } of alerts) {
-    const { title, message } = alertMessage(kind, record);
+  for (const { record, kind, extra } of alerts) {
+    const { title, message } = alertMessage(kind, record, extra);
     console.log(`ALERT [${kind}] -> ${title}`);
     if (DRY_RUN) continue;
     try {
@@ -260,6 +284,8 @@ async function main() {
       if (kind === 'announced') record.announcedAlertedAt = null;
       if (kind === 'headsUp') record.headsUpAt = null;
       if (kind === 'open') record.alertedAt = null;
+      // Put the dates back to "sold out" so the next run notices them again.
+      if (kind === 'returns' && record.perf) for (const p of (extra && extra.performances) || []) record.perf[p.key] = 'sold_out';
     }
   }
 

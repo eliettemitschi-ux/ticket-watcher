@@ -48,6 +48,13 @@ function formatLondon(utcMs, { withTime = true } = {}) {
   return `${day}, ${hour12}${p.mm ? '.' + String(p.mm).padStart(2, '0') : ''}${suffix}`;
 }
 
+// "1 Oct 2026, 6.30pm" -- the label used for individual performances.
+function formatLondonShort(utcMs) {
+  const p = londonParts(utcMs);
+  const hour12 = ((p.hh + 11) % 12) + 1;
+  return `${p.d} ${MONTH_NAMES[p.m0]} ${p.y}, ${hour12}${p.mm ? '.' + String(p.mm).padStart(2, '0') : ''}${p.hh >= 12 ? 'pm' : 'am'}`;
+}
+
 /**
  * When the "opens soon" heads-up should fire, and when it stops being useful.
  *   exact: `hoursBefore` before opening, but never earlier than 07:00 London
@@ -64,4 +71,4 @@ function headsUpWindow(opens, hoursBefore) {
   return { from: londonToUtcMs(day.y, day.m0, day.d, 8, 0), until: londonToUtcMs(day.y, day.m0, day.d, 23, 59) };
 }
 
-module.exports = { londonParts, londonToUtcMs, formatLondon, headsUpWindow, MONTH_NAMES };
+module.exports = { londonParts, londonToUtcMs, formatLondon, formatLondonShort, headsUpWindow, MONTH_NAMES };

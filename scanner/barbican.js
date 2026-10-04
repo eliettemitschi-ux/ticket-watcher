@@ -4,7 +4,7 @@
 
 const fetch = require('node-fetch');
 const { parseListing, groupByEvent, hasLoadMore, stripTags } = require('./parseListing');
-const { extractInstances, isGeneralPresaleGated } = require('../checkers/htmlInstancesChecker');
+const { extractInstances, isGeneralPresaleGated, formatLabel } = require('../checkers/htmlInstancesChecker');
 const { parsePageOnSaleDates, parseOverlayTime, isRollingPlaceholder } = require('./dates');
 const { londonToUtcMs } = require('./time');
 
@@ -67,9 +67,13 @@ function classifyInstancesResponse(raw) {
     if (text.length < 200 || /unexpected error/i.test(text)) return { state: 'not_on_sale' };
     return { state: 'error', error: 'Unrecognised instances response (no performances found)' };
   }
-  if (instances.every((i) => i.soldOut)) return { state: 'sold_out' };
-  if (isGeneralPresaleGated(html)) return { state: 'gated', generalSaleText: generalSaleTextFrom(html) };
-  return { state: 'bookable' };
+  const gated = isGeneralPresaleGated(html);
+  // Per-date availability, used to spot sold-out dates getting tickets back.
+  // Dates behind a general-sale gate aren't bookable yet, so aren't "available".
+  const performances = instances.map((i) => ({ key: i.datetime, label: formatLabel(i.datetime), available: !i.soldOut && !gated }));
+  if (instances.every((i) => i.soldOut)) return { state: 'sold_out', performances };
+  if (gated) return { state: 'gated', generalSaleText: generalSaleTextFrom(html), performances };
+  return { state: 'bookable', performances };
 }
 
 async function readEvent(nodeId) {

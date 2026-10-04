@@ -323,6 +323,65 @@ const ctx = (over = {}) => ({
   check('production page: tour title cleaned', parseProductionPage('<title>Ballet Shoes | UK Tour | Family shows | National Theatre</title><body>x</body>', now2).title, 'Ballet Shoes');
 }
 
+// --- returns: sold-out dates getting tickets back (ticked shows only) ---------
+{
+  const { alertMessage } = require('../scanner/messages');
+  const cfg3 = { ...cfg, headsUpHoursBefore: 2 };
+  const ctx3 = (over = {}) => ({ ...ctx(over), config: cfg3, selection: 'on' });
+  const perfs = (a, b, c) => [
+    { key: 'd1', label: '9 Oct 2026, 7.30pm', available: a, price: 30 },
+    { key: 'd2', label: '10 Oct 2026, 7.30pm', available: b, price: 45 },
+    { key: 'd3', label: '11 Oct 2026, 7.30pm', available: c, price: null },
+  ];
+  const rd = (state, performances) => ({ state, performances });
+
+  // First reading after ticking is a silent baseline.
+  const first = nextRecord(null, rd('sold_out', perfs(false, false, false)), ctx3({ baselineRun: true }));
+  check('returns: nothing is reported on the first reading (baseline)', first.returns, []);
+  check('returns: per-date state is remembered for a ticked show', first.record.perf, { d1: 'sold_out', d2: 'sold_out', d3: 'sold_out' });
+
+  // A sold-out date opens up.
+  const flip = nextRecord(first.record, rd('bookable', perfs(false, true, false)), ctx3());
+  check('returns: a sold-out date that now has tickets is reported', flip.returns.map((p) => p.key), ['d2']);
+  check('returns: it is recorded as available afterwards', flip.record.perf.d2, 'available');
+
+  // No repeat while it stays available.
+  const again = nextRecord(flip.record, rd('bookable', perfs(false, true, false)), ctx3());
+  check('returns: a date that stays available is not reported again', again.returns, []);
+
+  // Sells out then comes back: reported again.
+  const gone = nextRecord(again.record, rd('sold_out', perfs(false, false, false)), ctx3());
+  const back = nextRecord(gone.record, rd('bookable', perfs(false, true, false)), ctx3());
+  check('returns: sells out and returns again is reported again', back.returns.map((p) => p.key), ['d2']);
+
+  // A brand-new date appears on sale.
+  const newDate = nextRecord(back.record, rd('bookable', [...perfs(false, true, false), { key: 'd4', label: '12 Oct 2026, 7.30pm', available: true }]), ctx3());
+  check('returns: a brand-new date on sale is reported', newDate.returns.map((p) => p.key), ['d4']);
+
+  // Shows you have not ticked are never tracked.
+  const unticked = nextRecord(first.record, rd('bookable', perfs(false, true, false)), { ...ctx3(), selection: 'auto' });
+  check('returns: an unticked show reports nothing', unticked.returns, []);
+  check('returns: and its per-date memory is dropped', 'perf' in unticked.record, false);
+
+  // Waiting -> open is the "on sale now" alert's job, not a return.
+  const waiting = nextRecord(null, rd('not_on_sale', []), ctx3({ baselineRun: true }));
+  const opens = nextRecord(waiting.record, rd('bookable', perfs(true, true, true)), ctx3());
+  check('returns: a show opening for the first time is not a "return"', opens.returns, []);
+
+  // A show that was never tracked before being ticked while live: baseline first.
+  const live = nextRecord(null, rd('bookable', perfs(true, false, false)), ctx3({ baselineRun: true }));
+  const tickedLater = nextRecord({ ...live.record, perf: undefined }, rd('bookable', perfs(true, true, false)), ctx3());
+  check('returns: ticking a live show starts from a silent baseline', tickedLater.returns, []);
+
+  // Wording.
+  const rec = { venue: 'National Theatre', title: 'Some Woman', reasons: [], selection: 'on' };
+  const msg = alertMessage('returns', rec, { performances: [{ label: '9 Oct 2026, 7.30pm', price: 51 }, { label: '10 Oct 2026, 7.30pm', price: 45 }] });
+  check('returns message: title', msg.title, 'Tickets back: Some Woman');
+  check('returns message: lists the dates, the cheapest price and why', msg.message.split('\n'), ['National Theatre · 2 dates with tickets: 9 Oct 2026, 7.30pm, 10 Oct 2026, 7.30pm', 'From £45', 'You ticked this show']);
+  const many = alertMessage('returns', rec, { performances: Array.from({ length: 6 }, (_, i) => ({ label: `${i + 1} Nov` })) });
+  check('returns message: long lists are shortened', /and 2 more/.test(many.message), true);
+}
+
 // --- header safety (a title like "Esmé" must not crash the ntfy POST) -----
 {
   check('headerSafe: plain ASCII is untouched', headerSafe('Barbican on sale: Jazz'), 'Barbican on sale: Jazz');
