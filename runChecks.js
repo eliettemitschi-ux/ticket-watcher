@@ -143,6 +143,10 @@ async function runAllChecks(log) {
       logFn(
         `"${event.name}": ${result.length} performance(s)${anyChanged ? ' (changed)' : ''} -> ${updated.status.state}`
       );
+      // A fallback path was used (e.g. the primary API recipe failed): say so,
+      // otherwise a degraded check is invisible in the logs.
+      const fallbackNote = result.find((p) => p.note);
+      if (fallbackNote) logFn(`  note: ${fallbackNote.note}`);
 
       for (const perf of newlyAvailable) {
         const verdict = shouldNotify(perf, updated, settings);

@@ -1244,7 +1244,11 @@
     "url": "https://royalcourttheatre.com/events/man-to-man/",
     "recipe": {
       "mode": "royal-court-api",
-      "eventId": 45811
+      "eventId": 45811,
+      "spektrix": {
+        "client": "royalcourt",
+        "eventId": "118056AKTSMRLCGMVPKPCRQTBNJSGPJQG"
+      }
     },
     "ntfyTopic": "BARBICAN-1999-man-to-man-3ee8",
     "timeFilter": null,
