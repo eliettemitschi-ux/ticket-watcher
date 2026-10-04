@@ -220,6 +220,16 @@ try {
 if (hasOwnerToken) loadOwner(false);
 if (location.hash === '#owner') loadOwner(true);
 
+// A plain, always-works way in: a small "Owner sign-in" link at the bottom of
+// Settings. Anyone can tap it, but without the owner's token it unlocks nothing.
+const ownerSignin = document.getElementById('owner-signin');
+if (ownerSignin && settingsDialog) {
+  ownerSignin.addEventListener('click', () => {
+    settingsDialog.close();
+    loadOwner(true);
+  });
+}
+
 const settingsTitle = document.getElementById('settings-title');
 if (settingsTitle && settingsDialog) {
   let taps = 0;
@@ -227,7 +237,7 @@ if (settingsTitle && settingsDialog) {
   settingsTitle.addEventListener('click', () => {
     taps += 1;
     clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => { taps = 0; }, 1500);
+    tapTimer = setTimeout(() => { taps = 0; }, 2500);
     if (taps >= 5) {
       taps = 0;
       settingsDialog.close();

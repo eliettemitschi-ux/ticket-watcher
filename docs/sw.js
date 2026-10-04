@@ -3,7 +3,7 @@
 // behind a stale cache), falling back to the cache when the network fails or is
 // too slow. Bump CACHE when the shell files change shape.
 
-const CACHE = 'ticket-watcher-v1';
+const CACHE = 'ticket-watcher-v2';
 const SHELL = [
   './',
   './index.html',
@@ -47,7 +47,10 @@ function fetchWithTimeout(request) {
 
 async function networkFirst(request) {
   try {
-    const response = await fetchWithTimeout(request);
+    // cache: 'no-cache' makes the browser re-check with the server instead of
+    // reusing its own 10-minute HTTP cache, so a page update is picked up on
+    // the very next open rather than up to 10 minutes later.
+    const response = await fetchWithTimeout(new Request(request, { cache: 'no-cache' }));
     if (response.ok) {
       const copy = response.clone();
       caches.open(CACHE).then((cache) => cache.put(request, copy));

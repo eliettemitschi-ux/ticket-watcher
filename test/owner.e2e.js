@@ -187,6 +187,31 @@ function fakeGitHub() {
   await page.waitForSelector('#owner-token-input');
   check('gesture: five taps on the Settings title offers to unlock', await page.locator('#owner-token-input').count(), 1);
 
+  // 10. The same two ways in, on a real touch screen (iPhone-style device).
+  const phone = await browser.newContext({
+    viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+  });
+  await phone.route('https://api.github.com/**', gh.handler);
+  const mobile = await phone.newPage();
+  await mobile.goto(BASE, { waitUntil: 'networkidle' });
+  await mobile.tap('#settings-btn');
+  await mobile.waitForSelector('#settings-dialog[open]');
+  await mobile.tap('#owner-signin');
+  await mobile.waitForSelector('#owner-token-input');
+  check('touch: the "Owner sign-in" link opens the unlock prompt', await mobile.locator('#owner-token-input').count(), 1);
+  await mobile.tap('#owner-token-cancel');
+
+  await mobile.tap('#settings-btn');
+  await mobile.waitForSelector('#settings-dialog[open]');
+  for (let i = 0; i < 5; i++) { await mobile.tap('#settings-title'); await mobile.waitForTimeout(350); }
+  await mobile.waitForSelector('#owner-token-input');
+  check('touch: five slow taps on the title also open it (350ms apart)', await mobile.locator('#owner-token-input').count(), 1);
+  await mobile.fill('#owner-token-input', GOOD);
+  await mobile.tap('#owner-token-save');
+  await mobile.waitForSelector('#owner-view:not([hidden])');
+  check('touch: unlocking from the phone shows the scanner tab', await mobile.locator('#owner-tabs button').count(), 2);
+
   check('no script errors anywhere', pageErrors, []);
   await browser.close();
   server.close();

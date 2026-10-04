@@ -409,3 +409,10 @@ input:focus { outline: none; border-color: var(--accent); }
   width: 100%; padding: 10px 12px; margin: 4px 0 8px; border-radius: 10px;
   border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem;
 }
+.owner-link { margin: 18px 0 0; text-align: center; }
+.link-btn {
+  background: none; border: 0; padding: 4px 8px; color: var(--muted); opacity: 0.6;
+  font-size: 0.75rem; text-decoration: underline; cursor: pointer;
+}
+.link-btn:hover { opacity: 1; color: var(--text); }
+.settings-dialog h2 { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
