@@ -333,35 +333,35 @@
     "addedAt": "2026-09-18T21:52:03.045Z",
     "performances": [
       {
-        "label": "Bob Dylan, Thursday 3 December 2026, 8:00pm",
+        "label": "3 December 2026, 8:00pm",
         "state": "sold_out",
         "lastChecked": "2026-10-05T22:07:17.415Z",
         "lastChanged": "2026-10-05T18:27:36.230Z",
         "snippet": "Sold out"
       },
       {
-        "label": "Bob Dylan, Friday 4 December 2026, 8:00pm",
+        "label": "4 December 2026, 8:00pm",
         "state": "sold_out",
         "lastChecked": "2026-10-05T22:07:17.415Z",
         "lastChanged": "2026-10-05T18:27:36.230Z",
         "snippet": "Sold out"
       },
       {
-        "label": "Bob Dylan, Saturday 5 December 2026, 8:00pm",
+        "label": "5 December 2026, 8:00pm",
         "state": "sold_out",
         "lastChecked": "2026-10-05T22:07:17.415Z",
         "lastChanged": "2026-10-05T18:27:36.230Z",
         "snippet": "Sold out"
       },
       {
-        "label": "Bob Dylan, Monday 7 December 2026, 8:00pm",
+        "label": "7 December 2026, 8:00pm",
         "state": "sold_out",
         "lastChecked": "2026-10-05T22:07:17.415Z",
         "lastChanged": "2026-10-05T18:27:36.230Z",
         "snippet": "Sold out"
       },
       {
-        "label": "Bob Dylan, Tuesday 8 December 2026, 8:00pm",
+        "label": "8 December 2026, 8:00pm",
         "state": "sold_out",
         "lastChecked": "2026-10-05T22:07:17.415Z",
         "lastChanged": "2026-10-05T18:27:36.230Z",
@@ -408,7 +408,7 @@
       "lastChecked": "2026-10-05T22:07:17.415Z",
       "lastChanged": "2026-10-02T19:54:20.065Z",
       "lastError": null,
-      "snippet": "10 performances checked"
+      "snippet": "5 performances checked"
     },
     "ntfyTopic": "BARBICAN-1999-bob-dylan-719b"
   },
