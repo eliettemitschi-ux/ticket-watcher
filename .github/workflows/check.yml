@@ -97,6 +97,14 @@ jobs:
         timeout-minutes: 2
         run: node scripts/run-scanner.js
 
+      # Eurostar Snap tickets (see scripts/run-trains.js): notifications only,
+      # state kept in the same private repo.
+      - name: Run Eurostar Snap watcher
+        if: steps.private-data.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 2
+        run: node scripts/run-trains.js
+
       - name: Save scanner data to the private repo
         if: steps.private-data.outcome == 'success'
         continue-on-error: true
@@ -104,8 +112,7 @@ jobs:
         run: |
           git config user.name "ticket-watcher-bot"
           git config user.email "actions@users.noreply.github.com"
-          if [ ! -f scanner.json ]; then exit 0; fi
-          git add scanner.json
+          for f in scanner.json trains.json; do if [ -f "$f" ]; then git add "$f"; fi; done
           git diff --cached --quiet && exit 0
           git commit -m "scan"
           # selections.json is written from the owner's phone (a different

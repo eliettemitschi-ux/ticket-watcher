@@ -1,0 +1,5 @@
+{
+  "routes": [
+    { "id": "london-paris", "name": "London to Paris", "origin": "7015400", "destination": "8727100", "from": "2026-10-19", "to": "2026-10-23" }
+  ]
+}
