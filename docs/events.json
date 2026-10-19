@@ -15,28 +15,28 @@
       {
         "label": "21 Nov 2026, 5pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:10:48.803Z",
+        "lastChecked": "2026-10-19T21:16:00.808Z",
         "lastChanged": "2026-10-19T12:05:53.980Z",
         "snippet": "Sold out"
       },
       {
         "label": "21 Nov 2026, 8.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:10:48.803Z",
+        "lastChecked": "2026-10-19T21:16:00.808Z",
         "lastChanged": "2026-10-19T17:45:52.657Z",
         "snippet": "Sold out"
       },
       {
         "label": "22 Nov 2026, 2pm",
         "state": "available",
-        "lastChecked": "2026-10-19T21:10:48.803Z",
+        "lastChecked": "2026-10-19T21:16:00.808Z",
         "lastChanged": "2026-10-09T09:01:32.118Z",
         "snippet": "Not marked sold out"
       }
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-19T21:10:48.803Z",
+      "lastChecked": "2026-10-19T21:16:00.808Z",
       "lastChanged": "2026-10-19T17:45:52.657Z",
       "lastError": null,
       "snippet": "22 Nov 2026, 2pm: Not marked sold out"
@@ -335,77 +335,77 @@
       {
         "label": "Bob Dylan, Thursday 3 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Bob Dylan, Friday 4 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Bob Dylan, Saturday 5 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Bob Dylan, Monday 7 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Bob Dylan, Tuesday 8 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Exclusive box package: Bob Dylan, Thursday 3 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Exclusive box package: Bob Dylan, Friday 4 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Exclusive box package: Bob Dylan, Saturday 5 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Exclusive box package: Bob Dylan, Monday 7 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       },
       {
         "label": "Exclusive box package: Bob Dylan, Tuesday 8 December 2026, 8:00pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.617Z",
+        "lastChecked": "2026-10-19T21:16:10.043Z",
         "lastChanged": "2026-10-19T00:45:55.236Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-19T21:11:01.617Z",
+      "lastChecked": "2026-10-19T21:16:10.043Z",
       "lastChanged": "2026-10-17T13:36:11.349Z",
       "lastError": null,
       "snippet": "10 performances checked"
@@ -428,35 +428,35 @@
       {
         "label": "29 Nov 2026, 1pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.854Z",
+        "lastChecked": "2026-10-19T21:16:10.733Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.854Z",
+        "lastChecked": "2026-10-19T21:16:10.733Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 3pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.854Z",
+        "lastChecked": "2026-10-19T21:16:10.733Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 4pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:01.854Z",
+        "lastChecked": "2026-10-19T21:16:10.733Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-19T21:11:01.854Z",
+      "lastChecked": "2026-10-19T21:16:10.733Z",
       "lastChanged": null,
       "lastError": null,
       "snippet": "4 performances checked"
@@ -479,14 +479,14 @@
       {
         "label": "7 Nov 2026, 11pm",
         "state": "available",
-        "lastChecked": "2026-10-19T21:11:02.032Z",
+        "lastChecked": "2026-10-19T21:16:10.994Z",
         "lastChanged": "2026-10-19T16:50:59.892Z",
         "snippet": "Not marked sold out"
       }
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-19T21:11:02.032Z",
+      "lastChecked": "2026-10-19T21:16:10.994Z",
       "lastChanged": "2026-10-19T16:50:59.892Z",
       "lastError": null,
       "snippet": "7 Nov 2026, 11pm: Not marked sold out"
@@ -538,14 +538,14 @@
       {
         "label": "Electra/Persona",
         "state": "unknown",
-        "lastChecked": "2026-10-19T21:11:30.959Z",
+        "lastChecked": "2026-10-19T21:16:40.049Z",
         "lastChanged": "2026-10-10T18:02:05.464Z",
         "snippet": "Dates and times for Electra/Persona No results found Please try broadening your search criteria. Footer Information © National Theatre The Royal National Theatr"
       }
     ],
     "status": {
       "state": "unknown",
-      "lastChecked": "2026-10-19T21:11:30.959Z",
+      "lastChecked": "2026-10-19T21:16:40.049Z",
       "lastChanged": "2026-10-10T16:52:23.969Z",
       "lastError": null,
       "snippet": "Dates and times for Electra/Persona No results found Please try broadening your search criteria. Footer Information © National Theatre The Royal National Theatr"
@@ -1077,9 +1077,9 @@
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-19T21:11:33.314Z",
+      "lastChecked": "2026-10-19T21:16:41.018Z",
       "lastChanged": "2026-10-19T17:37:17.274Z",
-      "lastError": null,
+      "lastError": "request to https://ticketing.sohoplace.org/api/consumer/eventinventory/2020466?promoCode=WAC failed, reason: ",
       "snippet": "23 Oct 2026, 7pm: Real seats available, from £47.5"
     }
   },
@@ -1104,56 +1104,56 @@
       {
         "label": "20 Oct 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "21 Oct 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "22 Oct 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "22 Oct 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "23 Oct 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "24 Oct 2026, 1.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "24 Oct 2026, 6.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-19T21:11:34.726Z",
+        "lastChecked": "2026-10-19T21:16:42.182Z",
         "lastChanged": "2026-10-18T08:57:25.638Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-19T21:11:34.726Z",
+      "lastChecked": "2026-10-19T21:16:42.182Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
       "snippet": "7 performances checked"
