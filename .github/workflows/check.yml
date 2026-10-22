@@ -97,13 +97,8 @@ jobs:
         timeout-minutes: 2
         run: node scripts/run-scanner.js
 
-      # Eurostar Snap tickets (see scripts/run-trains.js): notifications only,
-      # state kept in the same private repo.
-      - name: Run Eurostar Snap watcher
-        if: steps.private-data.outcome == 'success'
-        continue-on-error: true
-        timeout-minutes: 2
-        run: node scripts/run-trains.js
+      # Eurostar Snap is watched by the Cloudflare Worker (cron-worker/src/snap.js),
+      # not here: since 13 Oct 2026 Snap answers GitHub's runners with HTTP 403.
 
       - name: Save scanner data to the private repo
         if: steps.private-data.outcome == 'success'
@@ -112,7 +107,7 @@ jobs:
         run: |
           git config user.name "ticket-watcher-bot"
           git config user.email "actions@users.noreply.github.com"
-          for f in scanner.json trains.json; do if [ -f "$f" ]; then git add "$f"; fi; done
+          for f in scanner.json; do if [ -f "$f" ]; then git add "$f"; fi; done
           git diff --cached --quiet && exit 0
           git commit -m "scan"
           # selections.json is written from the owner's phone (a different

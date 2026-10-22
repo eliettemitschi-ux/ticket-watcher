@@ -232,6 +232,66 @@
       </div>`;
   }
 
+  // --- Trains (Eurostar Snap) ------------------------------------------------
+  // Trips live in snap-trips.json: { trips: [{ id, out: [dates], back: [dates] }] }.
+  // "out" is London to Paris, "back" Paris to London. The Cloudflare Worker
+  // (cron-worker/src/snap.js) checks them every 5 minutes and writes what it
+  // saw to snap-state.json.
+
+  const ROUTE_OF = { out: 'london-paris', back: 'paris-london' };
+  const WATCHER_SILENT_MS = 7 * 60 * 60 * 1000; // it reports at least every 6h
+
+  const fmtDate = (iso) => fmtDay(`${iso}T12:00:00Z`);
+
+  function addDateTo(dates, date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return dates;
+    return Array.from(new Set([...dates, date])).sort();
+  }
+
+  // Trips with at least one date still to come.
+  function liveTrips(trips, today) {
+    return (trips || []).filter((t) => [...(t.out || []), ...(t.back || [])].some((d) => d >= today));
+  }
+
+  function dateStatus(snapState, leg, date) {
+    const route = snapState && snapState.routes && snapState.routes[ROUTE_OF[leg]];
+    const day = route && route.days && route.days[date];
+    if (!day) return { cls: 'unknown', text: 'Not checked yet' };
+    if (day.price === null) return { cls: 'pending', text: 'No Snap tickets yet' };
+    const n = (day.slots || []).length;
+    return { cls: 'available', text: `From £${day.price}${n ? ` · ${n} time window${n === 1 ? '' : 's'}` : ''}` };
+  }
+
+  function legLines(trip, leg, snapState, today) {
+    return (trip[leg] || [])
+      .map((date) => {
+        if (date < today) return `<div class="event-meta trip-past">${fmtDate(date)} · gone</div>`;
+        const s = dateStatus(snapState, leg, date);
+        return `<div class="event-meta">${fmtDate(date)} <span class="badge ${s.cls}">${s.text}</span></div>`;
+      })
+      .join('');
+  }
+
+  function tripCard(trip, snapState, today) {
+    const leg = (name, label) => ((trip[name] || []).length ? `<p class="event-venue trip-leg">${label}</p>${legLines(trip, name, snapState, today)}` : '');
+    return `
+      <div class="event-card">
+        <div class="event-main">
+          ${leg('out', 'London → Paris')}
+          ${leg('back', 'Paris → London')}
+          <button type="button" class="settings-btn trip-remove" data-trip-remove="${escapeHtml(trip.id)}">Stop watching</button>
+        </div>
+      </div>`;
+  }
+
+  // One line on whether the watcher itself is healthy.
+  function watcherLine(snapState, nowMs) {
+    if (!snapState || !snapState.checkedAt) return "The watcher hasn't reported yet. It checks every 5 minutes.";
+    if (snapState.blocked) return `⚠️ Snap has been refusing checks since ${fmtDay(snapState.blocked.since)}, ${fmtTime(snapState.blocked.since)}. Alerts may be missed.`;
+    if (nowMs - new Date(snapState.checkedAt).getTime() > WATCHER_SILENT_MS) return `⚠️ No report from the watcher since ${timeAgo(snapState.checkedAt, nowMs)}. It may have stopped.`;
+    return `Watcher OK · checks every 5 minutes · last update ${timeAgo(snapState.checkedAt, nowMs)}`;
+  }
+
   // Turns what GitHub answered into a plain-English reason, or null if the
   // token is fine. repoStatus / fileStatus are HTTP codes (null = no answer).
   function diagnoseToken(token, repoStatus, fileStatus) {
@@ -249,6 +309,7 @@
     diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, statusOf, watchLabel,
     matchesQuery, filterRecords, groupRecords, sortKey, utf8ToBase64, base64ToUtf8, opensLine,
     watchingCard, compactRow, openedCard,
+    addDateTo, liveTrips, dateStatus, tripCard, watcherLine,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
@@ -277,26 +338,34 @@
     return res;
   }
 
-  async function readSelections() {
-    const res = await gh('/contents/selections.json');
-    if (res.status === 404) return { selections: {}, sha: null };
+  // A JSON file in the private repo, with the sha needed to save it back.
+  async function readJsonFile(name, fallback) {
+    const res = await gh(`/contents/${name}`);
+    if (res.status === 404) return { data: fallback, sha: null };
     if (!res.ok) throw Object.assign(new Error(`GitHub said ${res.status}`), { status: res.status });
     const file = await res.json();
-    return { selections: JSON.parse(base64ToUtf8(file.content) || '{}'), sha: file.sha };
+    return { data: JSON.parse(base64ToUtf8(file.content) || 'null') || fallback, sha: file.sha };
   }
 
-  async function writeSelections(selections, sha) {
-    const res = await gh('/contents/selections.json', {
+  async function writeJsonFile(name, data, sha, message) {
+    const res = await gh(`/contents/${name}`, {
       method: 'PUT',
       body: {
-        message: 'Update alert selections',
-        content: utf8ToBase64(JSON.stringify(selections, null, 2) + '\n'),
+        message,
+        content: utf8ToBase64(JSON.stringify(data, null, 2) + '\n'),
         ...(sha ? { sha } : {}),
       },
     });
     if (!res.ok) throw Object.assign(new Error(`GitHub said ${res.status}`), { status: res.status });
     return (await res.json()).content.sha;
   }
+
+  async function readSelections() {
+    const { data, sha: fileSha } = await readJsonFile('selections.json', {});
+    return { selections: data, sha: fileSha };
+  }
+
+  const writeSelections = (selections, fileSha) => writeJsonFile('selections.json', selections, fileSha, 'Update alert selections');
 
   // Applies one tick against the freshest copy of selections.json, retrying
   // once if it changed underneath us (e.g. a tick from another device).
@@ -321,7 +390,7 @@
       dlg.className = 'settings-dialog';
       dlg.innerHTML = `
         <h2>Owner access</h2>
-        <p>Paste your access token to unlock the private Scanner tab on this device.</p>
+        <p>Paste your access token to unlock the private Scanner and Trains tabs on this device.</p>
         <input type="password" id="owner-token-input" class="owner-input" placeholder="github_pat_…" autocomplete="off" autocapitalize="off" spellcheck="false" />
         <p class="hint" id="owner-token-msg"></p>
         <button type="button" class="install-btn" id="owner-token-save">Unlock</button>
@@ -374,7 +443,7 @@
     const nav = document.createElement('nav');
     nav.id = 'owner-tabs';
     nav.className = 'owner-tabs';
-    nav.innerHTML = '<button type="button" data-tab="watchlist" class="active">Watchlist</button><button type="button" data-tab="scanner">Scanner</button>';
+    nav.innerHTML = '<button type="button" data-tab="watchlist" class="active">Watchlist</button><button type="button" data-tab="scanner">Scanner</button><button type="button" data-tab="trains">Trains</button>';
     document.querySelector('header').insertAdjacentElement('afterend', nav);
 
     const section = document.createElement('section');
@@ -398,6 +467,29 @@
       <section id="owner-opened"></section>
       <p class="hint"><button type="button" class="settings-btn" id="owner-lock">Lock this device</button></p>`;
     nav.insertAdjacentElement('afterend', section);
+
+    const trains = document.createElement('section');
+    trains.id = 'owner-trains';
+    trains.className = 'owner-view';
+    trains.hidden = true;
+    trains.innerHTML = `
+      <p class="subtitle" id="trains-status">Loading…</p>
+      <p class="hint" id="trains-msg"></p>
+      <h2 class="section-title">Add a trip</h2>
+      <p class="hint">Add every date you could travel on. You get an alert when Snap tickets appear on any of them, when a new time window opens, or when the price drops. Alerts go to your BARBICAN-1999-trains channel in ntfy.</p>
+      <div class="trip-form">
+        <p class="event-venue trip-leg">London → Paris</p>
+        <div class="trip-date-row"><input type="date" id="trip-out-date" class="owner-input" aria-label="London to Paris date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>
+        <div class="chips" id="trip-out-chips"></div>
+        <p class="event-venue trip-leg">Paris → London</p>
+        <div class="trip-date-row"><input type="date" id="trip-back-date" class="owner-input" aria-label="Paris to London date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
+        <div class="chips" id="trip-back-chips"></div>
+        <button type="button" class="install-btn" id="trip-save">Start watching</button>
+      </div>
+      <h2 class="section-title">Watching <span class="count" id="trips-count"></span></h2>
+      <section id="trips-list"></section>`;
+    section.insertAdjacentElement('afterend', trains);
+    trains.addEventListener('click', onTrainsClick);
 
     nav.addEventListener('click', (e) => {
       const tab = e.target.closest('button[data-tab]');
@@ -426,14 +518,16 @@
   }
 
   function showTab(name) {
-    const scanner = name === 'scanner';
+    const ownerTab = name !== 'watchlist';
     document.querySelectorAll('#owner-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
-    $('owner-view').hidden = !scanner;
+    $('owner-view').hidden = name !== 'scanner';
+    $('owner-trains').hidden = name !== 'trains';
     const note = document.querySelector('.golden-note');
     const main = document.querySelector('main');
-    if (note) note.hidden = scanner;
-    if (main) main.hidden = scanner;
-    if (scanner) refresh();
+    if (note) note.hidden = ownerTab;
+    if (main) main.hidden = ownerTab;
+    if (name === 'scanner') refresh();
+    if (name === 'trains') refreshTrains();
   }
 
   function setMessage(text, isError) {
@@ -510,6 +604,106 @@
     render();
   }
 
+  // --- The Trains tab -------------------------------------------------------
+
+  let trips = [];
+  let snapState = null;
+  const draft = { out: [], back: [] };
+
+  const londonToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
+
+  function setTrainsMessage(text, isError) {
+    const el = $('trains-msg');
+    el.textContent = text || '';
+    el.className = `hint${isError ? ' error' : ''}`;
+  }
+
+  function renderTrains() {
+    const today = londonToday();
+    for (const leg of ['out', 'back']) {
+      $(`trip-${leg}-date`).min = today;
+      $(`trip-${leg}-chips`).innerHTML = draft[leg]
+        .map((d) => `<button type="button" class="chip active" data-unadd-${leg}="${d}" aria-label="Remove ${fmtDate(d)}">${fmtDate(d)} ✕</button>`)
+        .join('');
+    }
+    $('trip-save').disabled = !draft.out.length && !draft.back.length;
+    $('trains-status').textContent = watcherLine(snapState, Date.now());
+    const live = liveTrips(trips, today);
+    $('trips-count').textContent = `(${live.length})`;
+    $('trips-list').innerHTML = live.length
+      ? live.map((t) => tripCard(t, snapState, today)).join('')
+      : '<div class="empty-state">No trips watched. Add one above.</div>';
+  }
+
+  async function refreshTrains() {
+    try {
+      const [t, s] = await Promise.all([readJsonFile('snap-trips.json', { trips: [] }), gh('/contents/snap-state.json', { raw: true })]);
+      if (s.status === 401 || s.status === 403) throw Object.assign(new Error('rejected'), { status: s.status });
+      trips = t.data.trips || [];
+      snapState = s.status === 404 ? null : s.ok ? await s.json() : snapState;
+      setTrainsMessage('', false);
+    } catch (err) {
+      setTrainsMessage(err.status === 401 || err.status === 403
+        ? 'Your token was rejected. Lock this device and unlock again with a new one.'
+        : `Couldn't refresh (${err.message}). Showing the last data.`, true);
+    }
+    renderTrains();
+  }
+
+  // Applies one change to the freshest copy of snap-trips.json (dropping trips
+  // that are over), retrying once if it changed underneath us.
+  async function saveTrips(change) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { data, sha: fileSha } = await readJsonFile('snap-trips.json', { trips: [] });
+      const next = liveTrips(change(data.trips || []), londonToday());
+      try {
+        await writeJsonFile('snap-trips.json', { trips: next }, fileSha, 'Update Snap trips');
+        return next;
+      } catch (err) {
+        if (attempt === 1 || (err.status !== 409 && err.status !== 422)) throw err;
+      }
+    }
+    return null;
+  }
+
+  async function onTrainsClick(event) {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.add) {
+      const input = $(`trip-${btn.dataset.add}-date`);
+      if (input.value && input.value < londonToday()) { setTrainsMessage('That date has already gone.', true); return; }
+      draft[btn.dataset.add] = addDateTo(draft[btn.dataset.add], input.value);
+      input.value = '';
+      setTrainsMessage('', false);
+    } else if (btn.dataset.unaddOut || btn.dataset.unaddBack) {
+      const leg = btn.dataset.unaddOut ? 'out' : 'back';
+      draft[leg] = draft[leg].filter((d) => d !== (btn.dataset.unaddOut || btn.dataset.unaddBack));
+    } else if (btn.id === 'trip-save') {
+      const trip = { id: `t${Date.now().toString(36)}`, out: draft.out, back: draft.back, addedAt: new Date().toISOString() };
+      setTrainsMessage('Saving…', false);
+      btn.disabled = true;
+      try {
+        trips = await saveTrips((list) => [...list, trip]);
+        draft.out = [];
+        draft.back = [];
+        setTrainsMessage('Watching. The first check runs within about 5 minutes.', false);
+      } catch (err) {
+        setTrainsMessage(`Couldn't save the trip (${err.message}). Nothing was changed.`, true);
+      }
+    } else if (btn.dataset.tripRemove) {
+      setTrainsMessage('Saving…', false);
+      try {
+        trips = await saveTrips((list) => list.filter((t) => t.id !== btn.dataset.tripRemove));
+        setTrainsMessage('Stopped watching that trip.', false);
+      } catch (err) {
+        setTrainsMessage(`Couldn't remove it (${err.message}). Nothing was changed.`, true);
+      }
+    } else {
+      return;
+    }
+    renderTrains();
+  }
+
   function lock() {
     setToken(null);
     if (timer) clearInterval(timer);
@@ -525,7 +719,10 @@
     }
     started = true;
     buildChrome();
-    timer = setInterval(() => { if (!$('owner-view').hidden) refresh(); }, REFRESH_MS);
+    timer = setInterval(() => {
+      if (!$('owner-view').hidden) refresh();
+      if (!$('owner-trains').hidden) refreshTrains();
+    }, REFRESH_MS);
     showTab('scanner');
   }
 

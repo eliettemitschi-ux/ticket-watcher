@@ -68,7 +68,7 @@ async function until(fn, ms = 8000) {
 
 // Fake GitHub: private repo contents + a log of every request.
 function fakeGitHub() {
-  const gh = { store: null, sha: 0, puts: [], requests: [], rejectAll: false };
+  const gh = { store: null, sha: 0, puts: [], requests: [], rejectAll: false, trips: null, tripPuts: [], snapState: null };
   gh.handler = async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -96,6 +96,20 @@ function fakeGitHub() {
       gh.sha += 1;
       gh.puts.push({ saved: JSON.parse(gh.store), sentSha: body.sha || null });
       return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ content: { sha: `sha${gh.sha}` } }) });
+    }
+    if (p === '/contents/snap-state.json') {
+      if (!gh.snapState) return route.fulfill({ status: 404, headers: cors, body: '{"message":"Not Found"}' });
+      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(gh.snapState) });
+    }
+    if (p === '/contents/snap-trips.json' && req.method() === 'GET') {
+      if (!gh.trips) return route.fulfill({ status: 404, headers: cors, body: '{"message":"Not Found"}' });
+      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ sha: `t${gh.tripPuts.length}`, content: Buffer.from(gh.trips).toString('base64') }) });
+    }
+    if (p === '/contents/snap-trips.json' && req.method() === 'PUT') {
+      const body = JSON.parse(req.postData());
+      gh.trips = Buffer.from(body.content, 'base64').toString('utf8');
+      gh.tripPuts.push({ saved: JSON.parse(gh.trips), sentSha: body.sha || null });
+      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ content: { sha: `t${gh.tripPuts.length}` } }) });
     }
     return route.fulfill({ status: 404, headers: cors, body: '{}' });
   };
@@ -207,7 +221,7 @@ function fakeGitHub() {
   // 5. Persistence: a reload keeps the device unlocked and shows the saved ticks.
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('#owner-tabs');
-  check('reload: the tabs are back without unlocking again', await page.locator('#owner-tabs button').count(), 2);
+  check('reload: the tabs are back without unlocking again', await page.locator('#owner-tabs button').count(), 3);
   await page.click('#owner-tabs button[data-tab="scanner"]');
   await page.waitForSelector('#owner-watching .event-card');
   check('reload: the saved tick is still in Watching', await watchingTitles(), ['Flagged Show', 'Plain Show']);
@@ -224,6 +238,49 @@ function fakeGitHub() {
   check('failed save: a message is shown', await page.locator('#owner-msg').textContent().then((t) => /Nothing was changed/.test(t)), true);
   check('failed save: the show goes back to Watching, ticked', await watchingTitles(), ['Flagged Show', 'Plain Show']);
   check('failed save: nothing was written', gh.puts.length, putsBefore);
+
+  // 6b. The Trains tab: add a trip, see what the watcher saw, stop watching.
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+  const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
+  const [out1, out2, back1] = [plus(14), plus(15), plus(18)];
+  gh.trips = JSON.stringify({ trips: [{ id: 'old', out: ['2020-01-01'], back: [] }] }); // a finished trip
+  gh.snapState = { checkedAt: iso(-180000), routes: { 'london-paris': { days: { [out1]: { price: 39, slots: [{ window: '06:01-13:00', price: 39 }] }, [out2]: { price: null, slots: [] } } } } };
+  await page.click('#owner-tabs button[data-tab="trains"]');
+  await page.waitForSelector('#owner-trains:not([hidden])');
+  await until(async () => /Watcher OK/.test(await page.locator('#trains-status').textContent()));
+  check('trains: the watcher status line shows it is healthy', /last update 3m ago/.test(await page.locator('#trains-status').textContent()), true);
+  check('trains: the scanner and the watchlist are hidden', [await page.locator('#owner-view').isHidden(), await page.locator('main').isHidden()], [true, true]);
+  check('trains: a finished trip is not listed', await page.locator('#trips-list .empty-state').count(), 1);
+  check('trains: "Start watching" is off until a date is added', await page.locator('#trip-save').isDisabled(), true);
+  await page.fill('#trip-out-date', out2);
+  await page.click('button[data-add="out"]');
+  await page.fill('#trip-out-date', out1);
+  await page.click('button[data-add="out"]');
+  await page.fill('#trip-back-date', back1);
+  await page.click('button[data-add="back"]');
+  check('trains: added dates show as chips, in date order', await page.locator('#trip-out-chips .chip').count(), 2);
+  await page.fill('#trip-out-date', '2020-01-01');
+  await page.click('button[data-add="out"]');
+  check('trains: a past date is refused', /already gone/.test(await page.locator('#trains-msg').textContent()), true);
+  await page.click('#trip-save');
+  await until(() => gh.tripPuts.length === 1);
+  const savedTrip = gh.tripPuts[0].saved.trips;
+  check('trains: one trip saved with both directions, finished trips dropped', savedTrip.map((t) => [t.out, t.back]), [[[out1, out2], [back1]]]);
+  check('trains: the save quotes the file version it read', gh.tripPuts[0].sentSha, 't0');
+  await until(async () => (await page.locator('#trips-list .event-card').count()) === 1);
+  const cardText = await page.locator('#trips-list .event-card').textContent();
+  check('trains: the card shows what the watcher saw for each date', [/From £39 · 1 time window/.test(cardText), /No Snap tickets yet/.test(cardText), /Not checked yet/.test(cardText)], [true, true, true]);
+  check('trains: the form is cleared after saving', await page.locator('#trip-out-chips .chip').count(), 0);
+  await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-trains.png'), fullPage: true });
+  await page.click('button[data-trip-remove]');
+  await until(() => gh.tripPuts.length === 2);
+  check('trains: "Stop watching" removes the trip', gh.tripPuts[1].saved, { trips: [] });
+  await until(async () => (await page.locator('#trips-list .empty-state').count()) === 1);
+  gh.snapState = { ...gh.snapState, blocked: { since: iso(-3600000), alerted: true } };
+  await page.click('#owner-tabs button[data-tab="scanner"]');
+  await page.click('#owner-tabs button[data-tab="trains"]');
+  await until(async () => /refusing checks/.test(await page.locator('#trains-status').textContent()));
+  check('trains: a blocked watcher shows a warning', true, true);
 
 
   // 7. A rejected token (expired / revoked).
@@ -273,7 +330,7 @@ function fakeGitHub() {
   await mobile.fill('#owner-token-input', GOOD);
   await mobile.tap('#owner-token-save');
   await mobile.waitForSelector('#owner-view:not([hidden])');
-  check('touch: unlocking from the phone shows the scanner tab', await mobile.locator('#owner-tabs button').count(), 2);
+  check('touch: unlocking from the phone shows the scanner tab', await mobile.locator('#owner-tabs button').count(), 3);
 
   check('no script errors anywhere', pageErrors, []);
   await browser.close();

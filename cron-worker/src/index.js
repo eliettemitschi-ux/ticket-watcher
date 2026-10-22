@@ -12,6 +12,11 @@
 // already uses locally (scopes: repo, workflow), reused rather than
 // minting a brand new one, since it already has exactly the access
 // this needs and already lives on this same machine.
+//
+// The same 5-minute tick also runs the Eurostar Snap watcher (snap.js),
+// separately, so a failure in one never stops the other.
+
+import { runSnap } from './snap.js';
 
 const OWNER = 'eliettemitschi-ux';
 const REPO = 'ticket-watcher';
@@ -46,12 +51,28 @@ export default {
         .then(() => console.log('Triggered check.yml successfully.'))
         .catch((err) => console.error('Failed to trigger check.yml:', err.message))
     );
+    ctx.waitUntil(
+      runSnap(env)
+        .then((r) => console.log(`Snap: ${r.blocked ? 'blocked' : 'ok'}, ${r.sent} alert(s)${r.saved ? ', saved' : ''}`))
+        .catch((err) => console.error('Snap watcher failed:', err.message))
+    );
   },
 
   // A plain GET lets you manually trigger a run (or just sanity-check
   // the Worker is deployed and reachable) by visiting the Worker's own
   // URL in a browser -- not required for normal operation, just handy.
   async fetch(request, env) {
+    // /snap runs one Snap check now. It answers with counts only, so the
+    // public URL never reveals which dates you're watching.
+    if (new URL(request.url).pathname === '/snap') {
+      try {
+        const r = await runSnap(env);
+        const dates = r.watched['london-paris'].length + r.watched['paris-london'].length;
+        return Response.json({ datesWatched: dates, blocked: r.blocked, alertsSent: r.sent });
+      } catch (err) {
+        return new Response(`Snap failed: ${err.message}\n`, { status: 500 });
+      }
+    }
     try {
       await triggerCheck(env);
       return new Response('Triggered check.yml successfully.\n');

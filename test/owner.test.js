@@ -118,6 +118,36 @@ for (const [name, html] of [['card', owner.watchingCard(nasty, {}, Date.now())],
   check(`markup (${name}): a non-https link is neutralised`, html.includes('javascript:'), false);
 }
 
+// --- Trains tab ---------------------------------------------------------------
+check('trains: adding dates keeps them sorted and unique', owner.addDateTo(owner.addDateTo(['2026-11-06'], '2026-11-05'), '2026-11-06'), ['2026-11-05', '2026-11-06']);
+check('trains: an empty or malformed date is ignored', [owner.addDateTo(['2026-11-05'], ''), owner.addDateTo([], '5 Nov')], [['2026-11-05'], []]);
+
+const trip = { id: 't1', out: ['2026-11-05', '2026-11-06'], back: ['2026-11-09', '2026-11-10'] };
+const gone = { id: 't0', out: ['2026-10-01'], back: [] };
+check('trains: a trip with any date to come is live, a finished one is not', owner.liveTrips([gone, trip], '2026-11-07').map((t) => t.id), ['t1']);
+
+const snapState = {
+  checkedAt: '2026-10-22T09:00:00Z',
+  routes: {
+    'london-paris': { days: { '2026-11-05': { price: null, slots: [] }, '2026-11-06': { price: 45, slots: [{ window: '06:01-13:00', price: 45 }, { window: '13:00-20:01', price: 55 }] } } },
+  },
+};
+check('trains: a date with tickets shows the price and windows', owner.dateStatus(snapState, 'out', '2026-11-06'), { cls: 'available', text: 'From £45 · 2 time windows' });
+check('trains: a date checked with none says so', owner.dateStatus(snapState, 'out', '2026-11-05'), { cls: 'pending', text: 'No Snap tickets yet' });
+check('trains: a date the watcher has not seen yet says so', owner.dateStatus(snapState, 'back', '2026-11-09'), { cls: 'unknown', text: 'Not checked yet' });
+const card = owner.tripCard(trip, snapState, '2026-11-06');
+check('trains: card shows both directions', [card.includes('London → Paris'), card.includes('Paris → London')], [true, true]);
+check('trains: a date already gone is greyed, not given a status', card.includes('Thu 5 Nov · gone'), true);
+check('trains: card has a remove button for that trip', card.includes('data-trip-remove="t1"'), true);
+check('trains: a one-way trip shows only its direction', owner.tripCard({ id: 't2', out: ['2026-11-05'], back: [] }, null, '2026-10-22').includes('Paris → London'), false);
+check('trains: a hostile trip id is escaped', owner.tripCard({ id: '"><img src=x>', out: ['2026-11-05'] }, null, '2026-10-22').includes('<img'), false);
+
+const now = Date.parse('2026-10-22T10:00:00Z');
+check('watcher: healthy', owner.watcherLine(snapState, now), 'Watcher OK · checks every 5 minutes · last update 1h ago');
+check('watcher: never ran', owner.watcherLine(null, now), "The watcher hasn't reported yet. It checks every 5 minutes.");
+check('watcher: blocked is a warning', owner.watcherLine({ ...snapState, blocked: { since: '2026-10-22T08:30:00Z' } }, now).startsWith('⚠️ Snap has been refusing checks since Thu 22 Oct, 9:30am'), true);
+check('watcher: silent for over 7 hours is a warning', owner.watcherLine({ ...snapState, checkedAt: '2026-10-22T01:00:00Z' }, now).startsWith('⚠️ No report from the watcher'), true);
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);

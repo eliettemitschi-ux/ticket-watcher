@@ -435,3 +435,15 @@ input:focus { outline: none; border-color: var(--accent); }
 .owner-row-title:hover { color: var(--accent); }
 .owner-row-sub { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
 .owner-row-sub .badge { font-size: 0.68rem; padding: 2px 8px; margin-left: 2px; }
+
+/* --- Owner trains: add-a-trip form and trip cards --- */
+.trip-form { border: 1px solid var(--border); border-radius: 14px; background: var(--panel); padding: 12px 14px; }
+.trip-leg { margin: 8px 0 4px; font-weight: 600; color: var(--text); }
+.trip-date-row { display: flex; gap: 8px; align-items: center; }
+.trip-date-row .owner-input { flex: 1; min-width: 0; margin: 0; }
+.trip-date-row .chip { flex: none; padding: 8px 12px; }
+.trip-form .chips { margin: 8px 0 4px; }
+.trip-form .install-btn { margin-top: 10px; }
+.trip-form .install-btn:disabled { opacity: 0.5; cursor: default; }
+.trip-past { opacity: 0.5; }
+.trip-remove { margin-top: 12px; }

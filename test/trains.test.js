@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSearchHtml, searchUrl } = require('../trains/snap');
-const { centersFor, diffDays } = require('../trains/diff');
+const { watchedDates, centersForDates, diffDays, alertText, ROUTES } = require('../trains/diff');
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -28,11 +28,20 @@ check('page: a blocked / unrelated page is "no strip", never "no tickets"', pars
 check('page: the year follows the chosen day across New Year', parseSearchHtml(html.replace(/Mon, 19 Oct/g, 'Mon, 29 Dec'), '2026-12-30').days.some((d) => d.date === '2026-12-29'), true);
 check('url: has the stations, the date and one adult', searchUrl({ origin: '7015400', destination: '8727100' }, '2026-10-21'), 'https://snap.eurostar.com/uk-en/search?adult=1&origin=7015400&destination=8727100&outbound=2026-10-21&outslot=13%3A00');
 
+// Which dates to watch, from the trips added in the Trains tab.
+const trips = [
+  { id: 't1', out: ['2026-11-06', '2026-11-05'], back: ['2026-11-09', '2026-11-10'] },
+  { id: 't2', out: ['2026-11-05', '2026-10-01', 'nonsense'], back: [] },
+];
+check('watch: out is London to Paris, back is Paris to London, sorted and unique', watchedDates(trips, '2026-10-22'), { 'london-paris': ['2026-11-05', '2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'] });
+check('watch: past dates are dropped', watchedDates(trips, '2026-11-06'), { 'london-paris': ['2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'] });
+check('watch: no trips, nothing to watch', watchedDates(undefined, '2026-10-22'), { 'london-paris': [], 'paris-london': [] });
+
 // Which dates to ask about: one request covers the chosen day plus two either side.
-check('centers: Mon to Fri needs one request, centred on Wednesday', centersFor('2026-10-19', '2026-10-23', '2026-10-16'), ['2026-10-21']);
-check('centers: a 10-day range needs two', centersFor('2026-10-19', '2026-10-28', '2026-10-16'), ['2026-10-21', '2026-10-26']);
-check('centers: days already past are skipped', centersFor('2026-10-19', '2026-10-23', '2026-10-22'), ['2026-10-24']);
-check('centers: a finished range needs none', centersFor('2026-10-19', '2026-10-23', '2026-10-30'), []);
+check('centers: two days next to each other need one request', centersForDates(['2026-11-05', '2026-11-06']), ['2026-11-07']);
+check('centers: dates up to 4 days apart share a request', centersForDates(['2026-11-05', '2026-11-09']), ['2026-11-07']);
+check('centers: dates 5 days apart need two', centersForDates(['2026-11-10', '2026-11-05']), ['2026-11-07', '2026-11-12']);
+check('centers: no dates, no requests', centersForDates([]), []);
 
 // What counts as "new tickets".
 const mon = { price: 75, slots: [{ window: '06:01-13:00', price: 85 }, { window: '13:00-20:01', price: 75 }] };
@@ -51,6 +60,22 @@ check('diff: a day that was already on sale is not reported again', diffDays({ .
 const a3 = diffDays(before, { ...before, '2026-10-20': tue, '2026-10-21': tue });
 check('diff: several new days give one alert each, in date order', a3.map((a) => a.date), ['2026-10-20', '2026-10-21']);
 check('diff: a day that sold out and came back is reported again', diffDays({ ...before, '2026-10-20': none }, { ...before, '2026-10-20': tue }).length, 1);
+check('diff: an empty previous ({}) reports tickets already on sale', diffDays({}, { '2026-10-19': mon }).map((a) => a.kind), ['day']);
+const cheaper = { price: 60, slots: [{ window: '06:01-13:00', price: 85 }, { window: '13:00-20:01', price: 60 }] };
+const a4 = diffDays(before, { ...before, '2026-10-19': cheaper });
+check('diff: a lower price on a day already on sale is a drop', a4.map((a) => [a.date, a.kind, a.price, a.was]), [['2026-10-19', 'drop', 60, 75]]);
+check('diff: a higher price is not an alert', diffDays(before, { ...before, '2026-10-19': { ...mon, price: 90 } }), []);
+const a5 = diffDays(
+  { ...before, '2026-10-19': { price: 75, slots: [{ window: '13:00-20:01', price: 75 }] } },
+  { ...before, '2026-10-19': { price: 60, slots: [{ window: '06:01-13:00', price: 60 }, { window: '13:00-20:01', price: 75 }] } },
+);
+check('diff: a new window that is also cheaper gives one alert, as a new window', a5.map((a) => a.kind), ['slot']);
+
+// What the notification says.
+const lp = ROUTES['london-paris'];
+check('text: tickets appearing', alertText(lp, a1[0]), { title: 'Snap London to Paris: Tue 20 Oct has tickets', message: '£85 (06:01 to 13:00)\nSnap trains are confirmed 48 hours before travel.' });
+check('text: a price drop says what it was', `${alertText(lp, a4[0]).title} | ${alertText(lp, a4[0]).message.split('\n')[0]}`, 'Snap London to Paris: Mon 19 Oct is now £60 | was £75 · £85 (06:01 to 13:00), £60 (13:00 to 20:01)');
+check('text: a new window lists only the new one', alertText(ROUTES['paris-london'], a2[0]).title, 'Snap Paris to London: Mon 19 Oct has a new time window');
 
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }
 console.log('\nAll trains tests passed.');

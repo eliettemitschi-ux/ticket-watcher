@@ -20,3 +20,8 @@ compatibility_date = "2026-09-01"
 
 [triggers]
 crons = ["*/5 * * * *"]
+
+# Where Eurostar Snap alerts go (see src/snap.js). Not a secret: ntfy topics
+# are open to anyone who knows the name.
+[vars]
+NTFY_TRAINS_TOPIC = "BARBICAN-1999-trains"
