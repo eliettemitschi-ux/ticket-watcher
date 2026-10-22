@@ -22,7 +22,7 @@ const BLOCKED_ALERT_AFTER_MS = 30 * 60 * 1000;
 // a heartbeat so the Trains tab can tell the watcher is still alive.
 const HEARTBEAT_MS = 6 * 60 * 60 * 1000;
 
-const todayLondon = (now) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(now);
+export const todayLondon = (now) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(now);
 
 function ghHeaders(env, raw) {
   return {
@@ -34,7 +34,7 @@ function ghHeaders(env, raw) {
 }
 
 // Returns { data, sha }, or { data: fallback, sha: null } if the file doesn't exist yet.
-async function readJson(env, file, fallback) {
+export async function readJson(env, file, fallback) {
   const res = await fetch(`${PRIVATE_API}/${file}`, { headers: ghHeaders(env, false) });
   if (res.status === 404) return { data: fallback, sha: null };
   if (!res.ok) throw new Error(`GitHub ${file}: ${res.status}`);
@@ -43,7 +43,7 @@ async function readJson(env, file, fallback) {
   return { data: JSON.parse(new TextDecoder().decode(bytes) || 'null') || fallback, sha: meta.sha };
 }
 
-async function writeJson(env, file, data, sha, message) {
+export async function writeJson(env, file, data, sha, message) {
   const bytes = new TextEncoder().encode(JSON.stringify(data, null, 2) + '\n');
   const content = btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''));
   const res = await fetch(`${PRIVATE_API}/${file}`, {

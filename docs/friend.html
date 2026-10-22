@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0d0f14" />
+  <title>Snap train alerts</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Snap train alerts</h1>
+    <p class="subtitle" id="status">Loading…</p>
+  </header>
+
+  <div class="owner-view" id="friend-view" hidden>
+    <p class="hint" id="msg" role="status"></p>
+
+    <h2 class="section-title">Add dates</h2>
+    <p class="hint">Add every date you could travel on. You get a notification when Eurostar Snap tickets appear on any of them, when a new time window opens, or when the price drops.</p>
+    <div class="trip-form">
+      <p class="event-venue trip-leg">London → Paris</p>
+      <div class="trip-date-row"><input type="date" id="out-date" class="owner-input" aria-label="London to Paris date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>
+      <div class="chips" id="out-chips"></div>
+      <p class="event-venue trip-leg">Paris → London</p>
+      <div class="trip-date-row"><input type="date" id="back-date" class="owner-input" aria-label="Paris to London date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
+      <div class="chips" id="back-chips"></div>
+      <button type="button" class="install-btn" id="save">Start watching</button>
+    </div>
+
+    <h2 class="section-title">Watching <span class="count" id="count"></span></h2>
+    <section id="trips"></section>
+
+    <h2 class="section-title">Getting the alerts</h2>
+    <p class="hint">Alerts arrive in the free <strong>ntfy</strong> app. Subscribe to <code id="topic">…</code> there. Eliette's guide has the steps.</p>
+  </div>
+
+  <div class="owner-view" id="no-key" hidden>
+    <div class="empty-state">This page needs your personal link. Open the link Eliette sent you, or ask her for a new one.</div>
+  </div>
+
+  <script src="./friend.js"></script>
+</body>
+</html>

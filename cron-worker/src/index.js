@@ -17,6 +17,7 @@
 // separately, so a failure in one never stops the other.
 
 import { runSnap } from './snap.js';
+import { handleFriend } from './friend.js';
 
 const OWNER = 'eliettemitschi-ux';
 const REPO = 'ticket-watcher';
@@ -62,6 +63,8 @@ export default {
   // the Worker is deployed and reachable) by visiting the Worker's own
   // URL in a browser -- not required for normal operation, just handy.
   async fetch(request, env) {
+    // /friend is the personal-key API behind docs/friend.html (see friend.js).
+    if (new URL(request.url).pathname === '/friend') return handleFriend(request, env);
     // /snap runs one Snap check now. It answers with counts only, so the
     // public URL never reveals which dates you're watching.
     if (new URL(request.url).pathname === '/snap') {
