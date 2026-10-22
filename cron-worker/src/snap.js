@@ -12,7 +12,7 @@
 // news" rules are shared with the Node tests (trains/snapParse.js, diff.js).
 
 import { HEADERS, searchUrl, parseSearchHtml } from '../../trains/snapParse.js';
-import { ROUTES, watchedDates, centersForDates, diffDays, alertText } from '../../trains/diff.js';
+import { ROUTES, watchedDates, centersForDates, diffDays, alertText, channelsFor, topicFor } from '../../trains/diff.js';
 
 const PRIVATE_API = 'https://api.github.com/repos/eliettemitschi-ux/ticket-watcher-private/contents';
 const TRIPS_FILE = 'snap-trips.json';
@@ -84,13 +84,13 @@ async function snapshot(route, dates) {
   return days;
 }
 
-async function notify(env, { title, message, click }) {
+async function notify(env, { title, message, click, topic }) {
   const server = (env.NTFY_SERVER || 'https://ntfy.sh').replace(/\/$/, '');
   // JSON publishing, so the £ sign and accents survive (headers can't carry them).
   const res = await fetch(server, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic: env.NTFY_TRAINS_TOPIC, title, message, priority: 5, tags: ['train'], ...(click ? { click } : {}) }),
+    body: JSON.stringify({ topic: topic || env.NTFY_TRAINS_TOPIC, title, message, priority: 5, tags: ['train'], ...(click ? { click } : {}) }),
   });
   if (!res.ok) throw new Error(`ntfy responded ${res.status}`);
 }
@@ -121,10 +121,14 @@ export async function runSnap(env, now = new Date()) {
       alerts = again ? diffDays(prev, again).filter((a) => alerts.some((b) => b.date === a.date && b.kind === a.kind)) : [];
       next = again || next;
     }
+    const leg = route.id === 'london-paris' ? 'out' : 'back';
     for (const a of alerts) {
       try {
-        await notify(env, { ...alertText(route, a), click: searchUrl(route, a.date) });
-        sent += 1;
+        // Each trip's own channel hears about its dates; trips without one use the main channel.
+        for (const channel of channelsFor(tripsFile.trips, leg, a.date)) {
+          await notify(env, { ...alertText(route, a), click: searchUrl(route, a.date), topic: topicFor(env.NTFY_TRAINS_TOPIC, channel) });
+          sent += 1;
+        }
       } catch (err) {
         console.error(`Snap alert failed (${err.message}), will retry next run`);
         next[a.date] = prev[a.date] || { price: null, slots: [] }; // forget it so it re-alerts

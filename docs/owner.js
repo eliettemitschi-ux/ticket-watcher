@@ -272,6 +272,11 @@
       .join('');
   }
 
+  // A trip's channel name, as the Worker reads it (trains/diff.js cleanChannel).
+  const cleanChannel = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '').slice(0, 20);
+  const TRAINS_TOPIC = 'BARBICAN-1999-trains';
+  const topicOf = (trip) => (cleanChannel(trip.channel) ? `${TRAINS_TOPIC}-${cleanChannel(trip.channel)}` : TRAINS_TOPIC);
+
   function tripCard(trip, snapState, today) {
     const leg = (name, label) => ((trip[name] || []).length ? `<p class="event-venue trip-leg">${label}</p>${legLines(trip, name, snapState, today)}` : '');
     return `
@@ -279,6 +284,7 @@
         <div class="event-main">
           ${leg('out', 'London → Paris')}
           ${leg('back', 'Paris → London')}
+          <p class="event-meta">Alerts go to <code>${escapeHtml(topicOf(trip))}</code>${cleanChannel(trip.channel) ? '' : ' (your main channel)'}</p>
           <button type="button" class="settings-btn trip-remove" data-trip-remove="${escapeHtml(trip.id)}">Stop watching</button>
         </div>
       </div>`;
@@ -309,7 +315,7 @@
     diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, statusOf, watchLabel,
     matchesQuery, filterRecords, groupRecords, sortKey, utf8ToBase64, base64ToUtf8, opensLine,
     watchingCard, compactRow, openedCard,
-    addDateTo, liveTrips, dateStatus, tripCard, watcherLine,
+    addDateTo, liveTrips, dateStatus, tripCard, watcherLine, cleanChannel,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
@@ -476,7 +482,7 @@
       <p class="subtitle" id="trains-status">Loading…</p>
       <p class="hint" id="trains-msg"></p>
       <h2 class="section-title">Add a trip</h2>
-      <p class="hint">Add every date you could travel on. You get an alert when Snap tickets appear on any of them, when a new time window opens, or when the price drops. Alerts go to your BARBICAN-1999-trains channel in ntfy.</p>
+      <p class="hint">Add every date you could travel on. You get an alert when Snap tickets appear on any of them, when a new time window opens, or when the price drops. A trip for someone else can have its own channel, so they only hear about their dates.</p>
       <div class="trip-form">
         <p class="event-venue trip-leg">London → Paris</p>
         <div class="trip-date-row"><input type="date" id="trip-out-date" class="owner-input" aria-label="London to Paris date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>
@@ -484,12 +490,16 @@
         <p class="event-venue trip-leg">Paris → London</p>
         <div class="trip-date-row"><input type="date" id="trip-back-date" class="owner-input" aria-label="Paris to London date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
         <div class="chips" id="trip-back-chips"></div>
+        <p class="event-venue trip-leg">Who should be alerted?</p>
+        <input type="text" id="trip-channel" class="owner-input" placeholder="Leave empty for you, or a name like pierre" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Channel name for this trip" />
+        <p class="hint" id="trip-channel-hint"></p>
         <button type="button" class="install-btn" id="trip-save">Start watching</button>
       </div>
       <h2 class="section-title">Watching <span class="count" id="trips-count"></span></h2>
       <section id="trips-list"></section>`;
     section.insertAdjacentElement('afterend', trains);
     trains.addEventListener('click', onTrainsClick);
+    trains.addEventListener('input', (e) => { if (e.target.id === 'trip-channel') renderChannelHint(); });
 
     nav.addEventListener('click', (e) => {
       const tab = e.target.closest('button[data-tab]');
@@ -618,7 +628,12 @@
     el.className = `hint${isError ? ' error' : ''}`;
   }
 
+  function renderChannelHint() {
+    $('trip-channel-hint').textContent = `Alerts for this trip go to ${topicOf({ channel: $('trip-channel').value })}${cleanChannel($('trip-channel').value) ? '. Send that name to your friend: they subscribe to it in ntfy.' : ', your own channel.'}`;
+  }
+
   function renderTrains() {
+    renderChannelHint();
     const today = londonToday();
     for (const leg of ['out', 'back']) {
       $(`trip-${leg}-date`).min = today;
@@ -679,13 +694,15 @@
       const leg = btn.dataset.unaddOut ? 'out' : 'back';
       draft[leg] = draft[leg].filter((d) => d !== (btn.dataset.unaddOut || btn.dataset.unaddBack));
     } else if (btn.id === 'trip-save') {
-      const trip = { id: `t${Date.now().toString(36)}`, out: draft.out, back: draft.back, addedAt: new Date().toISOString() };
+      const channel = cleanChannel($('trip-channel').value);
+      const trip = { id: `t${Date.now().toString(36)}`, out: draft.out, back: draft.back, ...(channel ? { channel } : {}), addedAt: new Date().toISOString() };
       setTrainsMessage('Saving…', false);
       btn.disabled = true;
       try {
         trips = await saveTrips((list) => [...list, trip]);
         draft.out = [];
         draft.back = [];
+        $('trip-channel').value = '';
         setTrainsMessage('Watching. The first check runs within about 5 minutes.', false);
       } catch (err) {
         setTrainsMessage(`Couldn't save the trip (${err.message}). Nothing was changed.`, true);

@@ -106,5 +106,18 @@ files['snap-trips.json'] = { text: JSON.stringify({ trips: [] }), sha: 'trips2' 
 r = await runSnap(env, at('2026-10-16T17:05:00Z'));
 check('no trips: no Snap requests, route dropped from state', state().routes, {});
 
+// --- 6. Per-trip channels -----------------------------------------------------
+snapMode = 'ok';
+const topicsAfterFreshState = async (tripList, iso) => {
+  delete files['snap-state.json'];
+  files['snap-trips.json'] = { text: JSON.stringify({ trips: tripList }), sha: `trips-${iso}` };
+  await runSnap(env, at(iso));
+  return take(pushes).map((x) => x.topic);
+};
+check('channels: a trip with no channel alerts the main channel only', await topicsAfterFreshState([{ id: 'a', out: ['2026-10-19'] }], '2026-10-16T18:00:00Z'), ['TEST-trains']);
+check('channels: a friend trip alerts only their channel, not the main one', await topicsAfterFreshState([{ id: 'b', out: ['2026-10-19'], channel: 'Pierre' }], '2026-10-16T18:10:00Z'), ['TEST-trains-pierre']);
+check('channels: the same date in both trips alerts both channels', await topicsAfterFreshState([{ id: 'a', out: ['2026-10-19'] }, { id: 'b', out: ['2026-10-19'], channel: 'pierre' }], '2026-10-16T18:20:00Z'), ['TEST-trains', 'TEST-trains-pierre']);
+take(saves);
+
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }
 console.log('\nAll Snap Worker tests passed.');

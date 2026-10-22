@@ -142,6 +142,12 @@ check('trains: card has a remove button for that trip', card.includes('data-trip
 check('trains: a one-way trip shows only its direction', owner.tripCard({ id: 't2', out: ['2026-11-05'], back: [] }, null, '2026-10-22').includes('Paris → London'), false);
 check('trains: a hostile trip id is escaped', owner.tripCard({ id: '"><img src=x>', out: ['2026-11-05'] }, null, '2026-10-22').includes('<img'), false);
 
+check('trains: channel names are tidied the same way as the watcher does', [owner.cleanChannel('Pierre!'), owner.cleanChannel('')], ['pierre', '']);
+const friendCard = owner.tripCard({ id: 'f1', out: ['2026-11-05'], channel: 'pierre' }, null, '2026-10-22');
+check('trains: a friend trip card shows their channel', friendCard.includes('BARBICAN-1999-trains-pierre'), true);
+check('trains: your own trip card says it is the main channel', card.includes('BARBICAN-1999-trains</code> (your main channel)'), true);
+check('trains: a hostile channel name cannot inject markup', owner.tripCard({ id: 'x', out: ['2026-11-05'], channel: '<img src=x>' }, null, '2026-10-22').includes('<img'), false);
+
 const now = Date.parse('2026-10-22T10:00:00Z');
 check('watcher: healthy', owner.watcherLine(snapState, now), 'Watcher OK · checks every 5 minutes · last update 1h ago');
 check('watcher: never ran', owner.watcherLine(null, now), "The watcher hasn't reported yet. It checks every 5 minutes.");

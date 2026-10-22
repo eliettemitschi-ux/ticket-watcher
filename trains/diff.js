@@ -27,6 +27,18 @@ function watchedDates(trips, today) {
   return { 'london-paris': [...sets['london-paris']].sort(), 'paris-london': [...sets['paris-london']].sort() };
 }
 
+// A trip can have a channel name ("pierre"): its alerts then go to
+// <base>-pierre instead of the main channel. Letters, digits and dashes only.
+const cleanChannel = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '').slice(0, 20);
+const topicFor = (base, channel) => (channel ? `${base}-${channel}` : base);
+
+/** The channels that should hear about one date: '' is the main channel. */
+function channelsFor(trips, leg, date) {
+  const found = new Set();
+  for (const trip of trips || []) if ((trip[leg] || []).includes(date)) found.add(cleanChannel(trip.channel));
+  return [...found];
+}
+
 /**
  * Snap's date strip shows the chosen day plus two either side, so one request
  * covers five days. Returns the fewest days to request so every date is on a
@@ -87,4 +99,4 @@ function alertText(route, a) {
   };
 }
 
-module.exports = { ROUTES, watchedDates, centersForDates, diffDays, alertText, dayLabel };
+module.exports = { ROUTES, cleanChannel, topicFor, channelsFor, watchedDates, centersForDates, diffDays, alertText, dayLabel };

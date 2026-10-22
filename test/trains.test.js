@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSearchHtml, searchUrl } = require('../trains/snap');
-const { watchedDates, centersForDates, diffDays, alertText, ROUTES } = require('../trains/diff');
+const { watchedDates, centersForDates, diffDays, alertText, ROUTES, cleanChannel, topicFor, channelsFor } = require('../trains/diff');
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -36,6 +36,14 @@ const trips = [
 check('watch: out is London to Paris, back is Paris to London, sorted and unique', watchedDates(trips, '2026-10-22'), { 'london-paris': ['2026-11-05', '2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'] });
 check('watch: past dates are dropped', watchedDates(trips, '2026-11-06'), { 'london-paris': ['2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'] });
 check('watch: no trips, nothing to watch', watchedDates(undefined, '2026-10-22'), { 'london-paris': [], 'paris-london': [] });
+
+// Per-trip channels: a trip's alerts go to <main>-<name>, or the main channel if it has no name.
+check('channel: names are lower-cased and stripped to letters, digits and dashes', [cleanChannel('Pierre!'), cleanChannel(' -Marie Claire- '), cleanChannel(undefined)], ['pierre', 'marieclaire', '']);
+check('channel: topic names', [topicFor('BARBICAN-1999-trains', ''), topicFor('BARBICAN-1999-trains', 'pierre')], ['BARBICAN-1999-trains', 'BARBICAN-1999-trains-pierre']);
+const shared = [{ out: ['2026-11-05'] }, { out: ['2026-11-05', '2026-11-06'], channel: 'Pierre' }];
+check('channel: a date watched by two trips alerts both channels', channelsFor(shared, 'out', '2026-11-05'), ['', 'pierre']);
+check('channel: a date only in the friend trip alerts only their channel', channelsFor(shared, 'out', '2026-11-06'), ['pierre']);
+check('channel: the right direction is used', channelsFor(shared, 'back', '2026-11-05'), []);
 
 // Which dates to ask about: one request covers the chosen day plus two either side.
 check('centers: two days next to each other need one request', centersForDates(['2026-11-05', '2026-11-06']), ['2026-11-07']);
