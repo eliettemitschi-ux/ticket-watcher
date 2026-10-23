@@ -117,9 +117,11 @@ export async function runSnap(env, now = new Date()) {
     let alerts = diffDays(prev, next);
     if (alerts.length) {
       // Look once more before alerting, so a one-off glitch can't ping you.
-      const again = await snapshot(route, dates);
+      // Only the alerted dates are looked at again, which keeps a big burst inside
+      // Cloudflare's 50-requests-per-run limit.
+      const again = await snapshot(route, alerts.map((a) => a.date));
       alerts = again ? diffDays(prev, again).filter((a) => alerts.some((b) => b.date === a.date && b.kind === a.kind)) : [];
-      next = again || next;
+      next = again ? { ...next, ...again } : next;
     }
     const leg = route.id === 'london-paris' ? 'out' : 'back';
     for (const a of alerts) {
