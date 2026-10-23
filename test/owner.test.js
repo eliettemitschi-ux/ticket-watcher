@@ -148,6 +148,14 @@ check('trains: a friend trip card shows their channel', friendCard.includes('BAR
 check('trains: your own trip card says it is the main channel', card.includes('BARBICAN-1999-trains</code> (your main channel)'), true);
 check('trains: a hostile channel name cannot inject markup', owner.tripCard({ id: 'x', out: ['2026-11-05'], channel: '<img src=x>' }, null, '2026-10-22').includes('<img'), false);
 
+// Cities: a trip is London to or from one city; no city means Paris.
+check('cities: a trip with no city, or an unknown one, is Paris', [owner.cityOfTrip({}), owner.cityOfTrip({ city: 'atlantis' }), owner.cityOfTrip({ city: 'brussels' })], ['paris', 'paris', 'brussels']);
+const bxl = owner.tripCard({ id: 'b1', city: 'brussels', out: ['2026-11-05'], back: ['2026-11-09'] }, { routes: { 'london-brussels': { days: { '2026-11-05': { price: 38, slots: [] } } } } }, '2026-10-22');
+check('cities: a Brussels card names the right route in each direction', [bxl.includes('London → Brussels'), bxl.includes('Brussels → London'), bxl.includes('London → Paris')], [true, true, false]);
+check('cities: and shows what the watcher saw on that city route', bxl.includes('From £38'), true);
+check('cities: a Paris card still says Paris', card.includes('London → Paris') && card.includes('Paris → London'), true);
+check('cities: status is read from the right route', [owner.dateStatus({ routes: { 'brussels-london': { days: { '2026-11-09': { price: 41, slots: [] } } } } }, 'back', '2026-11-09', 'brussels').text, owner.dateStatus({ routes: { 'brussels-london': { days: { '2026-11-09': { price: 41, slots: [] } } } } }, 'back', '2026-11-09').text], ['From £41', 'Not checked yet']);
+
 const now = Date.parse('2026-10-22T10:00:00Z');
 check('watcher: healthy', owner.watcherLine(snapState, now), 'Watcher OK · checks every 5 minutes · last update 1h ago');
 check('watcher: never ran', owner.watcherLine(null, now), "The watcher hasn't reported yet. It checks every 5 minutes.");

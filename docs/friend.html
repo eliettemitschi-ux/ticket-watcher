@@ -21,10 +21,13 @@
     <h2 class="section-title">Add dates</h2>
     <p class="hint">Pick each date you could travel on and tap <strong>Add</strong>. It is saved straight away. You get a notification when Eurostar Snap tickets appear on a date, when a new time window opens, or when the price drops. <span id="cap-note"></span></p>
     <div class="trip-form">
-      <p class="event-venue trip-leg">London → Paris</p>
-      <div class="trip-date-row"><input type="date" id="out-date" class="owner-input" aria-label="London to Paris date" /><button type="button" class="chip" data-add="out">Add</button></div>
-      <p class="event-venue trip-leg">Paris → London</p>
-      <div class="trip-date-row"><input type="date" id="back-date" class="owner-input" aria-label="Paris to London date" /><button type="button" class="chip" data-add="back">Add</button></div>
+      <label class="city-pick" for="city">Travelling to or from London and
+        <select id="city" class="owner-input"><option value="paris">Paris</option><option value="brussels">Brussels</option><option value="amsterdam">Amsterdam</option></select>
+      </label>
+      <p class="event-venue trip-leg" id="out-label">London → Paris</p>
+      <div class="trip-date-row"><input type="date" id="out-date" class="owner-input" aria-label="Outbound date" /><button type="button" class="chip" data-add="out">Add</button></div>
+      <p class="event-venue trip-leg" id="back-label">Paris → London</p>
+      <div class="trip-date-row"><input type="date" id="back-date" class="owner-input" aria-label="Return date" /><button type="button" class="chip" data-add="back">Add</button></div>
       <p class="form-msg" id="msg" role="status" aria-live="polite"></p>
     </div>
 

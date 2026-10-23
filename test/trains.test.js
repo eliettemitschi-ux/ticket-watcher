@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSearchHtml, searchUrl } = require('../trains/snap');
-const { changeLine, watchedDates, centersForDates, diffDays, alertText, ROUTES, cleanChannel, topicFor, channelsFor } = require('../trains/diff');
+const { CITIES, cityOf, changeLine, watchedDates, centersForDates, diffDays, alertText, ROUTES, cleanChannel, topicFor, channelsFor } = require('../trains/diff');
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -33,17 +33,37 @@ const trips = [
   { id: 't1', out: ['2026-11-06', '2026-11-05'], back: ['2026-11-09', '2026-11-10'] },
   { id: 't2', out: ['2026-11-05', '2026-10-01', 'nonsense'], back: [] },
 ];
-check('watch: out is London to Paris, back is Paris to London, sorted and unique', watchedDates(trips, '2026-10-22'), { 'london-paris': ['2026-11-05', '2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'] });
-check('watch: past dates are dropped', watchedDates(trips, '2026-11-06'), { 'london-paris': ['2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'] });
-check('watch: no trips, nothing to watch', watchedDates(undefined, '2026-10-22'), { 'london-paris': [], 'paris-london': [] });
+const noOthers = { 'london-brussels': [], 'brussels-london': [], 'london-amsterdam': [], 'amsterdam-london': [] };
+check('watch: out is London to Paris, back is Paris to London, sorted and unique', watchedDates(trips, '2026-10-22'), { 'london-paris': ['2026-11-05', '2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'], ...noOthers });
+check('watch: past dates are dropped', watchedDates(trips, '2026-11-06'), { 'london-paris': ['2026-11-06'], 'paris-london': ['2026-11-09', '2026-11-10'], ...noOthers });
+check('watch: no trips, nothing to watch', watchedDates(undefined, '2026-10-22'), { 'london-paris': [], 'paris-london': [], ...noOthers });
+
+// Cities: a trip is London to or from one city (Paris unless it says otherwise).
+const cityTrips = [
+  { id: 'b', city: 'brussels', out: ['2026-11-12'], back: ['2026-11-14'] },
+  { id: 'a', city: 'amsterdam', out: ['2026-11-12'], back: [] },
+  { id: 'p', out: ['2026-11-12'], back: [] },
+  { id: 'x', city: 'atlantis', out: ['2026-11-20'], back: [] },
+];
+const w = watchedDates(cityTrips, '2026-10-22');
+check('cities: each trip watches the routes of its own city', [w['london-brussels'], w['brussels-london'], w['london-amsterdam'], w['amsterdam-london']], [['2026-11-12'], ['2026-11-14'], ['2026-11-12'], []]);
+check('cities: no city means Paris, and so does one we do not know', [w['london-paris'], cityOf({}), cityOf({ city: 'atlantis' }), cityOf({ city: 'brussels' })], [['2026-11-12', '2026-11-20'], 'paris', 'paris', 'brussels']);
+check('cities: the three cities and their Snap station codes', Object.entries(CITIES).map(([id, c]) => [id, c.code]), [['paris', '8727100'], ['brussels', '8814001'], ['amsterdam', '8400058']]);
+check('cities: six routes, each with its own stations and name', Object.values(ROUTES).map((r) => [r.id, r.name, r.origin, r.destination]), [
+  ['london-paris', 'London to Paris', '7015400', '8727100'], ['paris-london', 'Paris to London', '8727100', '7015400'],
+  ['london-brussels', 'London to Brussels', '7015400', '8814001'], ['brussels-london', 'Brussels to London', '8814001', '7015400'],
+  ['london-amsterdam', 'London to Amsterdam', '7015400', '8400058'], ['amsterdam-london', 'Amsterdam to London', '8400058', '7015400'],
+]);
+check('cities: alert titles use the right city names', alertText(ROUTES['london-brussels'], { date: '2026-11-12', kind: 'day', price: 40, current: 40, slots: [{ window: '06:01-13:00', price: 40 }], newSlots: [] }).title, 'Snap London to Brussels: Thu 12 Nov has tickets');
+check('cities: channels follow the city (a Brussels trip does not alert on the same Paris day)', [channelsFor([{ city: 'brussels', out: ['2026-11-12'], channel: 'pierre' }], 'london-paris', '2026-11-12'), channelsFor([{ city: 'brussels', out: ['2026-11-12'], channel: 'pierre' }], 'london-brussels', '2026-11-12')], [[], ['pierre']]);
 
 // Per-trip channels: a trip's alerts go to <main>-<name>, or the main channel if it has no name.
 check('channel: names are lower-cased and stripped to letters, digits and dashes', [cleanChannel('Pierre!'), cleanChannel(' -Marie Claire- '), cleanChannel(undefined)], ['pierre', 'marieclaire', '']);
 check('channel: topic names', [topicFor('BARBICAN-1999-trains', ''), topicFor('BARBICAN-1999-trains', 'pierre')], ['BARBICAN-1999-trains', 'BARBICAN-1999-trains-pierre']);
 const shared = [{ out: ['2026-11-05'] }, { out: ['2026-11-05', '2026-11-06'], channel: 'Pierre' }];
-check('channel: a date watched by two trips alerts both channels', channelsFor(shared, 'out', '2026-11-05'), ['', 'pierre']);
-check('channel: a date only in the friend trip alerts only their channel', channelsFor(shared, 'out', '2026-11-06'), ['pierre']);
-check('channel: the right direction is used', channelsFor(shared, 'back', '2026-11-05'), []);
+check('channel: a date watched by two trips alerts both channels', channelsFor(shared, 'london-paris', '2026-11-05'), ['', 'pierre']);
+check('channel: a date only in the friend trip alerts only their channel', channelsFor(shared, 'london-paris', '2026-11-06'), ['pierre']);
+check('channel: the right direction is used', channelsFor(shared, 'paris-london', '2026-11-05'), []);
 
 // Which dates to ask about: one request covers the chosen day plus two either side.
 check('centers: two days next to each other need one request', centersForDates(['2026-11-05', '2026-11-06']), ['2026-11-07']);

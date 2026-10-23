@@ -13,7 +13,6 @@
   const KEY = 'twFriendKey';
   const TZ = 'Europe/London';
   const TIMEOUT_MS = 25000;
-  const LEGS = [['out', 'London → Paris'], ['back', 'Paris → London']];
 
   // --- Pure helpers (unit tested in test/friend.test.js) ----------------------
 
@@ -27,26 +26,26 @@
   }
 
   // One watched date with its status and a button to stop watching it.
-  function dateRow(leg, entry) {
+  function dateRow(route, entry) {
     return `
       <div class="owner-row watch-row">
         <div class="owner-row-main">
           <span class="owner-row-title">${fmtDate(entry.date)}</span>
           <div class="owner-row-sub">${seenBadge(entry)}</div>
         </div>
-        <button type="button" class="settings-btn" data-remove-leg="${leg}" data-remove-date="${escapeHtml(entry.date)}" aria-label="Stop watching ${fmtDate(entry.date)}">Remove</button>
+        <button type="button" class="settings-btn" data-remove-city="${escapeHtml(route.city)}" data-remove-leg="${escapeHtml(route.leg)}" data-remove-date="${escapeHtml(entry.date)}" aria-label="Stop watching ${fmtDate(entry.date)}">Remove</button>
       </div>`;
   }
 
-  // Both directions, or an empty-state line.
+  // One block per route that has dates (e.g. London → Brussels), or an empty-state line.
   function watchList(data) {
-    const groups = LEGS
-      .filter(([leg]) => (data[leg] || []).length)
-      .map(([leg, label]) => `<p class="event-venue trip-leg">${label}</p><div class="owner-list">${data[leg].map((e) => dateRow(leg, e)).join('')}</div>`);
+    const groups = (data.routes || [])
+      .filter((r) => r.dates.length)
+      .map((r) => `<p class="event-venue trip-leg">${escapeHtml(r.label)}</p><div class="owner-list">${r.dates.map((e) => dateRow(r, e)).join('')}</div>`);
     return groups.length ? groups.join('') : '<div class="empty-state">Nothing watched yet. Pick a date above and tap Add.</div>';
   }
 
-  const usedDates = (data) => (data.out || []).length + (data.back || []).length;
+  const usedDates = (data) => (data.routes || []).reduce((n, r) => n + r.dates.length, 0);
 
   // "Pierre Express": the page title for a friend, or the plain title when there is no name.
   const titleFor = (name) => (name ? `${name} Express` : 'Snap train alerts');
@@ -108,10 +107,12 @@
 
   function render() {
     const today = (data && data.today) || londonToday();
-    for (const [leg] of LEGS) {
+    for (const leg of ['out', 'back']) {
       $(`${leg}-date`).min = today;
       document.querySelector(`button[data-add="${leg}"]`).disabled = busy;
     }
+    $('city').disabled = busy;
+    showCity();
     if (!data) return;
     $('personal-note').hidden = !data.note;
     $('passport-note').hidden = !data.passport;
@@ -125,6 +126,13 @@
     $('count').textContent = `(${usedDates(data)})`;
     $('trips').innerHTML = watchList(data);
     document.querySelectorAll('#trips button').forEach((b) => { b.disabled = busy; });
+  }
+
+  // The two direction labels follow the chosen city.
+  function showCity() {
+    const city = $('city').selectedOptions[0].textContent;
+    $('out-label').textContent = `London → ${city}`;
+    $('back-label').textContent = `${city} → London`;
   }
 
   function badLink() {
@@ -172,15 +180,16 @@
     if (!btn) return;
     if (btn.dataset.add) {
       const leg = btn.dataset.add;
+      const city = $('city').value;
       const input = $(`${leg}-date`);
       if (!input.value) { setMessage('Pick a date first, then tap Add.', 'error'); return; }
       if (input.value < ((data && data.today) || londonToday())) { setMessage('That date has already gone.', 'error'); return; }
       const date = input.value;
-      change('msg', 'Adding…', () => call('POST', { body: { [leg]: [date] } }), `Added ${fmtDate(date)}. You are now watching it. The first check runs within about 5 minutes.`, 'Not added')
+      change('msg', 'Adding…', () => call('POST', { body: { city, [leg]: [date] } }), `Added ${fmtDate(date)}. You are now watching it. The first check runs within about 5 minutes.`, 'Not added')
         .then((ok) => { if (ok) input.value = ''; }); // a failed add keeps the date so it can be retried
     } else if (btn.dataset.removeLeg) {
-      const { removeLeg: leg, removeDate: date } = btn.dataset;
-      change('trips-msg', 'Removing…', () => call('DELETE', { query: `?leg=${encodeURIComponent(leg)}&date=${encodeURIComponent(date)}` }), `Stopped watching ${fmtDate(date)}.`, 'Not removed');
+      const { removeCity: city, removeLeg: leg, removeDate: date } = btn.dataset;
+      change('trips-msg', 'Removing…', () => call('DELETE', { query: `?city=${encodeURIComponent(city)}&leg=${encodeURIComponent(leg)}&date=${encodeURIComponent(date)}` }), `Stopped watching ${fmtDate(date)}.`, 'Not removed');
     }
   }
 
@@ -213,6 +222,7 @@
     $('friend-view').hidden = false;
     $('friend-view').addEventListener('click', onClick);
     $('copy-topic').addEventListener('click', onCopy);
+    $('city').addEventListener('change', showCity);
     render();
     refresh();
     setInterval(refresh, 60000);

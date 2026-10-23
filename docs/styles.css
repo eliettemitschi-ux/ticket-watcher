@@ -464,3 +464,5 @@ input:focus { outline: none; border-color: var(--accent); }
 #trips .owner-list { margin-bottom: 8px; }
 .trip-date-row .chip { background: var(--accent); border-color: var(--accent); color: #0b0f1a; font-weight: 600; }
 .trip-date-row .chip:disabled { opacity: 0.5; }
+.city-pick { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; color: var(--text); margin-bottom: 6px; }
+.city-pick select { margin: 0; }

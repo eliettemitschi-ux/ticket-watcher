@@ -2,29 +2,45 @@
 // news. Shared by the Cloudflare Worker (cron-worker/src/snap.js) and tests.
 //
 // Trips are what the owner adds in the Trains tab (snap-trips.json in the
-// private repo): { id, out: ['YYYY-MM-DD'], back: ['YYYY-MM-DD'] }. "out" is
-// London to Paris, "back" is Paris to London; any date listed is watched.
+// private repo): { id, city, out: ['YYYY-MM-DD'], back: ['YYYY-MM-DD'] }. "out"
+// is London to that city, "back" is that city to London; any date listed is
+// watched. A trip with no city means Paris (how trips were first saved).
 
 const { addDays } = require('./snapParse');
 
-const ROUTES = {
-  'london-paris': { id: 'london-paris', name: 'London to Paris', origin: '7015400', destination: '8727100' },
-  'paris-london': { id: 'paris-london', name: 'Paris to London', origin: '8727100', destination: '7015400' },
+// Snap's station codes (read from snap.eurostar.com, 23 Oct 2026). Only London
+// pairs are offered: they are the ones tested to answer and be readable.
+const LONDON = '7015400';
+const CITIES = {
+  paris: { name: 'Paris', code: '8727100' },
+  brussels: { name: 'Brussels', code: '8814001' },
+  amsterdam: { name: 'Amsterdam', code: '8400058' },
 };
+const DEFAULT_CITY = 'paris';
+
+// One route per direction: london-paris, paris-london, london-brussels, ...
+const ROUTES = {};
+for (const [id, c] of Object.entries(CITIES)) {
+  ROUTES[`london-${id}`] = { id: `london-${id}`, name: `London to ${c.name}`, origin: LONDON, destination: c.code, city: id, leg: 'out' };
+  ROUTES[`${id}-london`] = { id: `${id}-london`, name: `${c.name} to London`, origin: c.code, destination: LONDON, city: id, leg: 'back' };
+}
+
+const cityOf = (trip) => (trip && CITIES[trip.city] ? trip.city : DEFAULT_CITY);
+const routeIdFor = (city, leg) => (leg === 'out' ? `london-${city}` : `${city}-london`);
 
 const isIsoDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 /**
- * Every date still worth watching, per route.
- * @returns {{'london-paris': string[], 'paris-london': string[]}} sorted, unique, today or later
+ * Every date still worth watching, per route (every route is present, maybe empty).
+ * @returns {Object<string, string[]>} route id -> sorted, unique dates, today or later
  */
 function watchedDates(trips, today) {
-  const sets = { 'london-paris': new Set(), 'paris-london': new Set() };
+  const sets = Object.fromEntries(Object.keys(ROUTES).map((id) => [id, new Set()]));
   for (const trip of trips || []) {
-    for (const d of trip.out || []) if (isIsoDate(d) && d >= today) sets['london-paris'].add(d);
-    for (const d of trip.back || []) if (isIsoDate(d) && d >= today) sets['paris-london'].add(d);
+    const city = cityOf(trip);
+    for (const leg of ['out', 'back']) for (const d of trip[leg] || []) if (isIsoDate(d) && d >= today) sets[routeIdFor(city, leg)].add(d);
   }
-  return { 'london-paris': [...sets['london-paris']].sort(), 'paris-london': [...sets['paris-london']].sort() };
+  return Object.fromEntries(Object.entries(sets).map(([id, set]) => [id, [...set].sort()]));
 }
 
 // A trip can have a channel name ("pierre"): its alerts then go to
@@ -32,10 +48,12 @@ function watchedDates(trips, today) {
 const cleanChannel = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '').slice(0, 20);
 const topicFor = (base, channel) => (channel ? `${base}-${channel}` : base);
 
-/** The channels that should hear about one date: '' is the main channel. */
-function channelsFor(trips, leg, date) {
+/** The channels that should hear about one date on one route: '' is the main channel. */
+function channelsFor(trips, routeId, date) {
+  const route = ROUTES[routeId];
   const found = new Set();
-  for (const trip of trips || []) if ((trip[leg] || []).includes(date)) found.add(cleanChannel(trip.channel));
+  if (!route) return [];
+  for (const trip of trips || []) if (cityOf(trip) === route.city && (trip[route.leg] || []).includes(date)) found.add(cleanChannel(trip.channel));
   return [...found];
 }
 
@@ -123,4 +141,4 @@ function alertText(route, a, since) {
   };
 }
 
-module.exports = { SIMILAR_WITHIN, changeLine, ROUTES, cleanChannel, topicFor, channelsFor, watchedDates, centersForDates, diffDays, alertText, dayLabel };
+module.exports = { SIMILAR_WITHIN, changeLine, CITIES, DEFAULT_CITY, cityOf, routeIdFor, ROUTES, cleanChannel, topicFor, channelsFor, watchedDates, centersForDates, diffDays, alertText, dayLabel };

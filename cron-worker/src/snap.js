@@ -123,12 +123,11 @@ export async function runSnap(env, now = new Date()) {
       alerts = again ? diffDays(prev, again).filter((a) => alerts.some((b) => b.date === a.date && b.kind === a.kind)) : [];
       next = again ? { ...next, ...again } : next;
     }
-    const leg = route.id === 'london-paris' ? 'out' : 'back';
     for (const a of alerts) {
       try {
         // Each trip's own channel hears about its dates; trips without one use the main channel.
         const sinceAlert = prev[a.date] && typeof prev[a.date].alertedPrice === 'number' ? { price: prev[a.date].alertedPrice, kind: 'alert' } : null;
-        for (const channel of channelsFor(tripsFile.trips, leg, a.date)) {
+        for (const channel of channelsFor(tripsFile.trips, route.id, a.date)) {
           await notify(env, { ...alertText(route, a, sinceAlert), click: searchUrl(route, a.date), topic: topicFor(env.NTFY_TRAINS_TOPIC, channel) });
           sent += 1;
         }

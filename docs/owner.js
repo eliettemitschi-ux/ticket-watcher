@@ -238,7 +238,10 @@
   // (cron-worker/src/snap.js) checks them every 5 minutes and writes what it
   // saw to snap-state.json.
 
-  const ROUTE_OF = { out: 'london-paris', back: 'paris-london' };
+  // A trip is London to or from one city (Paris unless it says otherwise); see trains/diff.js.
+  const CITY_NAMES = { paris: 'Paris', brussels: 'Brussels', amsterdam: 'Amsterdam' };
+  const cityOfTrip = (trip) => (trip && CITY_NAMES[trip.city] ? trip.city : 'paris');
+  const routeIdOf = (city, leg) => (leg === 'out' ? `london-${city}` : `${city}-london`);
   const WATCHER_SILENT_MS = 7 * 60 * 60 * 1000; // it reports at least every 6h
 
   const fmtDate = (iso) => fmtDay(`${iso}T12:00:00Z`);
@@ -253,8 +256,8 @@
     return (trips || []).filter((t) => [...(t.out || []), ...(t.back || [])].some((d) => d >= today));
   }
 
-  function dateStatus(snapState, leg, date) {
-    const route = snapState && snapState.routes && snapState.routes[ROUTE_OF[leg]];
+  function dateStatus(snapState, leg, date, city = 'paris') {
+    const route = snapState && snapState.routes && snapState.routes[routeIdOf(city, leg)];
     const day = route && route.days && route.days[date];
     if (!day) return { cls: 'unknown', text: 'Not checked yet' };
     if (day.price === null) return { cls: 'pending', text: 'No Snap tickets yet' };
@@ -266,7 +269,7 @@
     return (trip[leg] || [])
       .map((date) => {
         if (date < today) return `<div class="event-meta trip-past">${fmtDate(date)} · gone</div>`;
-        const s = dateStatus(snapState, leg, date);
+        const s = dateStatus(snapState, leg, date, cityOfTrip(trip));
         return `<div class="event-meta">${fmtDate(date)} <span class="badge ${s.cls}">${s.text}</span></div>`;
       })
       .join('');
@@ -279,11 +282,12 @@
 
   function tripCard(trip, snapState, today) {
     const leg = (name, label) => ((trip[name] || []).length ? `<p class="event-venue trip-leg">${label}</p>${legLines(trip, name, snapState, today)}` : '');
+    const city = CITY_NAMES[cityOfTrip(trip)];
     return `
       <div class="event-card">
         <div class="event-main">
-          ${leg('out', 'London → Paris')}
-          ${leg('back', 'Paris → London')}
+          ${leg('out', `London → ${city}`)}
+          ${leg('back', `${city} → London`)}
           <p class="event-meta">Alerts go to <code>${escapeHtml(topicOf(trip))}</code>${cleanChannel(trip.channel) ? '' : ' (your main channel)'}</p>
           <button type="button" class="settings-btn trip-remove" data-trip-remove="${escapeHtml(trip.id)}">Stop watching</button>
         </div>
@@ -315,7 +319,7 @@
     diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, statusOf, watchLabel,
     matchesQuery, filterRecords, groupRecords, sortKey, utf8ToBase64, base64ToUtf8, opensLine,
     watchingCard, compactRow, openedCard,
-    addDateTo, liveTrips, dateStatus, tripCard, watcherLine, cleanChannel,
+    addDateTo, liveTrips, dateStatus, tripCard, watcherLine, cleanChannel, cityOfTrip,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
@@ -484,11 +488,14 @@
       <h2 class="section-title">Add a trip</h2>
       <p class="hint">Add every date you could travel on. You get an alert when Snap tickets appear on any of them, when a new time window opens, or when the price drops. A trip for someone else can have its own channel, so they only hear about their dates.</p>
       <div class="trip-form">
-        <p class="event-venue trip-leg">London → Paris</p>
-        <div class="trip-date-row"><input type="date" id="trip-out-date" class="owner-input" aria-label="London to Paris date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>
+        <label class="city-pick" for="trip-city">Travelling to or from London and
+          <select id="trip-city" class="owner-input"><option value="paris">Paris</option><option value="brussels">Brussels</option><option value="amsterdam">Amsterdam</option></select>
+        </label>
+        <p class="event-venue trip-leg" id="trip-out-label">London → Paris</p>
+        <div class="trip-date-row"><input type="date" id="trip-out-date" class="owner-input" aria-label="Outbound date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>
         <div class="chips" id="trip-out-chips"></div>
-        <p class="event-venue trip-leg">Paris → London</p>
-        <div class="trip-date-row"><input type="date" id="trip-back-date" class="owner-input" aria-label="Paris to London date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
+        <p class="event-venue trip-leg" id="trip-back-label">Paris → London</p>
+        <div class="trip-date-row"><input type="date" id="trip-back-date" class="owner-input" aria-label="Return date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
         <div class="chips" id="trip-back-chips"></div>
         <p class="event-venue trip-leg">Who should be alerted?</p>
         <input type="text" id="trip-channel" class="owner-input" placeholder="Leave empty for you, or a name like pierre" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Channel name for this trip" />
@@ -500,6 +507,7 @@
     section.insertAdjacentElement('afterend', trains);
     trains.addEventListener('click', onTrainsClick);
     trains.addEventListener('input', (e) => { if (e.target.id === 'trip-channel') renderChannelHint(); });
+    trains.addEventListener('change', (e) => { if (e.target.id === 'trip-city') renderCityLabels(); });
 
     nav.addEventListener('click', (e) => {
       const tab = e.target.closest('button[data-tab]');
@@ -632,8 +640,15 @@
     $('trip-channel-hint').textContent = `Alerts for this trip go to ${topicOf({ channel: $('trip-channel').value })}${cleanChannel($('trip-channel').value) ? '. Send that name to your friend: they subscribe to it in ntfy.' : ', your own channel.'}`;
   }
 
+  function renderCityLabels() {
+    const city = $('trip-city').selectedOptions[0].textContent;
+    $('trip-out-label').textContent = `London → ${city}`;
+    $('trip-back-label').textContent = `${city} → London`;
+  }
+
   function renderTrains() {
     renderChannelHint();
+    renderCityLabels();
     const today = londonToday();
     for (const leg of ['out', 'back']) {
       $(`trip-${leg}-date`).min = today;
@@ -695,7 +710,8 @@
       draft[leg] = draft[leg].filter((d) => d !== (btn.dataset.unaddOut || btn.dataset.unaddBack));
     } else if (btn.id === 'trip-save') {
       const channel = cleanChannel($('trip-channel').value);
-      const trip = { id: `t${Date.now().toString(36)}`, out: draft.out, back: draft.back, ...(channel ? { channel } : {}), addedAt: new Date().toISOString() };
+      const city = $('trip-city').value;
+      const trip = { id: `t${Date.now().toString(36)}`, ...(city !== 'paris' ? { city } : {}), out: draft.out, back: draft.back, ...(channel ? { channel } : {}), addedAt: new Date().toISOString() };
       setTrainsMessage('Saving…', false);
       btn.disabled = true;
       try {

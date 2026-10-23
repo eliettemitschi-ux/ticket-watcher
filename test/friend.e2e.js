@@ -50,11 +50,13 @@ const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).fo
 const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
 function fakeWorker() {
-  const w = { out: [], back: [], calls: [], rejectKey: false, failNext: null, delayPostMs: 0, abortNext: false, profile: { passport: true, note: false, maxDates: 12 } };
+  const w = { dates: { paris: { out: [], back: [] }, brussels: { out: [], back: [] }, amsterdam: { out: [], back: [] } }, calls: [], rejectKey: false, failNext: null, delayPostMs: 0, abortNext: false, profile: { passport: true, note: false, maxDates: 12 } };
   const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
   // The first date of each direction has tickets from 39 pounds, the rest have none yet.
   const entries = (dates) => dates.map((date, i) => (i === 0 ? { date, state: 'tickets', price: 39 } : { date, state: 'none' }));
-  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, checkedAt: new Date().toISOString(), blocked: false, out: entries(w.out), back: entries(w.back), ...w.profile });
+  const names = { paris: 'Paris', brussels: 'Brussels', amsterdam: 'Amsterdam' };
+  const routes = () => Object.keys(names).flatMap((city) => ['out', 'back'].map((leg) => ({ city, leg, label: leg === 'out' ? `London → ${names[city]}` : `${names[city]} → London`, dates: entries(w.dates[city][leg]) }))).filter((r) => r.dates.length);
+  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, checkedAt: new Date().toISOString(), blocked: false, routes: routes(), ...w.profile });
   w.handler = async (route) => {
     const req = route.request();
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
@@ -65,11 +67,13 @@ function fakeWorker() {
     if (w.failNext) { const f = w.failNext; w.failNext = null; return route.fulfill({ status: 400, headers: cors, body: JSON.stringify({ error: f }) }); }
     if (req.method() === 'POST') {
       const b = JSON.parse(req.postData());
-      for (const leg of ['out', 'back']) w[leg] = [...new Set([...w[leg], ...(b[leg] || [])])].sort();
+      const city = b.city || 'paris';
+      for (const leg of ['out', 'back']) w.dates[city][leg] = [...new Set([...w.dates[city][leg], ...(b[leg] || [])])].sort();
     }
     if (req.method() === 'DELETE') {
       const q = new URL(req.url()).searchParams;
-      w[q.get('leg')] = w[q.get('leg')].filter((d) => d !== q.get('date'));
+      const city = q.get('city') || 'paris';
+      w.dates[city][q.get('leg')] = w.dates[city][q.get('leg')].filter((d) => d !== q.get('date'));
     }
     return route.fulfill({ status: 200, headers: cors, body: JSON.stringify(view()) });
   };
@@ -117,6 +121,8 @@ function fakeWorker() {
   await page.click('#copy-topic');
   check('guide: the copy button confirms', await page.locator('#copied').textContent(), 'Copied');
   check('simple flow: there is no separate save button to forget', [await page.locator('#save').count(), await page.locator('#pending-note').count()], [0, 0]);
+  check('city: the dropdown starts on Paris, with the labels to match', [await page.locator('#city').inputValue(), await page.locator('#out-label').textContent(), await page.locator('#back-label').textContent()], ['paris', 'London → Paris', 'Paris → London']);
+  check('city: Paris, Brussels and Amsterdam are the choices', await page.locator('#city option').allTextContents(), ['Paris', 'Brussels', 'Amsterdam']);
   check('simple flow: nothing watched yet', await page.locator('#trips .empty-state').count(), 1);
 
   // 4. Come back later: the stored key works without the link.
@@ -135,7 +141,7 @@ function fakeWorker() {
   await page.click('button[data-add="out"]');
   await until(async () => (await page.locator('#trips .watch-row').count()) === 1);
   const post = worker.calls.find((c) => c.method === 'POST');
-  check('add: one tap sends exactly that one date', post.body, { out: [o1] });
+  check('add: one tap sends exactly that one date, for the chosen city (Paris by default)', post.body, { city: 'paris', out: [o1] });
   check('add: the date is in the Watching list straight away, with what the watcher saw', /From £39/.test(await page.locator('#trips').textContent()), true);
   check('add: a clear confirmation right under the Add buttons', /^Added .*You are now watching it\./.test(await page.locator('#msg').textContent()), true);
   check('add: the date box is cleared for the next one', await page.locator('#out-date').inputValue(), '');
@@ -179,6 +185,21 @@ function fakeWorker() {
   const q = new URL(del.url).searchParams;
   check('remove: asks the Worker to remove that one date', [q.get('leg'), q.get('date')], ['out', o1]);
   check('remove: a confirmation right under the Watching heading', /^Stopped watching/.test(await page.locator('#trips-msg').textContent()), true);
+
+  // 8b. Another city: the labels follow the dropdown, and the date is watched on that route.
+  await page.selectOption('#city', 'brussels');
+  check('city: the labels follow the dropdown', [await page.locator('#out-label').textContent(), await page.locator('#back-label').textContent()], ['London → Brussels', 'Brussels → London']);
+  await page.fill('#back-date', plus(40));
+  await page.click('button[data-add="back"]');
+  await until(async () => (await page.locator('#trips .watch-row').count()) === 4);
+  const brusselsPost = worker.calls.filter((c) => c.method === 'POST').pop();
+  check('city: the request names the city and the direction', brusselsPost.body, { city: 'brussels', back: [plus(40)] });
+  check('city: the list has its own heading for it', (await page.locator('#trips .trip-leg').allTextContents()).includes('Brussels → London'), true);
+  await page.locator('#trips .watch-row:last-child button').last().click();
+  await until(async () => (await page.locator('#trips .watch-row').count()) === 3);
+  const brusselsDel = new URL(worker.calls.filter((c) => c.method === 'DELETE').pop().url).searchParams;
+  check('city: removing it sends the city too', [brusselsDel.get('city'), brusselsDel.get('leg'), brusselsDel.get('date')], ['brussels', 'back', plus(40)]);
+  await page.selectOption('#city', 'paris');
 
   // 9. A friend with a cap of 4, the personal-link note and no passport reminder.
   worker.profile = { passport: false, note: true, maxDates: 4 };

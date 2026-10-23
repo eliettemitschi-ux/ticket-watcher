@@ -277,9 +277,23 @@ function fakeGitHub() {
   check('trains: the form is cleared after saving', [await page.locator('#trip-out-chips .chip').count(), await page.locator('#trip-channel').inputValue()], [0, '']);
   check('trains: the card shows where that trip alerts', (await page.locator('#trips-list .event-card').textContent()).includes('BARBICAN-1999-trains-pierre'), true);
   await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-trains.png'), fullPage: true });
-  await page.click('button[data-trip-remove]');
+  // A trip to another city: the labels follow the dropdown and the city is saved.
+  await page.selectOption('#trip-city', 'amsterdam');
+  check('trains: the direction labels follow the chosen city', [await page.locator('#trip-out-label').textContent(), await page.locator('#trip-back-label').textContent()], ['London → Amsterdam', 'Amsterdam → London']);
+  await page.fill('#trip-out-date', plus(30));
+  await page.click('button[data-add="out"]');
+  await page.click('#trip-save');
   await until(() => gh.tripPuts.length === 2);
-  check('trains: "Stop watching" removes the trip', gh.tripPuts[1].saved, { trips: [] });
+  const amsTrip = gh.tripPuts[1].saved.trips.find((t) => t.city === 'amsterdam');
+  check('trains: a trip to Amsterdam is saved with its city, next to the Paris one', [amsTrip.out, gh.tripPuts[1].saved.trips.length, gh.tripPuts[1].saved.trips.find((t) => t.id !== amsTrip.id).city], [[plus(30)], 2, undefined]);
+  await until(async () => (await page.locator('#trips-list .event-card').count()) === 2);
+  check('trains: both cards are listed, each with its own route names', [(await page.locator('#trips-list').textContent()).includes('London → Amsterdam'), (await page.locator('#trips-list').textContent()).includes('London → Paris')], [true, true]);
+  await page.selectOption('#trip-city', 'paris');
+  await page.click('button[data-trip-remove="' + amsTrip.id + '"]');
+  await until(() => gh.tripPuts.length === 3);
+  await page.click('button[data-trip-remove]');
+  await until(() => gh.tripPuts.length === 4);
+  check('trains: "Stop watching" removes the trip', gh.tripPuts[3].saved, { trips: [] });
   await until(async () => (await page.locator('#trips-list .empty-state').count()) === 1);
   gh.snapState = { ...gh.snapState, blocked: { since: iso(-3600000), alerted: true } };
   await page.click('#owner-tabs button[data-tab="scanner"]');

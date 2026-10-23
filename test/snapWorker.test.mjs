@@ -30,6 +30,7 @@ const files = {}; // private repo: name -> { text, sha }
 let shaN = 0;
 let snapMode = 'ok'; // 'ok' | 'blocked' | 'cheaper'
 const pushes = [];
+const snapUrls = [];
 const saves = [];
 const env = { GITHUB_TOKEN: 'test', NTFY_TRAINS_TOPIC: 'TEST-trains' };
 
@@ -47,6 +48,7 @@ globalThis.fetch = async (url, opts = {}) => {
     return json({ content: { sha: files[name].sha } }, 201);
   }
   if (url.startsWith('https://snap.eurostar.com/')) {
+    snapUrls.push(url);
     if (snapMode === 'blocked') return new Response('<html>Access denied</html>', { status: 403 });
     return new Response(snapMode === 'cheaper' ? page.replace(/>75</g, '>60<') : page, { status: 200 });
   }
@@ -122,6 +124,35 @@ check('channels: a trip with no channel alerts the main channel only', await top
 check('channels: a friend trip alerts only their channel, not the main one', await topicsAfterFreshState([{ id: 'b', out: ['2026-10-19'], channel: 'Pierre' }], '2026-10-16T18:10:00Z'), ['TEST-trains-pierre']);
 check('channels: the same date in both trips alerts both channels', await topicsAfterFreshState([{ id: 'a', out: ['2026-10-19'] }, { id: 'b', out: ['2026-10-19'], channel: 'pierre' }], '2026-10-16T18:20:00Z'), ['TEST-trains', 'TEST-trains-pierre']);
 take(saves);
+
+// --- 7. Brussels and Amsterdam ------------------------------------------------------
+snapUrls.length = 0;
+delete files['snap-state.json'];
+files['snap-trips.json'] = { text: JSON.stringify({ trips: [
+  { id: 'p', out: ['2026-10-19'] },
+  { id: 'b', city: 'brussels', out: ['2026-10-19'] },
+  { id: 'a', city: 'amsterdam', out: ['2026-10-19'], channel: 'pierre' },
+] }), sha: 'trips-cities' };
+await runSnap(env, at('2026-10-16T19:00:00Z'));
+p = take(pushes);
+check('cities: each city\'s trip alerts with its own city name, to its own channel', p.map((x) => `${x.topic} | ${x.title}`), [
+  'TEST-trains | Snap London to Paris: Mon 19 Oct has tickets',
+  'TEST-trains | Snap London to Brussels: Mon 19 Oct has tickets',
+  'TEST-trains-pierre | Snap London to Amsterdam: Mon 19 Oct has tickets',
+]);
+const asked = (code) => snapUrls.filter((u) => u.includes(`destination=${code}`)).length > 0;
+check('cities: Snap was asked about London to each city with the right station codes', [asked('8727100'), asked('8814001'), asked('8400058')], [true, true, true]);
+check('cities: the tapped link opens the right route', p[1].click, 'https://snap.eurostar.com/uk-en/search?adult=1&origin=7015400&destination=8814001&outbound=2026-10-19&outslot=13%3A00');
+check('cities: no request goes to a return route nobody is watching', snapUrls.some((u) => u.includes('origin=8814001') || u.includes('origin=8400058') || u.includes('origin=8727100')), false);
+check('cities: each route keeps its own memory', Object.keys(state().routes).sort(), ['london-amsterdam', 'london-brussels', 'london-paris']);
+take(saves);
+await runSnap(env, at('2026-10-16T19:05:00Z'));
+check('cities: a second run with nothing new is quiet', take(pushes).length, 0);
+snapMode = 'cheaper';
+await runSnap(env, at('2026-10-16T19:10:00Z'));
+p = take(pushes);
+check('cities: a price drop is reported per city, each compared with its own last alert', p.map((x) => x.message.split('\n')[1]), ['Down £15 since the last alert (was £75)', 'Down £15 since the last alert (was £75)', 'Down £15 since the last alert (was £75)']);
+snapMode = 'ok';
 
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }
 console.log('\nAll Snap Worker tests passed.');

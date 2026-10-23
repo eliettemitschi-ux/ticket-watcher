@@ -55,7 +55,9 @@ const call = (method, key, { query = '', body } = {}) => handleFriend(
 );
 const trips = () => JSON.parse(files['snap-trips.json'].text).trips;
 const tripOf = (channel) => trips().filter((t) => t.channel === channel);
-const dates = (b) => [b.out.map((e) => e.date), b.back.map((e) => e.date)];
+// The dates on one route of a reply, e.g. route(body, 'brussels', 'out'); dates(body) is the Paris pair.
+const route = (b, city, leg) => ((b.routes || []).find((r) => r.city === city && r.leg === leg) || { dates: [] });
+const dates = (b, city = 'paris') => [route(b, city, 'out').dates.map((e) => e.date), route(b, city, 'back').dates.map((e) => e.date)];
 
 files['snap-trips.json'] = { sha: 's0', text: JSON.stringify({ trips: [
   { id: 'mine', out: ['2026-11-05'], back: [] },
@@ -78,7 +80,7 @@ check('browser preflight: allowed from the site only', [r.status, r.headers.get(
 // --- Seeing your own dates only ---------------------------------------------
 r = await call('GET', PIERRE);
 let body = await r.json();
-check('GET: pierre sees nothing yet (not your dates, not marie\'s, not his finished one)', [r.status, body.channel, body.topic, body.out, body.back], [200, 'pierre', 'T-trains-pierre', [], []]);
+check('GET: pierre sees nothing yet (not your dates, not marie\'s, not his finished one)', [r.status, body.channel, body.topic, body.routes], [200, 'pierre', 'T-trains-pierre', []]);
 check('GET: a key with a name returns it', body.name, 'Pierre');
 check('GET: pierre has the passport reminder, no personal-link note, and the default cap', [body.passport, body.note, body.maxDates], [true, false, 12]);
 r = await call('GET', ZELIE);
@@ -103,7 +105,7 @@ const pierreTripId = tripOf('pierre')[0].id;
 r = await call('POST', PIERRE, { body: { out: ['2026-11-09'], back: ['2026-11-12'] } });
 body = await r.json();
 check('POST: more dates are merged into the same single trip, in date order', [dates(body), tripOf('pierre').length, tripOf('pierre')[0].id === pierreTripId], [[['2026-11-08', '2026-11-09'], ['2026-11-12']], 1, true]);
-check('POST: shows what the watcher saw for each date', [body.out[0], body.out[1], body.back[0]], [{ date: '2026-11-08', state: 'tickets', price: 45 }, { date: '2026-11-09', state: 'none' }, { date: '2026-11-12', state: 'unknown' }]);
+check('POST: shows what the watcher saw for each date', [route(body, 'paris', 'out').dates[0], route(body, 'paris', 'out').dates[1], route(body, 'paris', 'back').dates[0]], [{ date: '2026-11-08', state: 'tickets', price: 45 }, { date: '2026-11-09', state: 'none' }, { date: '2026-11-12', state: 'unknown' }]);
 r = await call('POST', PIERRE, { body: { out: ['2026-11-08'] } });
 check('POST: adding a date already watched changes nothing', [r.status, dates(await r.json())], [200, [['2026-11-08', '2026-11-09'], ['2026-11-12']]]);
 check('GET: the response never includes anyone else\'s dates', JSON.stringify(body).includes('2026-11-20') || JSON.stringify(body).includes('2026-11-05'), false);
@@ -171,6 +173,44 @@ for (const d of ['2026-11-09', '2026-11-08']) await call('DELETE', PIERRE, { que
 r = await call('DELETE', PIERRE, { query: '?leg=back&date=2026-11-12' });
 for (const d of many) await call('DELETE', PIERRE, { query: `?leg=out&date=${d}` });
 check('DELETE: removing a friend\'s last date removes their trip entirely', tripOf('pierre').length, 0);
+// --- Brussels and Amsterdam ---------------------------------------------------------
+check('cities: pierre starts with nothing watched', (await (await call('GET', PIERRE)).json()).routes, []);
+r = await call('POST', PIERRE, { body: { city: 'brussels', out: ['2026-11-12'], back: ['2026-11-14'] } });
+body = await r.json();
+check('cities: Brussels dates are listed under London to Brussels and Brussels to London', [r.status, body.routes.map((x) => [x.label, x.dates.map((e) => e.date)])], [200, [['London → Brussels', ['2026-11-12']], ['Brussels → London', ['2026-11-14']]]]);
+check('cities: a Brussels trip is saved with its city, tagged with his channel', tripOf('pierre').map((t) => [t.city, t.out, t.back]), [['brussels', ['2026-11-12'], ['2026-11-14']]]);
+r = await call('POST', PIERRE, { body: { city: 'amsterdam', out: ['2026-11-12'] } });
+body = await r.json();
+check('cities: the same day in another city is a separate watch', [dates(body, 'brussels')[0], dates(body, 'amsterdam')[0], tripOf('pierre').length], [['2026-11-12'], ['2026-11-12'], 2]);
+r = await call('POST', PIERRE, { body: { out: ['2026-11-12'] } });
+body = await r.json();
+check('cities: no city means Paris', [r.status, dates(body)], [200, [['2026-11-12'], []]]);
+check('cities: one trip per city, three in all', tripOf('pierre').map((t) => t.city || 'paris').sort(), ['amsterdam', 'brussels', 'paris']);
+check('cities: the reply lists routes in a fixed order, London to the city first', body.routes.map((x) => x.label), ['London → Paris', 'London → Brussels', 'Brussels → London', 'London → Amsterdam']);
+r = await call('POST', PIERRE, { body: { city: 'atlantis', out: ['2026-11-12'] } });
+check('cities: an unknown city is refused with the list to choose from', [r.status, (await r.json()).error], [400, 'Pick one of: Paris, Brussels, Amsterdam.']);
+r = await call('DELETE', PIERRE, { query: '?city=brussels&leg=out&date=2026-11-12' });
+body = await r.json();
+check('cities: removing a date removes it from that city only', [dates(body, 'brussels'), dates(body, 'amsterdam')[0], dates(body)[0]], [[[], ['2026-11-14']], ['2026-11-12'], ['2026-11-12']]);
+r = await call('DELETE', PIERRE, { query: '?city=atlantis&leg=out&date=2026-11-12' });
+check('cities: removing in an unknown city is refused', r.status, 400);
+r = await call('DELETE', PIERRE, { query: '?leg=out&date=2026-11-12' });
+check('cities: removing with no city means Paris', dates(await r.json())[0], []);
+
+// The cap of 4 counts every city together. At this point zélie has 4 Paris dates.
+r = await call('POST', ZELIE, { body: { city: 'brussels', out: ['2026-11-30'] } });
+z = await r.json();
+check('cap 4: a Brussels date counts with her Paris dates, so a fifth is refused', [r.status, (z.error || '').includes('up to 4')], [400, true]);
+for (const [leg, day] of [['out', '2026-12-11'], ['out', '2026-12-20'], ['back', '2026-12-13']]) await call('DELETE', ZELIE, { query: `?leg=${leg}&date=${day}` });
+r = await call('POST', ZELIE, { body: { city: 'amsterdam', out: ['2026-11-30'], back: ['2026-12-02'] } });
+check('cap 4: after removing three Paris dates, two Amsterdam dates fit (1 + 2 = 3)', [r.status, dates(await r.json(), 'amsterdam')], [200, [['2026-11-30'], ['2026-12-02']]]);
+r = await call('POST', ZELIE, { body: { city: 'brussels', out: ['2026-11-30', '2026-12-01'] } });
+check('cap 4: but two more in Brussels would be five and are refused', r.status, 400);
+z = await (await call('GET', ZELIE)).json();
+check('cap 4: her list is unchanged by the refused request', z.routes.map((x) => [x.label, x.dates.length]), [['Paris → London', 1], ['London → Amsterdam', 1], ['Amsterdam → London', 1]]);
+r = await call('GET', 'GAB-KEY-0123456789');
+check("cities: another friend's dates are never in someone else's list", JSON.stringify(z).includes('2027-01-15'), false);
+
 r = await call('PUT', PIERRE);
 check('other methods are refused', r.status, 405);
 
