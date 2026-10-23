@@ -33,8 +33,52 @@
     <h2 class="section-title">Watching <span class="count" id="count"></span></h2>
     <section id="trips"></section>
 
-    <h2 class="section-title">Getting the alerts</h2>
-    <p class="hint">Alerts arrive in the free <strong>ntfy</strong> app. Subscribe to <code id="topic">…</code> there. Eliette's guide has the steps.</p>
+    <section class="explainer" id="guide">
+      <h2>Set up your alerts</h2>
+      <p>Alerts arrive as phone notifications through the free <strong>ntfy</strong> app. There is no account and no sign-up.</p>
+      <ol class="ntfy-steps">
+        <li>
+          Install ntfy:
+          <a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone (App Store)</a>
+          &middot;
+          <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android (Google Play)</a>
+        </li>
+        <li>Open the app and tap <strong>+ (Subscribe to topic)</strong>. Leave the server as it is (ntfy.sh).</li>
+        <li>
+          Type your channel name exactly, capitals and dashes included:
+          <code class="topic-name">…</code>
+          <button type="button" class="chip" id="copy-topic">Copy</button>
+          <span class="hint" id="copied" role="status"></span>
+        </li>
+        <li>Allow notifications when your phone asks. On Android, also set ntfy's battery use to <strong>Unrestricted</strong> (Settings → Apps → ntfy → Battery), or the phone may delay alerts to save power.</li>
+      </ol>
+
+      <h2>What an alert looks like</h2>
+      <div class="alert-example"><strong>Snap London to Paris: Fri 6 Nov has tickets</strong><span>£45 (06:01 to 13:00), £55 (13:00 to 20:01)</span></div>
+      <div class="alert-example"><strong>Snap Paris to London: Mon 9 Nov is now £39</strong><span>was £55 · £39 (06:01 to 13:00)</span></div>
+      <p>You get one when tickets appear on a date you are watching, when a new time window opens on a date that already has tickets, or when the price drops. <strong>Tap the alert</strong> and it opens that day's search on Eurostar Snap.</p>
+
+      <h2>When one arrives</h2>
+      <ul class="guide-list">
+        <li>Book straight away. Cheap Snap seats can sell out within minutes.</li>
+        <li>You buy a time window, such as "leaving between 13:00 and 20:01". The exact train is confirmed 48 hours before you travel.</li>
+        <li>Snap tickets cannot be exchanged, refunded, transferred or cancelled. Be sure of your dates first.</li>
+        <li>In the ntfy app, open your channel, tap the three dots, and set the sound and priority to something you will notice.</li>
+      </ul>
+
+      <h2>Good to know</h2>
+      <h3>How often does it check?</h3>
+      <p>Every 5 minutes, day and night, on a free cloud service. It does not depend on anyone's phone or laptop being on.</p>
+      <h3>Is it private?</h3>
+      <p>The channel name works like a shared password: anyone who knows it can read your alerts. They contain only dates and prices, nothing personal, but please do not post the name publicly. Your personal link on this page only changes your own dates.</p>
+      <h3>I am not getting alerts</h3>
+      <p>Check that the channel name is spelled exactly as above, that notifications are allowed for ntfy, and (on Android) that battery use is Unrestricted. Then ask Eliette to send a test.</p>
+      <h3>How do I stop?</h3>
+      <p>Open your channel in ntfy, tap the three dots, and choose Unsubscribe. Remove your dates above so nothing is checked for you.</p>
+      <p class="hint">Alerts are a convenience and are not guaranteed. Always check the price and dates on the Eurostar Snap site before you pay.</p>
+    </section>
+
+    <p class="hint">Your link is just for you. Add this page to your home screen or bookmark it so you can find it again.</p>
   </div>
 
   <div class="owner-view" id="no-key" hidden>

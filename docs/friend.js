@@ -96,7 +96,7 @@
     $('save').disabled = !draft.out.length && !draft.back.length;
     if (!data) return;
     $('status').textContent = statusLine(data);
-    $('topic').textContent = data.topic;
+    document.querySelectorAll('.topic-name').forEach((el) => { el.textContent = data.topic; });
     $('count').textContent = `(${data.trips.length})`;
     $('trips').innerHTML = data.trips.length
       ? data.trips.map((t) => tripCard(t, today)).join('')
@@ -157,6 +157,22 @@
     render();
   }
 
+  // Copies the channel name; falls back to selecting it where the clipboard is blocked.
+  function onCopy() {
+    const el = document.querySelector('.topic-name');
+    const done = (text) => { $('copied').textContent = text; };
+    const select = () => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      done('Selected. Press copy.');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(el.textContent).then(() => done('Copied'), select);
+    else select();
+  }
+
   function start() {
     const fromLink = /^#key=([A-Za-z0-9_-]{16,})$/.exec(location.hash);
     if (fromLink) {
@@ -169,6 +185,7 @@
     if (!sessionKey) { badLink(); return; }
     $('friend-view').hidden = false;
     $('friend-view').addEventListener('click', onClick);
+    $('copy-topic').addEventListener('click', onCopy);
     render();
     refresh();
     setInterval(refresh, 60000);

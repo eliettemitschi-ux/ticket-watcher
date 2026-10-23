@@ -79,6 +79,8 @@ function fakeWorker() {
   check('no link: asks for the personal link', await page.locator('#no-key').isVisible(), true);
   check('no link: the form is not shown', await page.locator('#friend-view').isHidden(), true);
   check('no link: nothing was sent to the Worker', worker.calls.length, 0);
+  check('no link: the guide is hidden', await page.locator('#guide').isHidden(), true);
+  check('no link: the page source never contains the channel name', (await page.content()).includes('trains-pierre'), false);
 
   // 2. A garbled key in the link is ignored.
   await page.goto(BASE + '#key=short', { waitUntil: 'networkidle' });
@@ -92,7 +94,11 @@ function fakeWorker() {
   check('link: the key is removed from the address bar', page.url().includes('key='), false);
   check('link: the key is kept on this device', await page.evaluate(() => localStorage.getItem('twFriendKey')), KEY);
   check('link: the key goes to the Worker as a bearer token, not in the URL', [worker.calls[0].auth, worker.calls[0].url.includes(KEY)], [`Bearer ${KEY}`, false]);
-  check('link: the topic to subscribe to is shown', await page.locator('#topic').textContent(), 'BARBICAN-1999-trains-pierre');
+  check('guide: the steps show his own channel name', await page.locator('.topic-name').textContent(), 'BARBICAN-1999-trains-pierre');
+  check('guide: the setup steps, alert examples and FAQ are on the page', [await page.locator('#guide .ntfy-steps li').count(), await page.locator('#guide .alert-example').count(), await page.locator('#guide h3').count()], [4, 2, 4]);
+  await page.evaluate(() => { navigator.clipboard.writeText = () => Promise.resolve(); });
+  await page.click('#copy-topic');
+  check('guide: the copy button confirms', await page.locator('#copied').textContent(), 'Copied');
   check('link: nothing watched yet', await page.locator('#trips .empty-state').count(), 1);
   check('link: "Start watching" is off until a date is added', await page.locator('#save').isDisabled(), true);
 
