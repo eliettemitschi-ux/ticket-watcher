@@ -63,7 +63,7 @@ function centersForDates(dates) {
  *   day  -- had no tickets, now has some
  *   slot -- a new time window on a day that already had tickets
  *   drop -- the cheapest price went down
- * @returns {{date:string, kind:'day'|'slot'|'drop', price:number, was?:number, slots:object[], newSlots:object[]}[]}
+ * @returns {{date:string, kind:'day'|'slot'|'drop', price:number, current:number, was?:number, slots:object[], newSlots:object[]}[]}
  */
 function diffDays(prev, next) {
   if (!prev) return [];
@@ -73,13 +73,13 @@ function diffDays(prev, next) {
     if (now.price === null) continue;
     const before = prev[date];
     if (!before || before.price === null) {
-      alerts.push({ date, kind: 'day', price: now.price, slots: now.slots, newSlots: now.slots });
+      alerts.push({ date, kind: 'day', price: now.price, current: now.price, slots: now.slots, newSlots: now.slots });
       continue;
     }
     const known = new Set((before.slots || []).map((s) => s.window));
     const newSlots = (now.slots || []).filter((s) => !known.has(s.window));
-    if (newSlots.length) alerts.push({ date, kind: 'slot', price: Math.min(...newSlots.map((s) => s.price)), slots: now.slots, newSlots });
-    else if (now.price < before.price) alerts.push({ date, kind: 'drop', price: now.price, was: before.price, slots: now.slots, newSlots: [] });
+    if (newSlots.length) alerts.push({ date, kind: 'slot', price: Math.min(...newSlots.map((s) => s.price)), current: now.price, slots: now.slots, newSlots });
+    else if (now.price < before.price) alerts.push({ date, kind: 'drop', price: now.price, current: now.price, was: before.price, slots: now.slots, newSlots: [] });
   }
   return alerts;
 }
@@ -87,16 +87,40 @@ function diffDays(prev, next) {
 const dayLabel = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${iso}T12:00:00Z`));
 const slotText = (slots) => slots.map((s) => `£${s.price} (${s.window.replace('-', ' to ')})`).join(', ');
 
-/** The notification for one alert. */
-function alertText(route, a) {
+// A move of this much or less since the last alert reads as "about the same".
+const SIMILAR_WITHIN = 10;
+
+/**
+ * How today's cheapest price compares with an earlier one.
+ * @param {number} current  the day's cheapest price now
+ * @param {{price:number, kind:'alert'|'check'}|null} since  the last alerted price for
+ *   this date, or (if it was never alerted) the price at the last check
+ * @returns {string} '' when there is nothing to compare with
+ */
+function changeLine(current, since) {
+  if (!since || typeof current !== 'number') return '';
+  const when = since.kind === 'alert' ? 'the last alert' : 'the last check';
+  const diff = current - since.price;
+  if (Math.abs(diff) <= SIMILAR_WITHIN) return `About the same as ${when} (£${since.price})`;
+  return `${diff > 0 ? 'Up' : 'Down'} £${Math.abs(diff)} since ${when} (was £${since.price})`;
+}
+
+/**
+ * The notification for one alert. `since` is the last alerted price for this
+ * date ({price, kind:'alert'}); for a price drop on a date never alerted, the
+ * price at the last check is used instead ({price: a.was, kind:'check'}).
+ */
+function alertText(route, a, since) {
   const what = { day: 'has tickets', slot: 'has a new time window', drop: `is now £${a.price}` }[a.kind];
   const detail = a.kind === 'drop'
-    ? `was £${a.was}${a.slots.length ? ` · ${slotText(a.slots)}` : ''}`
+    ? slotText(a.slots) || `from £${a.price}`
     : slotText(a.kind === 'day' ? a.slots : a.newSlots) || `from £${a.price}`;
+  const compare = since || (a.kind === 'drop' ? { price: a.was, kind: 'check' } : null);
+  const change = changeLine(a.current, compare);
   return {
     title: `Snap ${route.name}: ${dayLabel(a.date)} ${what}`,
-    message: `${detail}\nSnap trains are confirmed 48 hours before travel.`,
+    message: [detail, change, 'Snap trains are confirmed 48 hours before travel.'].filter(Boolean).join('\n'),
   };
 }
 
-module.exports = { ROUTES, cleanChannel, topicFor, channelsFor, watchedDates, centersForDates, diffDays, alertText, dayLabel };
+module.exports = { SIMILAR_WITHIN, changeLine, ROUTES, cleanChannel, topicFor, channelsFor, watchedDates, centersForDates, diffDays, alertText, dayLabel };

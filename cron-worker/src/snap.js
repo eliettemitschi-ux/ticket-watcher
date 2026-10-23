@@ -125,14 +125,20 @@ export async function runSnap(env, now = new Date()) {
     for (const a of alerts) {
       try {
         // Each trip's own channel hears about its dates; trips without one use the main channel.
+        const sinceAlert = prev[a.date] && typeof prev[a.date].alertedPrice === 'number' ? { price: prev[a.date].alertedPrice, kind: 'alert' } : null;
         for (const channel of channelsFor(tripsFile.trips, leg, a.date)) {
-          await notify(env, { ...alertText(route, a), click: searchUrl(route, a.date), topic: topicFor(env.NTFY_TRAINS_TOPIC, channel) });
+          await notify(env, { ...alertText(route, a, sinceAlert), click: searchUrl(route, a.date), topic: topicFor(env.NTFY_TRAINS_TOPIC, channel) });
           sent += 1;
         }
+        next[a.date].alertedPrice = a.current; // what the next alert for this date is compared with
       } catch (err) {
         console.error(`Snap alert failed (${err.message}), will retry next run`);
         next[a.date] = prev[a.date] || { price: null, slots: [] }; // forget it so it re-alerts
       }
+    }
+    // Carry forward the last alerted price for dates that did not alert this time.
+    for (const date of Object.keys(next)) {
+      if (next[date].alertedPrice === undefined && prev[date] && typeof prev[date].alertedPrice === 'number') next[date].alertedPrice = prev[date].alertedPrice;
     }
     state.routes[route.id] = { days: next };
   }

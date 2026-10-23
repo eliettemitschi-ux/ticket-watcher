@@ -47,7 +47,7 @@ const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).to
 function fakeWorker() {
   const w = { trips: [], calls: [], rejectKey: false, failNext: null };
   const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
-  const view = () => ({ channel: 'pierre', topic: 'BARBICAN-1999-trains-pierre', today, maxDates: 12, checkedAt: new Date().toISOString(), blocked: false, trips: w.trips });
+  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, maxDates: 12, checkedAt: new Date().toISOString(), blocked: false, trips: w.trips });
   w.handler = async (route) => {
     const req = route.request();
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
@@ -80,6 +80,7 @@ function fakeWorker() {
   check('no link: the form is not shown', await page.locator('#friend-view').isHidden(), true);
   check('no link: nothing was sent to the Worker', worker.calls.length, 0);
   check('no link: the guide is hidden', await page.locator('#guide').isHidden(), true);
+  check('no link: the passport note is hidden too', await page.locator('.passport-note').isHidden(), true);
   check('no link: the page source never contains the channel name', (await page.content()).includes('trains-pierre'), false);
 
   // 2. A garbled key in the link is ignored.
@@ -94,6 +95,8 @@ function fakeWorker() {
   check('link: the key is removed from the address bar', page.url().includes('key='), false);
   check('link: the key is kept on this device', await page.evaluate(() => localStorage.getItem('twFriendKey')), KEY);
   check('link: the key goes to the Worker as a bearer token, not in the URL', [worker.calls[0].auth, worker.calls[0].url.includes(KEY)], [`Bearer ${KEY}`, false]);
+  check('title: the page is named after him', [await page.locator('h1').textContent(), await page.title()], ['Pierre Express', 'Pierre Express']);
+  check('passport: the reminder is on his page', (await page.locator('.passport-note').textContent()).startsWith('Passport: required.'), true);
   check('guide: the steps show his own channel name', await page.locator('.topic-name').textContent(), 'BARBICAN-1999-trains-pierre');
   check('guide: the setup steps, alert examples and FAQ are on the page', [await page.locator('#guide .ntfy-steps li').count(), await page.locator('#guide .alert-example').count(), await page.locator('#guide h3').count()], [4, 2, 4]);
   await page.evaluate(() => { navigator.clipboard.writeText = () => Promise.resolve(); });

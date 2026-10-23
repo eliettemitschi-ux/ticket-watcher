@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSearchHtml, searchUrl } = require('../trains/snap');
-const { watchedDates, centersForDates, diffDays, alertText, ROUTES, cleanChannel, topicFor, channelsFor } = require('../trains/diff');
+const { changeLine, watchedDates, centersForDates, diffDays, alertText, ROUTES, cleanChannel, topicFor, channelsFor } = require('../trains/diff');
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -82,7 +82,19 @@ check('diff: a new window that is also cheaper gives one alert, as a new window'
 // What the notification says.
 const lp = ROUTES['london-paris'];
 check('text: tickets appearing', alertText(lp, a1[0]), { title: 'Snap London to Paris: Tue 20 Oct has tickets', message: '£85 (06:01 to 13:00)\nSnap trains are confirmed 48 hours before travel.' });
-check('text: a price drop says what it was', `${alertText(lp, a4[0]).title} | ${alertText(lp, a4[0]).message.split('\n')[0]}`, 'Snap London to Paris: Mon 19 Oct is now £60 | was £75 · £85 (06:01 to 13:00), £60 (13:00 to 20:01)');
+check('text: a price drop lists the windows, then how it compares with the last check', alertText(lp, a4[0]).message, '£85 (06:01 to 13:00), £60 (13:00 to 20:01)\nDown £15 since the last check (was £75)\nSnap trains are confirmed 48 hours before travel.');
+check('text: a drop title gives the new price', alertText(lp, a4[0]).title, 'Snap London to Paris: Mon 19 Oct is now £60');
+
+// Price change since the last alert (within £10 reads as "about the same").
+check('change: nothing to compare with says nothing', changeLine(45, null), '');
+check('change: down since the last alert', changeLine(45, { price: 65, kind: 'alert' }), 'Down £20 since the last alert (was £65)');
+check('change: up since the last alert', changeLine(85, { price: 65, kind: 'alert' }), 'Up £20 since the last alert (was £65)');
+check('change: within £10 is about the same', [changeLine(75, { price: 65, kind: 'alert' }), changeLine(55, { price: 65, kind: 'alert' }), changeLine(65, { price: 65, kind: 'alert' })], ['About the same as the last alert (£65)', 'About the same as the last alert (£65)', 'About the same as the last alert (£65)']);
+check('change: £11 is a real move', changeLine(76, { price: 65, kind: 'alert' }), 'Up £11 since the last alert (was £65)');
+check('change: a price seen but never alerted says "last check"', changeLine(45, { price: 65, kind: 'check' }), 'Down £20 since the last check (was £65)');
+const reAlert = alertText(lp, { date: '2026-10-30', kind: 'slot', price: 75, current: 45, slots: [], newSlots: [{ window: '13:00-20:01', price: 75 }] }, { price: 65, kind: 'alert' });
+check('text: the comparison uses the day cheapest price, not the new window price', reAlert.message.split('\n')[1], 'Down £20 since the last alert (was £65)');
+check('text: a first alert for a date has no comparison line', alertText(lp, a1[0], null).message.split('\n').length, 2);
 check('text: a new window lists only the new one', alertText(ROUTES['paris-london'], a2[0]).title, 'Snap Paris to London: Mon 19 Oct has a new time window');
 
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }

@@ -47,12 +47,15 @@
       </div>`;
   }
 
+  // "Pierre Express": the page title for a friend, or the plain title when there is no name.
+  const titleFor = (name) => (name ? `${name} Express` : 'Snap train alerts');
+
   function statusLine(data) {
     if (data.blocked) return '⚠️ Eurostar is refusing checks right now, so alerts may be late.';
     return `Alerts go to ${data.topic} · checks every 5 minutes`;
   }
 
-  const helpers = { escapeHtml, addDateTo, seenBadge, tripCard, statusLine, fmtDate };
+  const helpers = { escapeHtml, addDateTo, seenBadge, tripCard, statusLine, fmtDate, titleFor };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -95,6 +98,10 @@
     }
     $('save').disabled = !draft.out.length && !draft.back.length;
     if (!data) return;
+    if (data.name) {
+      $('title').textContent = titleFor(data.name);
+      document.title = titleFor(data.name);
+    }
     $('status').textContent = statusLine(data);
     document.querySelectorAll('.topic-name').forEach((el) => { el.textContent = data.topic; });
     $('count').textContent = `(${data.trips.length})`;

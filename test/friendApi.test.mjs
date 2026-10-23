@@ -32,7 +32,7 @@ globalThis.fetch = async (url, opts = {}) => {
   return json({ content: { sha: files[name].sha } }, 201);
 };
 
-const env = { GITHUB_TOKEN: 't', NTFY_TRAINS_TOPIC: 'T-trains', FRIEND_KEYS: JSON.stringify({ 'PIERRE-KEY-0123456789': 'pierre', 'MARIE-KEY-0123456789': 'marie' }) };
+const env = { GITHUB_TOKEN: 't', NTFY_TRAINS_TOPIC: 'T-trains', FRIEND_KEYS: JSON.stringify({ 'PIERRE-KEY-0123456789': { channel: 'pierre', name: 'Pierre' }, 'MARIE-KEY-0123456789': 'marie' }) };
 const NOW = new Date('2026-10-22T12:00:00Z');
 const PIERRE = 'PIERRE-KEY-0123456789';
 const call = (method, key, { query = '', body } = {}) => handleFriend(
@@ -64,6 +64,9 @@ check('browser preflight: allowed from the site only', [r.status, r.headers.get(
 r = await call('GET', PIERRE);
 let body = await r.json();
 check('GET: pierre sees no trips yet (not yours, not marie, not the finished one)', [r.status, body.channel, body.topic, body.trips], [200, 'pierre', 'T-trains-pierre', []]);
+check('GET: a key with a name returns it', body.name, 'Pierre');
+r = await call('GET', 'MARIE-KEY-0123456789');
+check('GET: a key that is just a channel string still works, with no name', [r.status, (await r.json()).name], [200, '']);
 check('GET: says when the watcher last reported', body.checkedAt, '2026-10-22T11:58:00Z');
 
 // --- Adding ------------------------------------------------------------------

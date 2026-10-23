@@ -3,7 +3,8 @@
 // Lets a friend add and remove their OWN Snap dates from a page on the site
 // (docs/friend.html) without any access to the private repo. The Worker holds
 // the repo token; the friend holds a personal key that the Worker maps to their
-// alert channel (FRIEND_KEYS secret: {"<key>": "pierre"}).
+// alert channel and name (FRIEND_KEYS secret:
+// {"<key>": {"channel": "pierre", "name": "Pierre"}}; a bare string is just the channel).
 //
 // What a key can do: list, add and remove trips tagged with its own channel,
 // within the limits below. It cannot see anyone else's trips or any other
@@ -33,12 +34,17 @@ const fail = (status, message) => reply({ error: message }, status);
 const isRealDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
 const liveDates = (trip, today) => [...(trip.out || []), ...(trip.back || [])].filter((d) => d >= today);
 
-function channelFor(request, env) {
+// { channel, name } for the key on this request, or null if it is not a known key.
+function friendFor(request, env) {
   const key = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
   if (!key) return null;
   let keys = {};
   try { keys = JSON.parse(env.FRIEND_KEYS || '{}'); } catch { return null; }
-  return Object.prototype.hasOwnProperty.call(keys, key) ? cleanChannel(keys[key]) || null : null;
+  if (!Object.prototype.hasOwnProperty.call(keys, key)) return null;
+  const entry = keys[key];
+  const channel = cleanChannel(typeof entry === 'string' ? entry : entry && entry.channel);
+  if (!channel) return null;
+  return { channel, name: entry && typeof entry === 'object' && entry.name ? String(entry.name).slice(0, 30) : '' };
 }
 
 // Applies one change to the freshest snap-trips.json, retrying once if it
@@ -61,8 +67,9 @@ async function change(env, today, apply) {
 
 export async function handleFriend(request, env, now = new Date()) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-  const channel = channelFor(request, env);
-  if (!channel) return fail(401, 'This link is not valid. Ask Eliette for a new one.');
+  const friend = friendFor(request, env);
+  if (!friend) return fail(401, 'This link is not valid. Ask Eliette for a new one.');
+  const { channel, name } = friend;
   const today = todayLondon(now);
   const url = new URL(request.url);
 
@@ -108,7 +115,7 @@ export async function handleFriend(request, env, now = new Date()) {
         }));
         return { id: t.id, out: t.out || [], back: t.back || [], seen: { out: seen('out'), back: seen('back') } };
       });
-    return reply({ channel, topic: topicFor(env.NTFY_TRAINS_TOPIC, channel), today, maxDates: MAX_DATES, trips, checkedAt: state.checkedAt || null, blocked: Boolean(state.blocked) });
+    return reply({ channel, name, topic: topicFor(env.NTFY_TRAINS_TOPIC, channel), today, maxDates: MAX_DATES, trips, checkedAt: state.checkedAt || null, blocked: Boolean(state.blocked) });
   } catch (err) {
     console.error('friend API failed:', err.message);
     return fail(500, 'Something went wrong. Please try again in a minute.');

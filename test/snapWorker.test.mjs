@@ -63,6 +63,8 @@ files['snap-trips.json'] = { text: JSON.stringify({ trips: [{ id: 't1', out: ['2
 let r = await runSnap(env, at('2026-10-16T09:00:00Z'));
 let p = take(pushes);
 check('first run: one alert, to the trains topic', p.map((x) => x.topic), ['TEST-trains']);
+check('first run: no comparison line on a first alert', p[0].message.split('\n').length, 2);
+check('first run: remembers the price it alerted', state().routes['london-paris'].days['2026-10-19'].alertedPrice, 75);
 check('first run: says which day and the price', p[0].title, 'Snap London to Paris: Mon 19 Oct has tickets');
 check('first run: lists both time windows, £ sign intact', p[0].message.split('\n')[0], '£85 (06:01 to 13:00), £75 (13:00 to 20:01)');
 check('first run: tapping opens the Snap search for that day', p[0].click, 'https://snap.eurostar.com/uk-en/search?adult=1&origin=7015400&destination=8727100&outbound=2026-10-19&outslot=13%3A00');
@@ -79,7 +81,9 @@ check('repeat: nothing saved (no commit every 5 minutes)', take(saves), []);
 snapMode = 'cheaper';
 r = await runSnap(env, at('2026-10-16T09:10:00Z'));
 p = take(pushes);
-check('drop: one alert saying the new and old price', p.map((x) => `${x.title} | ${x.message.split('\n')[0].split(' · ')[0]}`), ['Snap London to Paris: Mon 19 Oct is now £60 | was £75']);
+check('drop: one alert with the new price', p.map((x) => x.title), ['Snap London to Paris: Mon 19 Oct is now £60']);
+check('drop: and how it compares with the last alert (£75)', p[0].message.split('\n')[1], 'Down £15 since the last alert (was £75)');
+check('drop: the new price is remembered as the last alerted price', state().routes['london-paris'].days['2026-10-19'].alertedPrice, 60);
 take(saves);
 
 // --- 4. Blocked -------------------------------------------------------------
