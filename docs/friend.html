@@ -16,11 +16,12 @@
   </header>
 
   <div class="owner-view" id="friend-view" hidden>
-    <p class="passport-note">Passport: required. Charm: lovely, but border officers still prefer the passport.</p>
+    <p class="personal-note" id="personal-note" hidden>This is your personal link. It's yours alone, like a toothbrush, so please don't share it.</p>
+    <p class="passport-note" id="passport-note" hidden>Passport: required. Charm: lovely, but border officers still prefer the passport.</p>
     <p class="hint" id="msg" role="status"></p>
 
     <h2 class="section-title">Add dates</h2>
-    <p class="hint">Add every date you could travel on. You get a notification when Eurostar Snap tickets appear on any of them, when a new time window opens, or when the price drops.</p>
+    <p class="hint">Add every date you could travel on. You get a notification when Eurostar Snap tickets appear on any of them, when a new time window opens, or when the price drops. <span id="cap-note"></span></p>
     <div class="trip-form">
       <p class="event-venue trip-leg">London → Paris</p>
       <div class="trip-date-row"><input type="date" id="out-date" class="owner-input" aria-label="London to Paris date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>

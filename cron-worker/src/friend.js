@@ -3,8 +3,12 @@
 // Lets a friend add and remove their OWN Snap dates from a page on the site
 // (docs/friend.html) without any access to the private repo. The Worker holds
 // the repo token; the friend holds a personal key that the Worker maps to their
-// alert channel and name (FRIEND_KEYS secret:
-// {"<key>": {"channel": "pierre", "name": "Pierre"}}; a bare string is just the channel).
+// alert channel and name (FRIEND_KEYS secret):
+//   {"<key>": {"channel": "pierre", "name": "Pierre",
+//              "maxDates": 4,          // optional, default 12, never more than 12
+//              "passport": true,       // optional: show the passport reminder
+//              "note": true}}          // optional: show the "personal link" note
+// A bare string instead of an object is just the channel, with the defaults.
 //
 // What a key can do: list, add and remove trips tagged with its own channel,
 // within the limits below. It cannot see anyone else's trips or any other
@@ -17,7 +21,7 @@ import { addDays } from '../../trains/snapParse.js';
 const TRIPS_FILE = 'snap-trips.json';
 const STATE_FILE = 'snap-state.json';
 const ALLOWED_ORIGIN = 'https://eliettemitschi-ux.github.io';
-const MAX_DATES = 12; // live dates per friend, across all their trips
+const MAX_DATES = 12; // most live dates per friend (across all their trips); a key can lower it
 const MAX_DAYS_AHEAD = 120;
 const ROUTE_OF = { out: 'london-paris', back: 'paris-london' };
 
@@ -34,7 +38,7 @@ const fail = (status, message) => reply({ error: message }, status);
 const isRealDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
 const liveDates = (trip, today) => [...(trip.out || []), ...(trip.back || [])].filter((d) => d >= today);
 
-// { channel, name } for the key on this request, or null if it is not a known key.
+// The friend's settings for the key on this request, or null if it is not a known key.
 function friendFor(request, env) {
   const key = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
   if (!key) return null;
@@ -44,7 +48,9 @@ function friendFor(request, env) {
   const entry = keys[key];
   const channel = cleanChannel(typeof entry === 'string' ? entry : entry && entry.channel);
   if (!channel) return null;
-  return { channel, name: entry && typeof entry === 'object' && entry.name ? String(entry.name).slice(0, 30) : '' };
+  const o = entry && typeof entry === 'object' ? entry : {};
+  const cap = Number.isInteger(o.maxDates) && o.maxDates >= 1 ? Math.min(o.maxDates, MAX_DATES) : MAX_DATES;
+  return { channel, name: o.name ? String(o.name).slice(0, 30) : '', maxDates: cap, passport: o.passport === true, note: o.note === true };
 }
 
 // Applies one change to the freshest snap-trips.json, retrying once if it
@@ -69,7 +75,7 @@ export async function handleFriend(request, env, now = new Date()) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   const friend = friendFor(request, env);
   if (!friend) return fail(401, 'This link is not valid. Ask Eliette for a new one.');
-  const { channel, name } = friend;
+  const { channel, name, maxDates, passport, note } = friend;
   const today = todayLondon(now);
   const url = new URL(request.url);
 
@@ -87,7 +93,7 @@ export async function handleFriend(request, env, now = new Date()) {
       const result = await change(env, today, (trips) => {
         const mine = trips.filter((t) => cleanChannel(t.channel) === channel);
         const already = mine.reduce((n, t) => n + liveDates(t, today).length, 0);
-        if (already + all.length > MAX_DATES) return { error: `You can watch up to ${MAX_DATES} dates at once. Remove one first.` };
+        if (already + all.length > maxDates) return { error: `You can watch up to ${maxDates} dates at once. Remove one first.` };
         const trip = { id: `f${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 6)}`, out: [...new Set(out)].sort(), back: [...new Set(back)].sort(), channel, addedAt: now.toISOString() };
         return [...trips, trip];
       });
@@ -115,7 +121,7 @@ export async function handleFriend(request, env, now = new Date()) {
         }));
         return { id: t.id, out: t.out || [], back: t.back || [], seen: { out: seen('out'), back: seen('back') } };
       });
-    return reply({ channel, name, topic: topicFor(env.NTFY_TRAINS_TOPIC, channel), today, maxDates: MAX_DATES, trips, checkedAt: state.checkedAt || null, blocked: Boolean(state.blocked) });
+    return reply({ channel, name, passport, note, topic: topicFor(env.NTFY_TRAINS_TOPIC, channel), today, maxDates, trips, checkedAt: state.checkedAt || null, blocked: Boolean(state.blocked) });
   } catch (err) {
     console.error('friend API failed:', err.message);
     return fail(500, 'Something went wrong. Please try again in a minute.');

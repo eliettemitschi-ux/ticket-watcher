@@ -45,9 +45,9 @@ const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).fo
 const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
 function fakeWorker() {
-  const w = { trips: [], calls: [], rejectKey: false, failNext: null };
+  const w = { trips: [], calls: [], rejectKey: false, failNext: null, profile: { passport: true, note: false, maxDates: 12 } };
   const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
-  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, maxDates: 12, checkedAt: new Date().toISOString(), blocked: false, trips: w.trips });
+  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, checkedAt: new Date().toISOString(), blocked: false, trips: w.trips, ...w.profile });
   w.handler = async (route) => {
     const req = route.request();
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
@@ -80,7 +80,7 @@ function fakeWorker() {
   check('no link: the form is not shown', await page.locator('#friend-view').isHidden(), true);
   check('no link: nothing was sent to the Worker', worker.calls.length, 0);
   check('no link: the guide is hidden', await page.locator('#guide').isHidden(), true);
-  check('no link: the passport note is hidden too', await page.locator('.passport-note').isHidden(), true);
+  check('no link: the passport and personal-link notes are hidden too', [await page.locator('#passport-note').isHidden(), await page.locator('#personal-note').isHidden()], [true, true]);
   check('no link: the page source never contains the channel name', (await page.content()).includes('trains-pierre'), false);
 
   // 2. A garbled key in the link is ignored.
@@ -96,7 +96,9 @@ function fakeWorker() {
   check('link: the key is kept on this device', await page.evaluate(() => localStorage.getItem('twFriendKey')), KEY);
   check('link: the key goes to the Worker as a bearer token, not in the URL', [worker.calls[0].auth, worker.calls[0].url.includes(KEY)], [`Bearer ${KEY}`, false]);
   check('title: the page is named after him', [await page.locator('h1').textContent(), await page.title()], ['Pierre Express', 'Pierre Express']);
-  check('passport: the reminder is on his page', (await page.locator('.passport-note').textContent()).startsWith('Passport: required.'), true);
+  check('passport: the reminder is on his page', (await page.locator('#passport-note').textContent()).startsWith('Passport: required.'), true);
+  check('notes: no personal-link note on his page', await page.locator('#personal-note').isHidden(), true);
+  check('cap: the form says how many dates he can watch', await page.locator('#cap-note').textContent(), 'You can watch up to 12 dates at once (0 used).');
   check('guide: the steps show his own channel name', await page.locator('.topic-name').textContent(), 'BARBICAN-1999-trains-pierre');
   check('guide: the setup steps, alert examples and FAQ are on the page', [await page.locator('#guide .ntfy-steps li').count(), await page.locator('#guide .alert-example').count(), await page.locator('#guide h3').count()], [4, 2, 4]);
   await page.evaluate(() => { navigator.clipboard.writeText = () => Promise.resolve(); });
@@ -145,6 +147,14 @@ function fakeWorker() {
   await until(async () => (await page.locator('#trips .empty-state').count()) === 1);
   const del = worker.calls.find((c) => c.method === 'DELETE');
   check('remove: asks the Worker to remove that trip', new URL(del.url).searchParams.get('id'), 'f1');
+
+  // 7b. A friend with a cap of 4, the personal-link note and no passport reminder.
+  worker.profile = { passport: false, note: true, maxDates: 4 };
+  await page.reload({ waitUntil: 'networkidle' });
+  await until(async () => await page.locator('#personal-note').isVisible());
+  check('friend: the personal-link note is shown, first on the page', (await page.locator('#personal-note').textContent()), 'This is your personal link. It\'s yours alone, like a toothbrush, so please don\'t share it.');
+  check('friend: no passport reminder', await page.locator('#passport-note').isHidden(), true);
+  check('friend: the cap of 4 is shown', await page.locator('#cap-note').textContent(), 'You can watch up to 4 dates at once (0 used).');
 
   // 8. The key stops working (revoked): the page says so and forgets it.
   worker.rejectKey = true;

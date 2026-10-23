@@ -50,12 +50,18 @@
   // "Pierre Express": the page title for a friend, or the plain title when there is no name.
   const titleFor = (name) => (name ? `${name} Express` : 'Snap train alerts');
 
+  // "You can watch up to 4 dates at once (1 used)."
+  function capLine(data) {
+    const used = (data.trips || []).reduce((n, t) => n + [...(t.out || []), ...(t.back || [])].filter((d) => d >= data.today).length, 0);
+    return `You can watch up to ${data.maxDates} dates at once (${used} used).`;
+  }
+
   function statusLine(data) {
     if (data.blocked) return '⚠️ Eurostar is refusing checks right now, so alerts may be late.';
     return `Alerts go to ${data.topic} · checks every 5 minutes`;
   }
 
-  const helpers = { escapeHtml, addDateTo, seenBadge, tripCard, statusLine, fmtDate, titleFor };
+  const helpers = { escapeHtml, addDateTo, seenBadge, tripCard, statusLine, fmtDate, titleFor, capLine };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -98,6 +104,9 @@
     }
     $('save').disabled = !draft.out.length && !draft.back.length;
     if (!data) return;
+    $('personal-note').hidden = !data.note;
+    $('passport-note').hidden = !data.passport;
+    $('cap-note').textContent = capLine(data);
     if (data.name) {
       $('title').textContent = titleFor(data.name);
       document.title = titleFor(data.name);
