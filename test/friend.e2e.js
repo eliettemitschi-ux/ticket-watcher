@@ -45,7 +45,7 @@ const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).fo
 const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
 function fakeWorker() {
-  const w = { trips: [], calls: [], rejectKey: false, failNext: null, profile: { passport: true, note: false, maxDates: 12 } };
+  const w = { trips: [], calls: [], rejectKey: false, failNext: null, delayPostMs: 0, abortNext: false, profile: { passport: true, note: false, maxDates: 12 } };
   const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
   const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, checkedAt: new Date().toISOString(), blocked: false, trips: w.trips, ...w.profile });
   w.handler = async (route) => {
@@ -53,6 +53,8 @@ function fakeWorker() {
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
     w.calls.push({ method: req.method(), auth: req.headers().authorization, url: req.url(), body: req.postData() ? JSON.parse(req.postData()) : null });
     if (w.rejectKey || req.headers().authorization !== `Bearer ${KEY}`) return route.fulfill({ status: 401, headers: cors, body: '{"error":"This link is not valid. Ask Eliette for a new one."}' });
+    if (w.abortNext && req.method() === 'POST') { w.abortNext = false; return route.abort('failed'); }
+    if (w.delayPostMs && req.method() === 'POST') await new Promise((r) => setTimeout(r, w.delayPostMs));
     if (w.failNext) { const f = w.failNext; w.failNext = null; return route.fulfill({ status: 400, headers: cors, body: JSON.stringify({ error: f }) }); }
     if (req.method() === 'POST') {
       const b = JSON.parse(req.postData());
@@ -124,8 +126,21 @@ function fakeWorker() {
   await page.fill('#out-date', '2020-01-01');
   await page.click('button[data-add="out"]');
   check('add: a past date is refused on the page', /already gone/.test(await page.locator('#msg').textContent()), true);
+  check('save: dates waiting to be saved are labelled "not saved yet"', [await page.locator('#pending-note').isVisible(), (await page.locator('#pending-note').textContent()).startsWith('These dates are not saved yet')], [true, true]);
+  check('save: the message area is right under the Start watching button', await page.locator('.trip-form #save + #msg').count(), 1);
+  worker.abortNext = true;
   await page.click('#save');
+  await until(async () => /Not saved/.test(await page.locator('#msg').textContent()));
+  check('network failure: the error says so, next to the button', await page.locator('#msg').textContent(), "Not saved: Couldn't reach the server. Check your connection and try again.");
+  check('network failure: the dates stay in the form and the button works again', [await page.locator('#out-chips .chip').count(), await page.locator('#save').isDisabled(), await page.locator('#save').textContent()], [2, false, 'Start watching']);
+  worker.delayPostMs = 900;
+  await page.click('#save');
+  await until(async () => (await page.locator('#save').textContent()) === 'Saving…');
+  check('saving: the button reads "Saving…" and cannot be tapped twice', [await page.locator('#save').isDisabled(), await page.locator('#pending-note').isHidden()], [true, true]);
   await until(async () => (await page.locator('#trips .event-card').count()) === 1);
+  worker.delayPostMs = 0;
+  check('saved: a clear confirmation next to the button', /^Saved\. You are now watching/.test(await page.locator('#msg').textContent()), true);
+  check('saved: only one trip was created, not two', worker.calls.filter((c) => c.method === 'POST' && c.body && c.body.out && c.body.out.length === 2).length >= 1 && (await page.locator('#trips .event-card').count()), 1);
   const post = worker.calls.find((c) => c.method === 'POST');
   check('add: the Worker is sent both lists, in date order', post.body, { out: [o1, o2], back: [b1] });
   const card = await page.locator('#trips .event-card').textContent();
@@ -139,7 +154,7 @@ function fakeWorker() {
   worker.failNext = 'You can watch up to 12 dates at once. Remove one first.';
   await page.click('#save');
   await until(async () => /up to 12 dates/.test(await page.locator('#msg').textContent()));
-  check('limit: the Worker\'s message is shown', await page.locator('#msg').textContent(), 'You can watch up to 12 dates at once. Remove one first.');
+  check('limit: the Worker\'s message is shown', await page.locator('#msg').textContent(), 'Not saved: You can watch up to 12 dates at once. Remove one first.');
   check('limit: the date is kept in the form so nothing is lost', await page.locator('#out-chips .chip').count(), 1);
 
   // 7. Remove.

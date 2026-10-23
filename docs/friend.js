@@ -70,6 +70,7 @@
   const $ = (id) => document.getElementById(id);
   const draft = { out: [], back: [] };
   let data = null;
+  let busy = false; // a save or removal is in flight
 
   const getKey = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
   const setKey = (k) => { try { localStorage.setItem(KEY, k); } catch { /* private mode */ } };
@@ -77,21 +78,38 @@
 
   let sessionKey = null;
 
+  const TIMEOUT_MS = 25000;
+
   async function call(method, { query = '', body } = {}) {
-    const res = await fetch(`${API}${query}`, {
-      method,
-      headers: { Authorization: `Bearer ${sessionKey}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-      body: body ? JSON.stringify(body) : undefined,
-      cache: 'no-store',
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch(`${API}${query}`, {
+        method,
+        headers: { Authorization: `Bearer ${sessionKey}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+        body: body ? JSON.stringify(body) : undefined,
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+    } catch (err) {
+      throw new Error(err && err.name === 'AbortError'
+        ? 'That took too long. Check your connection and try again.'
+        : "Couldn't reach the server. Check your connection and try again.");
+    } finally {
+      clearTimeout(timer);
+    }
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw Object.assign(new Error(json.error || `Error ${res.status}`), { status: res.status });
     return json;
   }
 
-  function setMessage(text, isError) {
-    $('msg').textContent = text || '';
-    $('msg').className = `hint${isError ? ' error' : ''}`;
+  // Messages sit right under the button that caused them ('msg' under Start
+  // watching, 'trips-msg' under the Watching heading), so they are never off-screen.
+  function setMessage(text, kind, where) {
+    const el = $(where || 'msg');
+    el.textContent = text || '';
+    el.className = `form-msg${kind ? ` ${kind}` : ''}`;
   }
 
   function render() {
@@ -102,7 +120,10 @@
         .map((d) => `<button type="button" class="chip active" data-unadd-${leg}="${d}" aria-label="Remove ${fmtDate(d)}">${fmtDate(d)} ✕</button>`)
         .join('');
     }
-    $('save').disabled = !draft.out.length && !draft.back.length;
+    const hasDraft = draft.out.length + draft.back.length > 0;
+    $('save').disabled = busy || !hasDraft;
+    $('save').textContent = busy ? 'Saving…' : 'Start watching';
+    $('pending-note').hidden = busy || !hasDraft;
     if (!data) return;
     $('personal-note').hidden = !data.note;
     $('passport-note').hidden = !data.passport;
@@ -126,12 +147,15 @@
   }
 
   async function refresh() {
+    if (busy) return; // never fight with a save in progress
     try {
-      data = await call('GET');
-      setMessage('', false);
+      const fresh = await call('GET');
+      if (busy) return; // a save started while this was loading: its answer is newer
+      data = fresh;
     } catch (err) {
       if (err.status === 401) { try { localStorage.removeItem(KEY); } catch { /* ignore */ } badLink(); return; }
-      setMessage(`Couldn't refresh (${err.message}). Showing the last data.`, true);
+      // A failed background refresh keeps the last data quietly, unless there is none yet.
+      if (!data) setMessage(err.message, 'error');
     }
     render();
   }
@@ -141,31 +165,41 @@
     if (!btn) return;
     if (btn.dataset.add) {
       const input = $(`${btn.dataset.add}-date`);
-      if (input.value && input.value < ((data && data.today) || londonToday())) { setMessage('That date has already gone.', true); return; }
+      if (!input.value) { setMessage('Pick a date first, then tap + Add date.', 'error'); return; }
+      if (input.value < ((data && data.today) || londonToday())) { setMessage('That date has already gone.', 'error'); return; }
       draft[btn.dataset.add] = addDateTo(draft[btn.dataset.add], input.value);
       input.value = '';
-      setMessage('', false);
+      setMessage('', '');
     } else if (btn.dataset.unaddOut || btn.dataset.unaddBack) {
       const leg = btn.dataset.unaddOut ? 'out' : 'back';
       draft[leg] = draft[leg].filter((d) => d !== (btn.dataset.unaddOut || btn.dataset.unaddBack));
     } else if (btn.id === 'save') {
-      btn.disabled = true;
-      setMessage('Saving…', false);
+      if (busy) return;
+      busy = true;
+      setMessage('Saving your dates…', '');
+      render();
       try {
         data = await call('POST', { body: { out: draft.out, back: draft.back } });
         draft.out = [];
         draft.back = [];
-        setMessage('Watching. The first check runs within about 5 minutes.', false);
+        setMessage('Saved. You are now watching these dates. The first check runs within about 5 minutes.', 'ok');
       } catch (err) {
-        setMessage(err.message, true);
+        setMessage(`Not saved: ${err.message}`, 'error');
+      } finally {
+        busy = false;
       }
     } else if (btn.dataset.remove) {
-      setMessage('Saving…', false);
+      if (busy) return;
+      busy = true;
+      setMessage('Stopping…', '', 'trips-msg');
+      render();
       try {
         data = await call('DELETE', { query: `?id=${encodeURIComponent(btn.dataset.remove)}` });
-        setMessage('Stopped watching that trip.', false);
+        setMessage('Stopped watching that trip.', 'ok', 'trips-msg');
       } catch (err) {
-        setMessage(err.message, true);
+        setMessage(`Not removed: ${err.message}`, 'error', 'trips-msg');
+      } finally {
+        busy = false;
       }
     } else {
       return;

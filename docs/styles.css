@@ -456,3 +456,7 @@ input:focus { outline: none; border-color: var(--accent); }
 #guide .hint { min-height: 0; }
 .passport-note { margin: 0 0 14px; padding: 10px 14px; border: 1px dashed var(--gold); border-radius: 12px; color: var(--gold); font-size: 0.9rem; }
 .personal-note { margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); color: var(--muted); font-size: 0.9rem; }
+.form-msg { margin: 10px 0 0; font-size: 0.92rem; color: var(--muted); min-height: 1.2em; }
+.form-msg.error { color: var(--sold-out); font-weight: 600; }
+.form-msg.ok { color: var(--available); }
+.pending-note { margin: 10px 0 0; font-size: 0.88rem; color: var(--gold); }

@@ -18,8 +18,6 @@
   <div class="owner-view" id="friend-view" hidden>
     <p class="personal-note" id="personal-note" hidden>This is your personal link. It's yours alone, like a toothbrush, so please don't share it.</p>
     <p class="passport-note" id="passport-note" hidden>Passport: required. Charm: lovely, but border officers still prefer the passport.</p>
-    <p class="hint" id="msg" role="status"></p>
-
     <h2 class="section-title">Add dates</h2>
     <p class="hint">Add every date you could travel on. You get a notification when Eurostar Snap tickets appear on any of them, when a new time window opens, or when the price drops. <span id="cap-note"></span></p>
     <div class="trip-form">
@@ -29,10 +27,13 @@
       <p class="event-venue trip-leg">Paris → London</p>
       <div class="trip-date-row"><input type="date" id="back-date" class="owner-input" aria-label="Paris to London date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
       <div class="chips" id="back-chips"></div>
+      <p class="pending-note" id="pending-note" hidden>These dates are not saved yet. Tap “Start watching” to save them.</p>
       <button type="button" class="install-btn" id="save">Start watching</button>
+      <p class="form-msg" id="msg" role="status" aria-live="polite"></p>
     </div>
 
     <h2 class="section-title">Watching <span class="count" id="count"></span></h2>
+    <p class="form-msg" id="trips-msg" role="status" aria-live="polite"></p>
     <section id="trips"></section>
 
     <section class="explainer" id="guide">

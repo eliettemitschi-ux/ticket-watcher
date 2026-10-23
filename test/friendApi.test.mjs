@@ -36,6 +36,7 @@ const env = { GITHUB_TOKEN: 't', NTFY_TRAINS_TOPIC: 'T-trains', FRIEND_KEYS: JSO
   'PIERRE-KEY-0123456789': { channel: 'pierre', name: 'Pierre', passport: true },
   'MARIE-KEY-0123456789': 'marie',
   'ZELIE-KEY-0123456789': { channel: 'zelie', name: 'Zélie', maxDates: 4, note: true },
+  'GAB-KEY-0123456789': { channel: 'gab', name: 'Gabrielle', maxDates: 4, note: true },
   'BIG-KEY-0123456789': { channel: 'big', maxDates: 99 },
   'ODD-KEY-0123456789': { channel: 'odd', maxDates: 'lots' },
 }) };
@@ -120,6 +121,11 @@ r = await call('POST', PIERRE, { body: { out: many } });
 check('POST: filling up to exactly 12 is allowed', r.status, 200);
 r = await call('POST', 'MARIE-KEY-0123456789', { body: { out: ['2026-11-25'] } });
 check('limits are per friend: marie is not affected by pierre\'s dates', r.status, 200);
+
+// --- A cap-4 friend adding four dates at once, across December and January ---------
+r = await call('POST', 'GAB-KEY-0123456789', { body: { out: ['2026-12-11', '2027-01-15'], back: ['2026-12-13', '2027-01-17'] } });
+body = await r.json();
+check('cap 4: four dates in one go (two in December, two in January) are saved', [r.status, body.trips.length, body.trips[0].out, body.trips[0].back], [200, 1, ['2026-12-11', '2027-01-15'], ['2026-12-13', '2027-01-17']]);
 
 // --- A lower cap for some friends -----------------------------------------------
 const ZELIE = 'ZELIE-KEY-0123456789';
