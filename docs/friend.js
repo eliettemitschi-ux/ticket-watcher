@@ -1,10 +1,10 @@
-// docs/friend.js -- the friend page: add and remove your own Snap dates.
+// docs/friend.js -- the friend page: add and remove your own Snap journeys.
 //
-// Pick a date, tap Add, and it is saved and watched straight away. There is
-// nothing private in this file. You open a personal link that carries a key
-// (friend.html#key=...); the key is kept on this device, removed from the
-// address bar, and sent to the Worker, which only lets it touch its own
-// channel's dates (cron-worker/src/friend.js).
+// Pick From, To and a date, tap Add, and that one journey is saved and watched
+// straight away. There is nothing private in this file. You open a personal link
+// that carries a key (friend.html#key=...); the key is kept on this device,
+// removed from the address bar, and sent to the Worker, which only lets it touch
+// its own channel's journeys (cron-worker/src/friend.js).
 
 (function (root) {
   'use strict';
@@ -13,6 +13,16 @@
   const KEY = 'twFriendKey';
   const TZ = 'Europe/London';
   const TIMEOUT_MS = 25000;
+
+  // Used until the Worker answers (it sends the current lists, which win).
+  // Which stations Snap sells a journey between: see trains/diff.js.
+  const FALLBACK_STATIONS = [['london', 'London'], ['paris', 'Paris'], ['brussels', 'Brussels'], ['amsterdam', 'Amsterdam']];
+  const FALLBACK_ALLOWED = {
+    london: ['paris', 'brussels', 'amsterdam'],
+    paris: ['london', 'brussels', 'amsterdam'],
+    brussels: ['london', 'paris'],
+    amsterdam: ['london', 'paris'],
+  };
 
   // --- Pure helpers (unit tested in test/friend.test.js) ----------------------
 
@@ -33,11 +43,11 @@
           <span class="owner-row-title">${fmtDate(entry.date)}</span>
           <div class="owner-row-sub">${seenBadge(entry)}</div>
         </div>
-        <button type="button" class="settings-btn" data-remove-city="${escapeHtml(route.city)}" data-remove-leg="${escapeHtml(route.leg)}" data-remove-date="${escapeHtml(entry.date)}" aria-label="Stop watching ${fmtDate(entry.date)}">Remove</button>
+        <button type="button" class="settings-btn" data-remove-from="${escapeHtml(route.from)}" data-remove-to="${escapeHtml(route.to)}" data-remove-date="${escapeHtml(entry.date)}" aria-label="Stop watching ${escapeHtml(route.label)} on ${fmtDate(entry.date)}">Remove</button>
       </div>`;
   }
 
-  // One block per route that has dates (e.g. London → Brussels), or an empty-state line.
+  // One block per route that has dates (e.g. Paris → Brussels), or an empty-state line.
   function watchList(data) {
     const groups = (data.routes || [])
       .filter((r) => r.dates.length)
@@ -46,6 +56,9 @@
   }
 
   const usedDates = (data) => (data.routes || []).reduce((n, r) => n + r.dates.length, 0);
+
+  // The stations you can travel to from one station, in the order Snap lists them.
+  const toChoices = (allowed, from) => (allowed && allowed[from]) || [];
 
   // "Pierre Express": the page title for a friend, or the plain title when there is no name.
   const titleFor = (name) => (name ? `${name} Express` : 'Snap train alerts');
@@ -58,7 +71,7 @@
     return `Alerts go to ${data.topic} · checks every 5 minutes`;
   }
 
-  const helpers = { escapeHtml, fmtDate, seenBadge, dateRow, watchList, usedDates, titleFor, capLine, statusLine };
+  const helpers = { escapeHtml, fmtDate, seenBadge, dateRow, watchList, usedDates, toChoices, titleFor, capLine, statusLine };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -72,6 +85,10 @@
   const getKey = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
   const setKey = (k) => { try { localStorage.setItem(KEY, k); } catch { /* private mode */ } };
   const londonToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
+
+  const stationList = () => (data && data.stations ? data.stations.map((s) => [s.id, s.name]) : FALLBACK_STATIONS);
+  const allowedMap = () => (data && data.allowed) || FALLBACK_ALLOWED;
+  const nameOf = (id) => (stationList().find(([sid]) => sid === id) || [id, id])[1];
 
   async function call(method, { query = '', body } = {}) {
     const controller = new AbortController();
@@ -97,7 +114,7 @@
     return json;
   }
 
-  // Messages sit right under what caused them ('msg' under the Add buttons,
+  // Messages sit right under what caused them ('msg' under the Add button,
   // 'trips-msg' under the Watching heading), so they are never off-screen.
   function setMessage(text, kind, where) {
     const el = $(where || 'msg');
@@ -105,14 +122,27 @@
     el.className = `form-msg${kind ? ` ${kind}` : ''}`;
   }
 
+  const optionsHtml = (ids) => ids.map((id) => `<option value="${escapeHtml(id)}">${escapeHtml(nameOf(id))}</option>`).join('');
+
+  // From lists every station; To lists only where Snap goes from there. Both keep
+  // what you chose if it is still allowed.
+  function fillSelects() {
+    const from = $('from');
+    const to = $('to');
+    const prevFrom = from.value;
+    const prevTo = to.value;
+    from.innerHTML = optionsHtml(stationList().map(([id]) => id));
+    from.value = stationList().some(([id]) => id === prevFrom) ? prevFrom : 'london';
+    const choices = toChoices(allowedMap(), from.value);
+    to.innerHTML = optionsHtml(choices);
+    to.value = choices.includes(prevTo) ? prevTo : choices[0];
+  }
+
   function render() {
     const today = (data && data.today) || londonToday();
-    for (const leg of ['out', 'back']) {
-      $(`${leg}-date`).min = today;
-      document.querySelector(`button[data-add="${leg}"]`).disabled = busy;
-    }
-    $('city').disabled = busy;
-    showCity();
+    $('date').min = today;
+    for (const id of ['from', 'to', 'swap']) $(id).disabled = busy;
+    document.querySelector('button[data-add]').disabled = busy;
     if (!data) return;
     $('personal-note').hidden = !data.note;
     $('passport-note').hidden = !data.passport;
@@ -128,13 +158,6 @@
     document.querySelectorAll('#trips button').forEach((b) => { b.disabled = busy; });
   }
 
-  // The two direction labels follow the chosen city.
-  function showCity() {
-    const city = $('city').selectedOptions[0].textContent;
-    $('out-label').textContent = `London → ${city}`;
-    $('back-label').textContent = `${city} → London`;
-  }
-
   function badLink() {
     $('friend-view').hidden = true;
     $('no-key').hidden = false;
@@ -146,7 +169,9 @@
     try {
       const fresh = await call('GET');
       if (busy) return; // a change started while this was loading: its answer is newer
+      const firstAnswer = !data;
       data = fresh;
+      if (firstAnswer) fillSelects();
     } catch (err) {
       if (err.status === 401) { try { localStorage.removeItem(KEY); } catch { /* ignore */ } badLink(); return; }
       // A failed background refresh keeps the last data quietly, unless there is none yet.
@@ -157,7 +182,7 @@
 
   // Runs one change (add or remove) and shows the result next to where it was made.
   async function change(where, working, run, done, failed) {
-    if (busy) return;
+    if (busy) return false;
     busy = true;
     setMessage(working, '', where);
     render();
@@ -175,21 +200,30 @@
     return ok;
   }
 
+  function onSwap() {
+    const from = $('from').value;
+    const to = $('to').value;
+    $('from').value = to;
+    fillSelects(); // To now lists where Snap goes from the new From
+    if (toChoices(allowedMap(), to).includes(from)) $('to').value = from;
+  }
+
   function onClick(event) {
     const btn = event.target.closest('button');
     if (!btn) return;
-    if (btn.dataset.add) {
-      const leg = btn.dataset.add;
-      const city = $('city').value;
-      const input = $(`${leg}-date`);
+    if (btn.id === 'swap') { onSwap(); return; }
+    if (btn.dataset.add !== undefined) {
+      const from = $('from').value;
+      const to = $('to').value;
+      const input = $('date');
       if (!input.value) { setMessage('Pick a date first, then tap Add.', 'error'); return; }
       if (input.value < ((data && data.today) || londonToday())) { setMessage('That date has already gone.', 'error'); return; }
       const date = input.value;
-      change('msg', 'Adding…', () => call('POST', { body: { city, [leg]: [date] } }), `Added ${fmtDate(date)}. You are now watching it. The first check runs within about 5 minutes.`, 'Not added')
+      change('msg', 'Adding…', () => call('POST', { body: { from, to, date } }), `Added ${nameOf(from)} → ${nameOf(to)} on ${fmtDate(date)}. You are now watching it. The first check runs within about 5 minutes.`, 'Not added')
         .then((ok) => { if (ok) input.value = ''; }); // a failed add keeps the date so it can be retried
-    } else if (btn.dataset.removeLeg) {
-      const { removeCity: city, removeLeg: leg, removeDate: date } = btn.dataset;
-      change('trips-msg', 'Removing…', () => call('DELETE', { query: `?city=${encodeURIComponent(city)}&leg=${encodeURIComponent(leg)}&date=${encodeURIComponent(date)}` }), `Stopped watching ${fmtDate(date)}.`, 'Not removed');
+    } else if (btn.dataset.removeFrom) {
+      const { removeFrom: from, removeTo: to, removeDate: date } = btn.dataset;
+      change('trips-msg', 'Removing…', () => call('DELETE', { query: `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}` }), `Stopped watching ${nameOf(from)} → ${nameOf(to)} on ${fmtDate(date)}.`, 'Not removed');
     }
   }
 
@@ -222,7 +256,8 @@
     $('friend-view').hidden = false;
     $('friend-view').addEventListener('click', onClick);
     $('copy-topic').addEventListener('click', onCopy);
-    $('city').addEventListener('change', showCity);
+    $('from').addEventListener('change', fillSelects);
+    fillSelects();
     render();
     refresh();
     setInterval(refresh, 60000);

@@ -119,8 +119,16 @@ for (const [name, html] of [['card', owner.watchingCard(nasty, {}, Date.now())],
 }
 
 // --- Trains tab ---------------------------------------------------------------
-check('trains: adding dates keeps them sorted and unique', owner.addDateTo(owner.addDateTo(['2026-11-06'], '2026-11-05'), '2026-11-06'), ['2026-11-05', '2026-11-06']);
-check('trains: an empty or malformed date is ignored', [owner.addDateTo(['2026-11-05'], ''), owner.addDateTo([], '5 Nov')], [['2026-11-05'], []]);
+const diff = require('../trains/diff.js');
+const sampleTrips = [
+  { city: 'brussels', out: ['2026-11-12'], back: ['2026-11-14'] },
+  { out: ['2026-11-12'] },
+  { legs: [{ from: 'paris', to: 'brussels', date: '2026-11-20' }, { from: 'brussels', to: 'amsterdam', date: '2026-11-21' }, { from: 'london', to: 'london', date: '2026-11-22' }, { from: 'london', to: 'paris', date: 'soon' }] },
+  { out: ['2026-11-13'], legs: [{ from: 'amsterdam', to: 'london', date: '2026-11-15' }] },
+];
+check('trains: legsOf reads older trips (out is London to the city, back the other way, no city is Paris)', owner.legsOf(sampleTrips[0]).concat(owner.legsOf(sampleTrips[1])), [{ from: 'london', to: 'brussels', date: '2026-11-12' }, { from: 'brussels', to: 'london', date: '2026-11-14' }, { from: 'london', to: 'paris', date: '2026-11-12' }]);
+check('trains: legsOf reads new-style legs and ignores journeys Snap does not sell and bad dates', owner.legsOf(sampleTrips[2]), [{ from: 'paris', to: 'brussels', date: '2026-11-20' }]);
+check('trains: this tab reads trips exactly the way the Worker does', sampleTrips.map((t) => owner.legsOf(t)), sampleTrips.map((t) => diff.legsOf(t)));
 
 const trip = { id: 't1', out: ['2026-11-05', '2026-11-06'], back: ['2026-11-09', '2026-11-10'] };
 const gone = { id: 't0', out: ['2026-10-01'], back: [] };
@@ -132,9 +140,9 @@ const snapState = {
     'london-paris': { days: { '2026-11-05': { price: null, slots: [] }, '2026-11-06': { price: 45, slots: [{ window: '06:01-13:00', price: 45 }, { window: '13:00-20:01', price: 55 }] } } },
   },
 };
-check('trains: a date with tickets shows the price and windows', owner.dateStatus(snapState, 'out', '2026-11-06'), { cls: 'available', text: 'From £45 · 2 time windows' });
-check('trains: a date checked with none says so', owner.dateStatus(snapState, 'out', '2026-11-05'), { cls: 'pending', text: 'No Snap tickets yet' });
-check('trains: a date the watcher has not seen yet says so', owner.dateStatus(snapState, 'back', '2026-11-09'), { cls: 'unknown', text: 'Not checked yet' });
+check('trains: a date with tickets shows the price and windows', owner.dateStatus(snapState, 'london-paris', '2026-11-06'), { cls: 'available', text: 'From £45 · 2 time windows' });
+check('trains: a date checked with none says so', owner.dateStatus(snapState, 'london-paris', '2026-11-05'), { cls: 'pending', text: 'No Snap tickets yet' });
+check('trains: a date the watcher has not seen yet says so', owner.dateStatus(snapState, 'paris-london', '2026-11-09'), { cls: 'unknown', text: 'Not checked yet' });
 const card = owner.tripCard(trip, snapState, '2026-11-06');
 check('trains: card shows both directions', [card.includes('London → Paris'), card.includes('Paris → London')], [true, true]);
 check('trains: a date already gone is greyed, not given a status', card.includes('Thu 5 Nov · gone'), true);
@@ -148,13 +156,17 @@ check('trains: a friend trip card shows their channel', friendCard.includes('BAR
 check('trains: your own trip card says it is the main channel', card.includes('BARBICAN-1999-trains</code> (your main channel)'), true);
 check('trains: a hostile channel name cannot inject markup', owner.tripCard({ id: 'x', out: ['2026-11-05'], channel: '<img src=x>' }, null, '2026-10-22').includes('<img'), false);
 
-// Cities: a trip is London to or from one city; no city means Paris.
-check('cities: a trip with no city, or an unknown one, is Paris', [owner.cityOfTrip({}), owner.cityOfTrip({ city: 'atlantis' }), owner.cityOfTrip({ city: 'brussels' })], ['paris', 'paris', 'brussels']);
-const bxl = owner.tripCard({ id: 'b1', city: 'brussels', out: ['2026-11-05'], back: ['2026-11-09'] }, { routes: { 'london-brussels': { days: { '2026-11-05': { price: 38, slots: [] } } } } }, '2026-10-22');
-check('cities: a Brussels card names the right route in each direction', [bxl.includes('London → Brussels'), bxl.includes('Brussels → London'), bxl.includes('London → Paris')], [true, true, false]);
-check('cities: and shows what the watcher saw on that city route', bxl.includes('From £38'), true);
-check('cities: a Paris card still says Paris', card.includes('London → Paris') && card.includes('Paris → London'), true);
-check('cities: status is read from the right route', [owner.dateStatus({ routes: { 'brussels-london': { days: { '2026-11-09': { price: 41, slots: [] } } } } }, 'back', '2026-11-09', 'brussels').text, owner.dateStatus({ routes: { 'brussels-london': { days: { '2026-11-09': { price: 41, slots: [] } } } } }, 'back', '2026-11-09').text], ['From £41', 'Not checked yet']);
+// Stations: a trip is one or more journeys, each with its own From and To.
+check('trains: route names read From → To', [owner.routeLabel('london', 'paris'), owner.routeLabel('paris', 'brussels'), owner.routeLabel('amsterdam', 'london')], ['London → Paris', 'Paris → Brussels', 'Amsterdam → London']);
+const bxl = owner.tripCard({ id: 'b1', legs: [{ from: 'london', to: 'brussels', date: '2026-11-05' }, { from: 'paris', to: 'brussels', date: '2026-11-12' }] }, { routes: { 'london-brussels': { days: { '2026-11-05': { price: 38, slots: [] } } } } }, '2026-10-22');
+check('trains: a trip of several journeys names each route', [bxl.includes('London → Brussels'), bxl.includes('Paris → Brussels'), bxl.includes('London → Paris')], [true, true, false]);
+check('trains: and shows what the watcher saw on each route', [bxl.includes('From £38'), bxl.includes('Not checked yet')], [true, true]);
+check('trains: a journey between two other stations works the same', owner.dateStatus({ routes: { 'paris-amsterdam': { days: { '2026-11-09': { price: 41, slots: [] } } } } }, 'paris-amsterdam', '2026-11-09').text, 'From £41');
+check('trains: status is read from the right route', owner.dateStatus({ routes: { 'brussels-london': { days: { '2026-11-09': { price: 41, slots: [] } } } } }, 'london-brussels', '2026-11-09').text, 'Not checked yet');
+check('trains: an older Brussels trip (city, out, back) still shows both directions', [owner.tripCard({ id: 'o', city: 'brussels', out: ['2026-11-05'], back: ['2026-11-09'] }, null, '2026-10-22').includes('London → Brussels'), owner.tripCard({ id: 'o', city: 'brussels', out: ['2026-11-05'], back: ['2026-11-09'] }, null, '2026-10-22').includes('Brussels → London')], [true, true]);
+check('trains: a one-journey trip shows only that route', owner.tripCard({ id: 'j', legs: [{ from: 'london', to: 'paris', date: '2026-11-05' }] }, null, '2026-10-22').includes('Paris → London'), false);
+check('trains: a finished journey is greyed in a new-style trip too', owner.tripCard({ id: 'j', legs: [{ from: 'london', to: 'paris', date: '2026-10-01' }, { from: 'london', to: 'paris', date: '2026-11-05' }] }, null, '2026-10-22').includes('Thu 1 Oct · gone'), true);
+check('trains: a trip is live while any journey is to come', owner.liveTrips([{ id: 'x', legs: [{ from: 'london', to: 'paris', date: '2026-10-01' }] }, { id: 'y', legs: [{ from: 'paris', to: 'london', date: '2026-11-01' }] }], '2026-10-22').map((t) => t.id), ['y']);
 
 const now = Date.parse('2026-10-22T10:00:00Z');
 check('watcher: healthy', owner.watcherLine(snapState, now), 'Watcher OK · checks every 5 minutes · last update 1h ago');

@@ -154,5 +154,27 @@ p = take(pushes);
 check('cities: a price drop is reported per city, each compared with its own last alert', p.map((x) => x.message.split('\n')[1]), ['Down £15 since the last alert (was £75)', 'Down £15 since the last alert (was £75)', 'Down £15 since the last alert (was £75)']);
 snapMode = 'ok';
 
+// --- 8. Journeys (From, To, date), including ones that do not touch London --------------
+snapUrls.length = 0;
+delete files['snap-state.json'];
+files['snap-trips.json'] = { text: JSON.stringify({ trips: [
+  { id: 'l1', channel: 'pierre', legs: [{ from: 'paris', to: 'brussels', date: '2026-10-19' }, { from: 'brussels', to: 'london', date: '2026-10-19' }, { from: 'brussels', to: 'amsterdam', date: '2026-10-19' }] },
+  { id: 'o', out: ['2026-10-19'] },
+] }), sha: 'trips-legs' };
+await runSnap(env, at('2026-10-16T20:00:00Z'));
+p = take(pushes);
+check('legs: each journey alerts with its own From and To, to its own channel (old and new trips together)', p.map((x) => `${x.topic} | ${x.title}`), [
+  'TEST-trains | Snap London to Paris: Mon 19 Oct has tickets',
+  'TEST-trains-pierre | Snap Paris to Brussels: Mon 19 Oct has tickets',
+  'TEST-trains-pierre | Snap Brussels to London: Mon 19 Oct has tickets',
+]);
+check('legs: Snap is asked with Paris as the starting station for Paris to Brussels', snapUrls.some((u) => u.includes('origin=8727100&destination=8814001')), true);
+check('legs: a journey Snap does not sell (Brussels to Amsterdam) is never asked about', snapUrls.some((u) => u.includes('origin=8814001&destination=8400058')), false);
+check('legs: the tapped link opens the right route', p[1].click, 'https://snap.eurostar.com/uk-en/search?adult=1&origin=8727100&destination=8814001&outbound=2026-10-19&outslot=13%3A00');
+check('legs: each route keeps its own memory', Object.keys(state().routes).sort(), ['brussels-london', 'london-paris', 'paris-brussels']);
+take(saves);
+await runSnap(env, at('2026-10-16T20:05:00Z'));
+check('legs: a second run with nothing new is quiet', take(pushes).length, 0);
+
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }
 console.log('\nAll Snap Worker tests passed.');

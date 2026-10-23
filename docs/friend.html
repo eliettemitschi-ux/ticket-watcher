@@ -18,16 +18,19 @@
   <div class="owner-view" id="friend-view" hidden>
     <p class="personal-note" id="personal-note" hidden>This is your personal link. It's yours alone, like a toothbrush, so please don't share it.</p>
     <p class="passport-note" id="passport-note" hidden>Passport: required. Charm: lovely, but border officers still prefer the passport.</p>
-    <h2 class="section-title">Add dates</h2>
-    <p class="hint">Pick each date you could travel on and tap <strong>Add</strong>. It is saved straight away. You get a notification when Eurostar Snap tickets appear on a date, when a new time window opens, or when the price drops. <span id="cap-note"></span></p>
+    <h2 class="section-title">Add a journey</h2>
+    <p class="hint">Choose where you are travelling from and to, pick the date, and tap <strong>Add</strong>. It is saved straight away. For a return, swap the stations (⇄) and add the other date. You get a notification when Eurostar Snap tickets appear on a date, when a new time window opens, or when the price drops. <span id="cap-note"></span></p>
     <div class="trip-form">
-      <label class="city-pick" for="city">Travelling to or from London and
-        <select id="city" class="owner-input"><option value="paris">Paris</option><option value="brussels">Brussels</option><option value="amsterdam">Amsterdam</option></select>
-      </label>
-      <p class="event-venue trip-leg" id="out-label">London → Paris</p>
-      <div class="trip-date-row"><input type="date" id="out-date" class="owner-input" aria-label="Outbound date" /><button type="button" class="chip" data-add="out">Add</button></div>
-      <p class="event-venue trip-leg" id="back-label">Paris → London</p>
-      <div class="trip-date-row"><input type="date" id="back-date" class="owner-input" aria-label="Return date" /><button type="button" class="chip" data-add="back">Add</button></div>
+      <div class="route-row">
+        <label class="city-pick" for="from">From
+          <select id="from" class="owner-input"><option value="london" selected>London</option><option value="paris">Paris</option><option value="brussels">Brussels</option><option value="amsterdam">Amsterdam</option></select>
+        </label>
+        <button type="button" class="chip swap-btn" id="swap" aria-label="Swap From and To">⇄</button>
+        <label class="city-pick" for="to">To
+          <select id="to" class="owner-input"><option value="paris" selected>Paris</option><option value="brussels">Brussels</option><option value="amsterdam">Amsterdam</option></select>
+        </label>
+      </div>
+      <div class="trip-date-row"><input type="date" id="date" class="owner-input" aria-label="Date of travel" /><button type="button" class="chip" data-add>Add</button></div>
       <p class="form-msg" id="msg" role="status" aria-live="polite"></p>
     </div>
 

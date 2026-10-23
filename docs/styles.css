@@ -466,3 +466,6 @@ input:focus { outline: none; border-color: var(--accent); }
 .trip-date-row .chip:disabled { opacity: 0.5; }
 .city-pick { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; color: var(--text); margin-bottom: 6px; }
 .city-pick select { margin: 0; }
+.route-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 6px; }
+.route-row .city-pick { flex: 1; min-width: 0; margin-bottom: 0; }
+.swap-btn { flex: none; margin-bottom: 4px; padding: 8px 12px; font-size: 1rem; }

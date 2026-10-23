@@ -239,61 +239,76 @@ function fakeGitHub() {
   check('failed save: the show goes back to Watching, ticked', await watchingTitles(), ['Flagged Show', 'Plain Show']);
   check('failed save: nothing was written', gh.puts.length, putsBefore);
 
-  // 6b. The Trains tab: add a trip, see what the watcher saw, stop watching.
+  // 6b. The Trains tab: add one journey at a time, see what the watcher saw, stop watching.
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
   const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
-  const [out1, out2, back1] = [plus(14), plus(15), plus(18)];
-  gh.trips = JSON.stringify({ trips: [{ id: 'old', out: ['2020-01-01'], back: [] }] }); // a finished trip
+  const [out1, out2, back1, bxl1] = [plus(14), plus(15), plus(18), plus(22)];
+  gh.trips = JSON.stringify({ trips: [{ id: 'old', out: ['2020-01-01'], back: [] }] }); // a finished trip, saved the older way
   gh.snapState = { checkedAt: iso(-180000), routes: { 'london-paris': { days: { [out1]: { price: 39, slots: [{ window: '06:01-13:00', price: 39 }] }, [out2]: { price: null, slots: [] } } } } };
+  const tripCards = () => page.locator('#trips-list .event-card').count();
   await page.click('#owner-tabs button[data-tab="trains"]');
   await page.waitForSelector('#owner-trains:not([hidden])');
   await until(async () => /Watcher OK/.test(await page.locator('#trains-status').textContent()));
   check('trains: the watcher status line shows it is healthy', /last update 3m ago/.test(await page.locator('#trains-status').textContent()), true);
   check('trains: the scanner and the watchlist are hidden', [await page.locator('#owner-view').isHidden(), await page.locator('main').isHidden()], [true, true]);
   check('trains: a finished trip is not listed', await page.locator('#trips-list .empty-state').count(), 1);
-  check('trains: "Start watching" is off until a date is added', await page.locator('#trip-save').isDisabled(), true);
-  await page.fill('#trip-out-date', out2);
-  await page.click('button[data-add="out"]');
-  await page.fill('#trip-out-date', out1);
-  await page.click('button[data-add="out"]');
-  await page.fill('#trip-back-date', back1);
-  await page.click('button[data-add="back"]');
-  check('trains: added dates show as chips, in date order', await page.locator('#trip-out-chips .chip').count(), 2);
-  await page.fill('#trip-out-date', '2020-01-01');
-  await page.click('button[data-add="out"]');
+  check('trains: there is no separate save step, just Add', [await page.locator('#trip-save').count(), await page.locator('#trip-out-chips').count()], [0, 0]);
+  check('trains: it starts on London to Paris, and From lists every station', [await page.locator('#trip-from').inputValue(), await page.locator('#trip-to').inputValue(), await page.locator('#trip-from option').allTextContents()], ['london', 'paris', ['London', 'Paris', 'Brussels', 'Amsterdam']]);
+  check('trains: from London you can go to Paris, Brussels or Amsterdam', await page.locator('#trip-to option').allTextContents(), ['Paris', 'Brussels', 'Amsterdam']);
+  await page.selectOption('#trip-from', 'brussels');
+  check('trains: from Brussels only London and Paris are offered', await page.locator('#trip-to option').allTextContents(), ['London', 'Paris']);
+  await page.selectOption('#trip-from', 'london');
+  await page.click('button[data-add]');
+  check('trains: tapping Add with no date says what to do', /Pick a date first/.test(await page.locator('#trains-msg').textContent()), true);
+  await page.fill('#trip-date', '2020-01-01');
+  await page.click('button[data-add]');
   check('trains: a past date is refused', /already gone/.test(await page.locator('#trains-msg').textContent()), true);
   check('trains: the form says alerts go to your main channel by default', /BARBICAN-1999-trains, your own channel/.test(await page.locator('#trip-channel-hint').textContent()), true);
   await page.fill('#trip-channel', 'Pierre!');
   check('trains: typing a friend name shows their channel', /BARBICAN-1999-trains-pierre. Send that name/.test(await page.locator('#trip-channel-hint').textContent()), true);
-  await page.click('#trip-save');
+  await page.fill('#trip-date', out1);
+  await page.click('button[data-add]');
   await until(() => gh.tripPuts.length === 1);
-  const savedTrip = gh.tripPuts[0].saved.trips;
-  check('trains: one trip saved with both directions, finished trips dropped', savedTrip.map((t) => [t.out, t.back]), [[[out1, out2], [back1]]]);
-  check('trains: the friend channel is saved, cleaned up', savedTrip[0].channel, 'pierre');
+  const first = gh.tripPuts[0].saved.trips;
+  check('trains: one tap saves one journey as its own trip, finished trips dropped', first.map((t) => t.legs), [[{ from: 'london', to: 'paris', date: out1 }]]);
+  check('trains: the friend channel is saved, cleaned up', first[0].channel, 'pierre');
   check('trains: the save quotes the file version it read', gh.tripPuts[0].sentSha, 't0');
-  await until(async () => (await page.locator('#trips-list .event-card').count()) === 1);
+  await until(async () => (await tripCards()) === 1);
   const cardText = await page.locator('#trips-list .event-card').textContent();
-  check('trains: the card shows what the watcher saw for each date', [/From £39 · 1 time window/.test(cardText), /No Snap tickets yet/.test(cardText), /Not checked yet/.test(cardText)], [true, true, true]);
-  check('trains: the form is cleared after saving', [await page.locator('#trip-out-chips .chip').count(), await page.locator('#trip-channel').inputValue()], [0, '']);
-  check('trains: the card shows where that trip alerts', (await page.locator('#trips-list .event-card').textContent()).includes('BARBICAN-1999-trains-pierre'), true);
+  check('trains: the card names the route and shows what the watcher saw', [cardText.includes('London → Paris'), /From £39 · 1 time window/.test(cardText), cardText.includes('BARBICAN-1999-trains-pierre')], [true, true, true]);
+  check('trains: a clear confirmation right under the Add button, and the date box is cleared', [/^Added London → Paris on .*first check runs within about 5 minutes\./.test(await page.locator('#trains-msg').textContent()), await page.locator('#trip-date').inputValue()], [true, '']);
   await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-trains.png'), fullPage: true });
-  // A trip to another city: the labels follow the dropdown and the city is saved.
-  await page.selectOption('#trip-city', 'amsterdam');
-  check('trains: the direction labels follow the chosen city', [await page.locator('#trip-out-label').textContent(), await page.locator('#trip-back-label').textContent()], ['London → Amsterdam', 'Amsterdam → London']);
-  await page.fill('#trip-out-date', plus(30));
-  await page.click('button[data-add="out"]');
-  await page.click('#trip-save');
+
+  // A return, for yourself: swap the stations and add the other date.
+  await page.fill('#trip-channel', '');
+  await page.click('#trip-swap');
+  check('trains: swap trades the two stations', [await page.locator('#trip-from').inputValue(), await page.locator('#trip-to').inputValue()], ['paris', 'london']);
+  await page.fill('#trip-date', back1);
+  await page.click('button[data-add]');
   await until(() => gh.tripPuts.length === 2);
-  const amsTrip = gh.tripPuts[1].saved.trips.find((t) => t.city === 'amsterdam');
-  check('trains: a trip to Amsterdam is saved with its city, next to the Paris one', [amsTrip.out, gh.tripPuts[1].saved.trips.length, gh.tripPuts[1].saved.trips.find((t) => t.id !== amsTrip.id).city], [[plus(30)], 2, undefined]);
-  await until(async () => (await page.locator('#trips-list .event-card').count()) === 2);
-  check('trains: both cards are listed, each with its own route names', [(await page.locator('#trips-list').textContent()).includes('London → Amsterdam'), (await page.locator('#trips-list').textContent()).includes('London → Paris')], [true, true]);
-  await page.selectOption('#trip-city', 'paris');
-  await page.click('button[data-trip-remove="' + amsTrip.id + '"]');
+  const second = gh.tripPuts[1].saved.trips.find((t) => !t.channel);
+  check('trains: the return is saved the other way round, to your own channel', [second.legs, gh.tripPuts[1].saved.trips.length], [[{ from: 'paris', to: 'london', date: back1 }], 2]);
+  await until(async () => (await tripCards()) === 2);
+
+  // Not only London: Paris to Brussels.
+  await page.selectOption('#trip-to', 'brussels');
+  await page.fill('#trip-date', bxl1);
+  await page.click('button[data-add]');
   await until(() => gh.tripPuts.length === 3);
-  await page.click('button[data-trip-remove]');
+  const third = gh.tripPuts[2].saved.trips.find((t) => t.legs[0].to === 'brussels');
+  check('trains: a journey that does not touch London is saved and listed under its own name', [third.legs, (await page.locator('#trips-list').textContent()).includes('Paris → Brussels')], [[{ from: 'paris', to: 'brussels', date: bxl1 }], true]);
+  await until(async () => (await tripCards()) === 3);
+
+  // Stop watching.
+  await page.click('button[data-trip-remove="' + third.id + '"]');
   await until(() => gh.tripPuts.length === 4);
-  check('trains: "Stop watching" removes the trip', gh.tripPuts[3].saved, { trips: [] });
+  check('trains: "Stop watching" removes just that trip, with a confirmation under the Watching heading', [gh.tripPuts[3].saved.trips.length, /^Stopped watching/.test(await page.locator('#trips-msg').textContent())], [2, true]);
+  await until(async () => (await tripCards()) === 2);
+  await page.click('button[data-trip-remove]');
+  await until(() => gh.tripPuts.length === 5);
+  await page.click('button[data-trip-remove]');
+  await until(() => gh.tripPuts.length === 6);
+  check('trains: removing the last trip leaves nothing watched', gh.tripPuts[5].saved, { trips: [] });
   await until(async () => (await page.locator('#trips-list .empty-state').count()) === 1);
   gh.snapState = { ...gh.snapState, blocked: { since: iso(-3600000), alerted: true } };
   await page.click('#owner-tabs button[data-tab="scanner"]');

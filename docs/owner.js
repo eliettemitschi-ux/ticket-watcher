@@ -233,31 +233,45 @@
   }
 
   // --- Trains (Eurostar Snap) ------------------------------------------------
-  // Trips live in snap-trips.json: { trips: [{ id, out: [dates], back: [dates] }] }.
-  // "out" is London to Paris, "back" Paris to London. The Cloudflare Worker
-  // (cron-worker/src/snap.js) checks them every 5 minutes and writes what it
-  // saw to snap-state.json.
+  // Trips live in snap-trips.json: { trips: [{ id, channel?, legs: [{from, to, date}] }] }.
+  // A leg is one journey on one day. Trips saved earlier used { city, out, back };
+  // legsOf reads both (same rules as trains/diff.js). The Cloudflare Worker
+  // (cron-worker/src/snap.js) checks them every 5 minutes and writes what it saw
+  // to snap-state.json.
 
-  // A trip is London to or from one city (Paris unless it says otherwise); see trains/diff.js.
-  const CITY_NAMES = { paris: 'Paris', brussels: 'Brussels', amsterdam: 'Amsterdam' };
-  const cityOfTrip = (trip) => (trip && CITY_NAMES[trip.city] ? trip.city : 'paris');
-  const routeIdOf = (city, leg) => (leg === 'out' ? `london-${city}` : `${city}-london`);
+  const STATION_NAMES = { london: 'London', paris: 'Paris', brussels: 'Brussels', amsterdam: 'Amsterdam' };
+  // Where Snap sells a journey to, from each station (tested live 23 Oct 2026; see trains/diff.js).
+  const ALLOWED = {
+    london: ['paris', 'brussels', 'amsterdam'],
+    paris: ['london', 'brussels', 'amsterdam'],
+    brussels: ['london', 'paris'],
+    amsterdam: ['london', 'paris'],
+  };
+  const isRoute = (from, to) => Boolean(ALLOWED[from] && ALLOWED[from].includes(to));
+  const routeLabel = (from, to) => `${STATION_NAMES[from]} → ${STATION_NAMES[to]}`;
   const WATCHER_SILENT_MS = 7 * 60 * 60 * 1000; // it reports at least every 6h
 
   const fmtDate = (iso) => fmtDay(`${iso}T12:00:00Z`);
+  const isIsoDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
-  function addDateTo(dates, date) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return dates;
-    return Array.from(new Set([...dates, date])).sort();
+  // Every journey in a trip, whichever way it was saved.
+  function legsOf(trip) {
+    const legs = [];
+    if (!trip) return legs;
+    for (const l of trip.legs || []) if (l && isRoute(l.from, l.to) && isIsoDate(l.date)) legs.push({ from: l.from, to: l.to, date: l.date });
+    const city = trip.city && trip.city !== 'london' && STATION_NAMES[trip.city] ? trip.city : 'paris';
+    for (const d of trip.out || []) if (isIsoDate(d)) legs.push({ from: 'london', to: city, date: d });
+    for (const d of trip.back || []) if (isIsoDate(d)) legs.push({ from: city, to: 'london', date: d });
+    return legs;
   }
 
-  // Trips with at least one date still to come.
+  // Trips with at least one journey still to come.
   function liveTrips(trips, today) {
-    return (trips || []).filter((t) => [...(t.out || []), ...(t.back || [])].some((d) => d >= today));
+    return (trips || []).filter((t) => legsOf(t).some((l) => l.date >= today));
   }
 
-  function dateStatus(snapState, leg, date, city = 'paris') {
-    const route = snapState && snapState.routes && snapState.routes[routeIdOf(city, leg)];
+  function dateStatus(snapState, routeId, date) {
+    const route = snapState && snapState.routes && snapState.routes[routeId];
     const day = route && route.days && route.days[date];
     if (!day) return { cls: 'unknown', text: 'Not checked yet' };
     if (day.price === null) return { cls: 'pending', text: 'No Snap tickets yet' };
@@ -265,34 +279,37 @@
     return { cls: 'available', text: `From £${day.price}${n ? ` · ${n} time window${n === 1 ? '' : 's'}` : ''}` };
   }
 
-  function legLines(trip, leg, snapState, today) {
-    return (trip[leg] || [])
-      .map((date) => {
-        if (date < today) return `<div class="event-meta trip-past">${fmtDate(date)} · gone</div>`;
-        const s = dateStatus(snapState, leg, date, cityOfTrip(trip));
-        return `<div class="event-meta">${fmtDate(date)} <span class="badge ${s.cls}">${s.text}</span></div>`;
-      })
-      .join('');
-  }
-
   // A trip's channel name, as the Worker reads it (trains/diff.js cleanChannel).
   const cleanChannel = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '').slice(0, 20);
   const TRAINS_TOPIC = 'BARBICAN-1999-trains';
   const topicOf = (trip) => (cleanChannel(trip.channel) ? `${TRAINS_TOPIC}-${cleanChannel(trip.channel)}` : TRAINS_TOPIC);
 
+  // A trip: each route it covers with its dates and what the watcher last saw.
   function tripCard(trip, snapState, today) {
-    const leg = (name, label) => ((trip[name] || []).length ? `<p class="event-venue trip-leg">${label}</p>${legLines(trip, name, snapState, today)}` : '');
-    const city = CITY_NAMES[cityOfTrip(trip)];
+    const byRoute = new Map();
+    for (const l of legsOf(trip)) {
+      const id = `${l.from}-${l.to}`;
+      if (!byRoute.has(id)) byRoute.set(id, { from: l.from, to: l.to, dates: [] });
+      byRoute.get(id).dates.push(l.date);
+    }
+    const blocks = [...byRoute.entries()].map(([id, r]) => {
+      const lines = [...new Set(r.dates)].sort().map((date) => {
+        if (date < today) return `<div class="event-meta trip-past">${fmtDate(date)} · gone</div>`;
+        const s = dateStatus(snapState, id, date);
+        return `<div class="event-meta">${fmtDate(date)} <span class="badge ${s.cls}">${s.text}</span></div>`;
+      }).join('');
+      return `<p class="event-venue trip-leg">${routeLabel(r.from, r.to)}</p>${lines}`;
+    }).join('');
     return `
       <div class="event-card">
         <div class="event-main">
-          ${leg('out', `London → ${city}`)}
-          ${leg('back', `${city} → London`)}
+          ${blocks}
           <p class="event-meta">Alerts go to <code>${escapeHtml(topicOf(trip))}</code>${cleanChannel(trip.channel) ? '' : ' (your main channel)'}</p>
           <button type="button" class="settings-btn trip-remove" data-trip-remove="${escapeHtml(trip.id)}">Stop watching</button>
         </div>
       </div>`;
   }
+
 
   // One line on whether the watcher itself is healthy.
   function watcherLine(snapState, nowMs) {
@@ -319,7 +336,7 @@
     diagnoseToken, autoEligible, effectiveEligible, nextSelection, withSelection, statusOf, watchLabel,
     matchesQuery, filterRecords, groupRecords, sortKey, utf8ToBase64, base64ToUtf8, opensLine,
     watchingCard, compactRow, openedCard,
-    addDateTo, liveTrips, dateStatus, tripCard, watcherLine, cleanChannel, cityOfTrip,
+    legsOf, liveTrips, dateStatus, tripCard, watcherLine, cleanChannel, routeLabel,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
@@ -484,30 +501,32 @@
     trains.hidden = true;
     trains.innerHTML = `
       <p class="subtitle" id="trains-status">Loading…</p>
-      <p class="hint" id="trains-msg"></p>
-      <h2 class="section-title">Add a trip</h2>
-      <p class="hint">Add every date you could travel on. You get an alert when Snap tickets appear on any of them, when a new time window opens, or when the price drops. A trip for someone else can have its own channel, so they only hear about their dates.</p>
+      <h2 class="section-title">Add a journey</h2>
+      <p class="hint">Choose where you are travelling from and to, pick the date, and tap <strong>Add</strong>. It is saved straight away. For a return, swap the stations (⇄) and add the other date. You get an alert when Snap tickets appear, when a new time window opens, or when the price drops. A journey for someone else can have its own channel, so they only hear about their dates.</p>
       <div class="trip-form">
-        <label class="city-pick" for="trip-city">Travelling to or from London and
-          <select id="trip-city" class="owner-input"><option value="paris">Paris</option><option value="brussels">Brussels</option><option value="amsterdam">Amsterdam</option></select>
-        </label>
-        <p class="event-venue trip-leg" id="trip-out-label">London → Paris</p>
-        <div class="trip-date-row"><input type="date" id="trip-out-date" class="owner-input" aria-label="Outbound date" /><button type="button" class="chip" data-add="out">+ Add date</button></div>
-        <div class="chips" id="trip-out-chips"></div>
-        <p class="event-venue trip-leg" id="trip-back-label">Paris → London</p>
-        <div class="trip-date-row"><input type="date" id="trip-back-date" class="owner-input" aria-label="Return date" /><button type="button" class="chip" data-add="back">+ Add date</button></div>
-        <div class="chips" id="trip-back-chips"></div>
         <p class="event-venue trip-leg">Who should be alerted?</p>
-        <input type="text" id="trip-channel" class="owner-input" placeholder="Leave empty for you, or a name like pierre" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Channel name for this trip" />
+        <input type="text" id="trip-channel" class="owner-input" placeholder="Leave empty for you, or a name like pierre" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Channel name for this journey" />
         <p class="hint" id="trip-channel-hint"></p>
-        <button type="button" class="install-btn" id="trip-save">Start watching</button>
+        <div class="route-row">
+          <label class="city-pick" for="trip-from">From
+            <select id="trip-from" class="owner-input"></select>
+          </label>
+          <button type="button" class="chip swap-btn" id="trip-swap" aria-label="Swap From and To">⇄</button>
+          <label class="city-pick" for="trip-to">To
+            <select id="trip-to" class="owner-input"></select>
+          </label>
+        </div>
+        <div class="trip-date-row"><input type="date" id="trip-date" class="owner-input" aria-label="Date of travel" /><button type="button" class="chip" data-add>Add</button></div>
+        <p class="form-msg" id="trains-msg" role="status" aria-live="polite"></p>
       </div>
       <h2 class="section-title">Watching <span class="count" id="trips-count"></span></h2>
+      <p class="form-msg" id="trips-msg" role="status" aria-live="polite"></p>
       <section id="trips-list"></section>`;
     section.insertAdjacentElement('afterend', trains);
     trains.addEventListener('click', onTrainsClick);
     trains.addEventListener('input', (e) => { if (e.target.id === 'trip-channel') renderChannelHint(); });
-    trains.addEventListener('change', (e) => { if (e.target.id === 'trip-city') renderCityLabels(); });
+    trains.addEventListener('change', (e) => { if (e.target.id === 'trip-from') fillTripSelects(); });
+    fillTripSelects();
 
     nav.addEventListener('click', (e) => {
       const tab = e.target.closest('button[data-tab]');
@@ -626,56 +645,73 @@
 
   let trips = [];
   let snapState = null;
-  const draft = { out: [], back: [] };
+  let trainsBusy = false; // an add or removal is in flight
 
   const londonToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
 
-  function setTrainsMessage(text, isError) {
-    const el = $('trains-msg');
+  // Messages sit right under what caused them ('trains-msg' under Add, 'trips-msg'
+  // under the Watching heading), so they are never off-screen.
+  function setTrainsMessage(text, kind, where) {
+    const el = $(where || 'trains-msg');
     el.textContent = text || '';
-    el.className = `hint${isError ? ' error' : ''}`;
+    el.className = `form-msg${kind ? ` ${kind}` : ''}`;
   }
 
   function renderChannelHint() {
-    $('trip-channel-hint').textContent = `Alerts for this trip go to ${topicOf({ channel: $('trip-channel').value })}${cleanChannel($('trip-channel').value) ? '. Send that name to your friend: they subscribe to it in ntfy.' : ', your own channel.'}`;
+    $('trip-channel-hint').textContent = `Alerts for this journey go to ${topicOf({ channel: $('trip-channel').value })}${cleanChannel($('trip-channel').value) ? '. Send that name to your friend: they subscribe to it in ntfy.' : ', your own channel.'}`;
   }
 
-  function renderCityLabels() {
-    const city = $('trip-city').selectedOptions[0].textContent;
-    $('trip-out-label').textContent = `London → ${city}`;
-    $('trip-back-label').textContent = `${city} → London`;
+  const stationOptions = (ids) => ids.map((id) => `<option value="${id}">${STATION_NAMES[id]}</option>`).join('');
+
+  // From lists every station; To lists only where Snap goes from there. Both keep
+  // what you chose if it is still allowed.
+  function fillTripSelects() {
+    const from = $('trip-from');
+    const to = $('trip-to');
+    const prevFrom = from.value;
+    const prevTo = to.value;
+    from.innerHTML = stationOptions(Object.keys(STATION_NAMES));
+    from.value = STATION_NAMES[prevFrom] ? prevFrom : 'london';
+    const choices = ALLOWED[from.value];
+    to.innerHTML = stationOptions(choices);
+    to.value = choices.includes(prevTo) ? prevTo : choices[0];
+  }
+
+  function swapStations() {
+    const from = $('trip-from').value;
+    const to = $('trip-to').value;
+    $('trip-from').value = to;
+    fillTripSelects();
+    if (ALLOWED[to].includes(from)) $('trip-to').value = from;
   }
 
   function renderTrains() {
     renderChannelHint();
-    renderCityLabels();
     const today = londonToday();
-    for (const leg of ['out', 'back']) {
-      $(`trip-${leg}-date`).min = today;
-      $(`trip-${leg}-chips`).innerHTML = draft[leg]
-        .map((d) => `<button type="button" class="chip active" data-unadd-${leg}="${d}" aria-label="Remove ${fmtDate(d)}">${fmtDate(d)} ✕</button>`)
-        .join('');
-    }
-    $('trip-save').disabled = !draft.out.length && !draft.back.length;
+    $('trip-date').min = today;
+    for (const id of ['trip-from', 'trip-to', 'trip-swap']) $(id).disabled = trainsBusy;
+    document.querySelector('#owner-trains button[data-add]').disabled = trainsBusy;
     $('trains-status').textContent = watcherLine(snapState, Date.now());
     const live = liveTrips(trips, today);
     $('trips-count').textContent = `(${live.length})`;
     $('trips-list').innerHTML = live.length
       ? live.map((t) => tripCard(t, snapState, today)).join('')
-      : '<div class="empty-state">No trips watched. Add one above.</div>';
+      : '<div class="empty-state">Nothing watched. Add a journey above.</div>';
+    document.querySelectorAll('#trips-list button').forEach((b) => { b.disabled = trainsBusy; });
   }
 
   async function refreshTrains() {
+    if (trainsBusy) return; // never fight with a change in progress
     try {
       const [t, s] = await Promise.all([readJsonFile('snap-trips.json', { trips: [] }), gh('/contents/snap-state.json', { raw: true })]);
       if (s.status === 401 || s.status === 403) throw Object.assign(new Error('rejected'), { status: s.status });
+      if (trainsBusy) return;
       trips = t.data.trips || [];
       snapState = s.status === 404 ? null : s.ok ? await s.json() : snapState;
-      setTrainsMessage('', false);
     } catch (err) {
       setTrainsMessage(err.status === 401 || err.status === 403
         ? 'Your token was rejected. Lock this device and unlock again with a new one.'
-        : `Couldn't refresh (${err.message}). Showing the last data.`, true);
+        : `Couldn't refresh (${err.message}). Showing the last data.`, 'error');
     }
     renderTrains();
   }
@@ -696,46 +732,45 @@
     return null;
   }
 
-  async function onTrainsClick(event) {
+  // Runs one change and shows the result next to where it was made.
+  async function changeTrips(where, working, run, done, failed) {
+    if (trainsBusy) return false;
+    trainsBusy = true;
+    setTrainsMessage(working, '', where);
+    renderTrains();
+    let ok = false;
+    try {
+      trips = await run();
+      setTrainsMessage(done, 'ok', where);
+      ok = true;
+    } catch (err) {
+      setTrainsMessage(`${failed}: ${err.message}. Nothing was changed.`, 'error', where);
+    } finally {
+      trainsBusy = false;
+      renderTrains();
+    }
+    return ok;
+  }
+
+  function onTrainsClick(event) {
     const btn = event.target.closest('button');
     if (!btn) return;
-    if (btn.dataset.add) {
-      const input = $(`trip-${btn.dataset.add}-date`);
-      if (input.value && input.value < londonToday()) { setTrainsMessage('That date has already gone.', true); return; }
-      draft[btn.dataset.add] = addDateTo(draft[btn.dataset.add], input.value);
-      input.value = '';
-      setTrainsMessage('', false);
-    } else if (btn.dataset.unaddOut || btn.dataset.unaddBack) {
-      const leg = btn.dataset.unaddOut ? 'out' : 'back';
-      draft[leg] = draft[leg].filter((d) => d !== (btn.dataset.unaddOut || btn.dataset.unaddBack));
-    } else if (btn.id === 'trip-save') {
+    if (btn.id === 'trip-swap') { swapStations(); return; }
+    if (btn.dataset.add !== undefined) {
+      const from = $('trip-from').value;
+      const to = $('trip-to').value;
+      const date = $('trip-date').value;
+      if (!date) { setTrainsMessage('Pick a date first, then tap Add.', 'error'); return; }
+      if (date < londonToday()) { setTrainsMessage('That date has already gone.', 'error'); return; }
       const channel = cleanChannel($('trip-channel').value);
-      const city = $('trip-city').value;
-      const trip = { id: `t${Date.now().toString(36)}`, ...(city !== 'paris' ? { city } : {}), out: draft.out, back: draft.back, ...(channel ? { channel } : {}), addedAt: new Date().toISOString() };
-      setTrainsMessage('Saving…', false);
-      btn.disabled = true;
-      try {
-        trips = await saveTrips((list) => [...list, trip]);
-        draft.out = [];
-        draft.back = [];
-        $('trip-channel').value = '';
-        setTrainsMessage('Watching. The first check runs within about 5 minutes.', false);
-      } catch (err) {
-        setTrainsMessage(`Couldn't save the trip (${err.message}). Nothing was changed.`, true);
-      }
+      const trip = { id: `t${Date.now().toString(36)}`, ...(channel ? { channel } : {}), legs: [{ from, to, date }], addedAt: new Date().toISOString() };
+      changeTrips('trains-msg', 'Adding…', () => saveTrips((list) => [...list, trip]), `Added ${routeLabel(from, to)} on ${fmtDate(date)}. The first check runs within about 5 minutes.`, 'Not added')
+        .then((ok) => { if (ok) $('trip-date').value = ''; }); // a failed add keeps the date so it can be retried
     } else if (btn.dataset.tripRemove) {
-      setTrainsMessage('Saving…', false);
-      try {
-        trips = await saveTrips((list) => list.filter((t) => t.id !== btn.dataset.tripRemove));
-        setTrainsMessage('Stopped watching that trip.', false);
-      } catch (err) {
-        setTrainsMessage(`Couldn't remove it (${err.message}). Nothing was changed.`, true);
-      }
-    } else {
-      return;
+      changeTrips('trips-msg', 'Removing…', () => saveTrips((list) => list.filter((t) => t.id !== btn.dataset.tripRemove)), 'Stopped watching that trip.', 'Not removed');
     }
-    renderTrains();
   }
+
 
   function lock() {
     setToken(null);
