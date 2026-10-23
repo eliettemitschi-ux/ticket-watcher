@@ -10,9 +10,16 @@
 //              "note": true}}          // optional: show the "personal link" note
 // A bare string instead of an object is just the channel, with the defaults.
 //
-// What a key can do: list, add and remove trips tagged with its own channel,
-// within the limits below. It cannot see anyone else's trips or any other
-// file. Every request is checked here; the page is just a convenience.
+// What a key can do: list, add and remove dates on its own channel, within the
+// limits below. It cannot see anyone else's dates or any other file. Every
+// request is checked here; the page is just a convenience.
+//
+//   GET                       -> { out: [{date, state, price?}], back: [...], ... }
+//   POST   {out: [...], back: [...]}   adds dates; saved at once
+//   DELETE ?leg=out&date=YYYY-MM-DD    removes one date
+//
+// A friend's dates all live in ONE trip in snap-trips.json (tagged with their
+// channel), so there is nothing for them to name or group.
 
 import { readJson, writeJson, todayLondon } from './snap.js';
 import { cleanChannel, topicFor } from '../../trains/diff.js';
@@ -92,36 +99,41 @@ export async function handleFriend(request, env, now = new Date()) {
       if (all.some((d) => d > addDays(today, MAX_DAYS_AHEAD))) return fail(400, `Dates can be at most ${MAX_DAYS_AHEAD} days ahead.`);
       const result = await change(env, today, (trips) => {
         const mine = trips.filter((t) => cleanChannel(t.channel) === channel);
-        const already = mine.reduce((n, t) => n + liveDates(t, today).length, 0);
-        if (already + all.length > maxDates) return { error: `You can watch up to ${maxDates} dates at once. Remove one first.` };
-        const trip = { id: `f${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 6)}`, out: [...new Set(out)].sort(), back: [...new Set(back)].sort(), channel, addedAt: now.toISOString() };
-        return [...trips, trip];
+        const others = trips.filter((t) => !mine.includes(t));
+        const dates = { out: new Set(), back: new Set() };
+        for (const t of mine) for (const leg of ['out', 'back']) for (const d of t[leg] || []) if (d >= today) dates[leg].add(d);
+        for (const d of out) dates.out.add(d);
+        for (const d of back) dates.back.add(d);
+        if (dates.out.size + dates.back.size > maxDates) return { error: `You can watch up to ${maxDates} dates at once. Remove one first.` };
+        const first = mine[0] || {};
+        const trip = { id: first.id || `f${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 6)}`, out: [...dates.out].sort(), back: [...dates.back].sort(), channel, addedAt: first.addedAt || now.toISOString() };
+        return [...others, trip];
       });
       if (result.error) return fail(400, result.error);
     } else if (request.method === 'DELETE') {
-      const id = url.searchParams.get('id');
-      if (!id) return fail(400, 'Which trip?');
-      const result = await change(env, today, (trips) => trips.filter((t) => !(t.id === id && cleanChannel(t.channel) === channel)));
+      const leg = url.searchParams.get('leg');
+      const date = url.searchParams.get('date');
+      if (!['out', 'back'].includes(leg) || !isRealDate(date)) return fail(400, 'Which date?');
+      const result = await change(env, today, (trips) => trips.map((t) => (cleanChannel(t.channel) === channel ? { ...t, [leg]: (t[leg] || []).filter((d) => d !== date) } : t)));
       if (result.error) return fail(400, result.error);
     } else if (request.method !== 'GET') {
       return fail(405, 'Not supported.');
     }
 
-    // Always answer with the friend's own trips (never anyone else's) and what the watcher last saw.
+    // Always answer with the friend's own dates (never anyone else's) and what the watcher last saw.
     const [{ data: file }, { data: state }] = await Promise.all([
       readJson(env, TRIPS_FILE, { trips: [] }),
       readJson(env, STATE_FILE, { routes: {} }),
     ]);
-    const trips = (file.trips || [])
-      .filter((t) => cleanChannel(t.channel) === channel && liveDates(t, today).length)
-      .map((t) => {
-        const seen = (leg) => Object.fromEntries((t[leg] || []).map((d) => {
-          const day = state.routes && state.routes[ROUTE_OF[leg]] && state.routes[ROUTE_OF[leg]].days && state.routes[ROUTE_OF[leg]].days[d];
-          return [d, !day ? { state: 'unknown' } : day.price === null ? { state: 'none' } : { state: 'tickets', price: day.price }];
-        }));
-        return { id: t.id, out: t.out || [], back: t.back || [], seen: { out: seen('out'), back: seen('back') } };
+    const mine = (file.trips || []).filter((t) => cleanChannel(t.channel) === channel);
+    const list = (leg) => [...new Set(mine.flatMap((t) => t[leg] || []))]
+      .filter((d) => d >= today)
+      .sort()
+      .map((date) => {
+        const day = state.routes && state.routes[ROUTE_OF[leg]] && state.routes[ROUTE_OF[leg]].days && state.routes[ROUTE_OF[leg]].days[date];
+        return !day ? { date, state: 'unknown' } : day.price === null ? { date, state: 'none' } : { date, state: 'tickets', price: day.price };
       });
-    return reply({ channel, name, passport, note, topic: topicFor(env.NTFY_TRAINS_TOPIC, channel), today, maxDates, trips, checkedAt: state.checkedAt || null, blocked: Boolean(state.blocked) });
+    return reply({ channel, name, passport, note, topic: topicFor(env.NTFY_TRAINS_TOPIC, channel), today, maxDates, out: list('out'), back: list('back'), checkedAt: state.checkedAt || null, blocked: Boolean(state.blocked) });
   } catch (err) {
     console.error('friend API failed:', err.message);
     return fail(500, 'Something went wrong. Please try again in a minute.');

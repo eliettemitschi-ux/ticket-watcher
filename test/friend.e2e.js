@@ -1,8 +1,10 @@
 // test/friend.e2e.js -- run with: node test/friend.e2e.js
 // Drives docs/friend.html in headless Chromium against a FAKE Worker
-// (page.route). Covers: no link = no access; the key in the link is kept and
-// removed from the address bar; a refused key; adding dates; removing a trip;
-// error messages from the Worker are shown as written.
+// (page.route). The flow under test is the simple one: pick a date, tap Add,
+// it is saved and watched at once (no second "save" step). Covers: no link = no
+// access; the key in the link is kept and removed from the address bar; a
+// refused key; adding and removing single dates; errors shown next to the
+// button; the per-friend notes and cap.
 
 const http = require('http');
 const fs = require('fs');
@@ -45,9 +47,11 @@ const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).fo
 const plus = (n) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
 function fakeWorker() {
-  const w = { trips: [], calls: [], rejectKey: false, failNext: null, delayPostMs: 0, abortNext: false, profile: { passport: true, note: false, maxDates: 12 } };
+  const w = { out: [], back: [], calls: [], rejectKey: false, failNext: null, delayPostMs: 0, abortNext: false, profile: { passport: true, note: false, maxDates: 12 } };
   const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'content-type': 'application/json' };
-  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, checkedAt: new Date().toISOString(), blocked: false, trips: w.trips, ...w.profile });
+  // The first date of each direction has tickets from 39 pounds, the rest have none yet.
+  const entries = (dates) => dates.map((date, i) => (i === 0 ? { date, state: 'tickets', price: 39 } : { date, state: 'none' }));
+  const view = () => ({ channel: 'pierre', name: 'Pierre', topic: 'BARBICAN-1999-trains-pierre', today, checkedAt: new Date().toISOString(), blocked: false, out: entries(w.out), back: entries(w.back), ...w.profile });
   w.handler = async (route) => {
     const req = route.request();
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
@@ -58,9 +62,12 @@ function fakeWorker() {
     if (w.failNext) { const f = w.failNext; w.failNext = null; return route.fulfill({ status: 400, headers: cors, body: JSON.stringify({ error: f }) }); }
     if (req.method() === 'POST') {
       const b = JSON.parse(req.postData());
-      w.trips.push({ id: `f${w.trips.length + 1}`, out: b.out, back: b.back, seen: { out: Object.fromEntries(b.out.map((d, i) => [d, i ? { state: 'none' } : { state: 'tickets', price: 39 }])), back: Object.fromEntries(b.back.map((d) => [d, { state: 'unknown' }])) } });
+      for (const leg of ['out', 'back']) w[leg] = [...new Set([...w[leg], ...(b[leg] || [])])].sort();
     }
-    if (req.method() === 'DELETE') w.trips = w.trips.filter((t) => t.id !== new URL(req.url()).searchParams.get('id'));
+    if (req.method() === 'DELETE') {
+      const q = new URL(req.url()).searchParams;
+      w[q.get('leg')] = w[q.get('leg')].filter((d) => d !== q.get('date'));
+    }
     return route.fulfill({ status: 200, headers: cors, body: JSON.stringify(view()) });
   };
   return w;
@@ -102,76 +109,83 @@ function fakeWorker() {
   check('notes: no personal-link note on his page', await page.locator('#personal-note').isHidden(), true);
   check('cap: the form says how many dates he can watch', await page.locator('#cap-note').textContent(), 'You can watch up to 12 dates at once (0 used).');
   check('guide: the steps show his own channel name', await page.locator('.topic-name').textContent(), 'BARBICAN-1999-trains-pierre');
-  check('guide: the setup steps, alert examples and FAQ are on the page', [await page.locator('#guide .ntfy-steps li').count(), await page.locator('#guide .alert-example').count(), await page.locator('#guide h3').count()], [4, 2, 4]);
+  check('guide: setup steps, alert examples and FAQ are on the page', [await page.locator('#guide .ntfy-steps li').count(), await page.locator('#guide .alert-example').count(), await page.locator('#guide h3').count()], [4, 2, 4]);
   await page.evaluate(() => { navigator.clipboard.writeText = () => Promise.resolve(); });
   await page.click('#copy-topic');
   check('guide: the copy button confirms', await page.locator('#copied').textContent(), 'Copied');
-  check('link: nothing watched yet', await page.locator('#trips .empty-state').count(), 1);
-  check('link: "Start watching" is off until a date is added', await page.locator('#save').isDisabled(), true);
+  check('simple flow: there is no separate save button to forget', [await page.locator('#save').count(), await page.locator('#pending-note').count()], [0, 0]);
+  check('simple flow: nothing watched yet', await page.locator('#trips .empty-state').count(), 1);
 
   // 4. Come back later: the stored key works without the link.
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await until(async () => (await page.locator('#friend-view').isVisible()));
   check('reopen: no link needed on the same device', await page.locator('#friend-view').isVisible(), true);
 
-  // 5. Add dates.
+  // 5. Pick a date, tap Add: saved at once.
   const [o1, o2, b1] = [plus(14), plus(15), plus(18)];
-  await page.fill('#out-date', o2);
   await page.click('button[data-add="out"]');
+  check('add: tapping Add with no date says what to do, and sends nothing', [await page.locator('#msg').textContent(), worker.calls.filter((c) => c.method === 'POST').length], ['Pick a date first, then tap Add.', 0]);
+  await page.fill('#out-date', '2020-01-01');
+  await page.click('button[data-add="out"]');
+  check('add: a past date is refused on the page, nothing sent', [await page.locator('#msg').textContent(), worker.calls.filter((c) => c.method === 'POST').length], ['That date has already gone.', 0]);
   await page.fill('#out-date', o1);
+  await page.click('button[data-add="out"]');
+  await until(async () => (await page.locator('#trips .watch-row').count()) === 1);
+  const post = worker.calls.find((c) => c.method === 'POST');
+  check('add: one tap sends exactly that one date', post.body, { out: [o1] });
+  check('add: the date is in the Watching list straight away, with what the watcher saw', /From £39/.test(await page.locator('#trips').textContent()), true);
+  check('add: a clear confirmation right under the Add buttons', /^Added .*You are now watching it\./.test(await page.locator('#msg').textContent()), true);
+  check('add: the date box is cleared for the next one', await page.locator('#out-date').inputValue(), '');
+  check('add: the count and cap line update', [await page.locator('#count').textContent(), await page.locator('#cap-note').textContent()], ['(1)', 'You can watch up to 12 dates at once (1 used).']);
+  await page.fill('#out-date', o2);
   await page.click('button[data-add="out"]');
   await page.fill('#back-date', b1);
   await page.click('button[data-add="back"]');
-  check('add: dates show as chips', [await page.locator('#out-chips .chip').count(), await page.locator('#back-chips .chip').count()], [2, 1]);
-  await page.fill('#out-date', '2020-01-01');
-  await page.click('button[data-add="out"]');
-  check('add: a past date is refused on the page', /already gone/.test(await page.locator('#msg').textContent()), true);
-  check('save: dates waiting to be saved are labelled "not saved yet"', [await page.locator('#pending-note').isVisible(), (await page.locator('#pending-note').textContent()).startsWith('These dates are not saved yet')], [true, true]);
-  check('save: the message area is right under the Start watching button', await page.locator('.trip-form #save + #msg').count(), 1);
-  worker.abortNext = true;
-  await page.click('#save');
-  await until(async () => /Not saved/.test(await page.locator('#msg').textContent()));
-  check('network failure: the error says so, next to the button', await page.locator('#msg').textContent(), "Not saved: Couldn't reach the server. Check your connection and try again.");
-  check('network failure: the dates stay in the form and the button works again', [await page.locator('#out-chips .chip').count(), await page.locator('#save').isDisabled(), await page.locator('#save').textContent()], [2, false, 'Start watching']);
-  worker.delayPostMs = 900;
-  await page.click('#save');
-  await until(async () => (await page.locator('#save').textContent()) === 'Saving…');
-  check('saving: the button reads "Saving…" and cannot be tapped twice', [await page.locator('#save').isDisabled(), await page.locator('#pending-note').isHidden()], [true, true]);
-  await until(async () => (await page.locator('#trips .event-card').count()) === 1);
-  worker.delayPostMs = 0;
-  check('saved: a clear confirmation next to the button', /^Saved\. You are now watching/.test(await page.locator('#msg').textContent()), true);
-  check('saved: only one trip was created, not two', worker.calls.filter((c) => c.method === 'POST' && c.body && c.body.out && c.body.out.length === 2).length >= 1 && (await page.locator('#trips .event-card').count()), 1);
-  const post = worker.calls.find((c) => c.method === 'POST');
-  check('add: the Worker is sent both lists, in date order', post.body, { out: [o1, o2], back: [b1] });
-  const card = await page.locator('#trips .event-card').textContent();
-  check('add: the card shows what the watcher saw for each date', [/From £39/.test(card), /No Snap tickets yet/.test(card), /Not checked yet/.test(card)], [true, true, true]);
-  check('add: the form is cleared', await page.locator('#out-chips .chip').count(), 0);
+  await until(async () => (await page.locator('#trips .watch-row').count()) === 3);
+  check('add: both directions are listed, each under its own heading', await page.locator('#trips .trip-leg').allTextContents(), ['London → Paris', 'Paris → London']);
+  check('add: a date with no tickets yet says so', /No Snap tickets yet/.test(await page.locator('#trips').textContent()), true);
   await page.screenshot({ path: path.join(process.env.TEMP || '.', 'friend-page.png'), fullPage: true });
 
-  // 6. The Worker says no: its message is shown as written.
+  // 6. Things going wrong are shown next to the button and nothing is lost.
   await page.fill('#out-date', plus(20));
+  worker.abortNext = true;
   await page.click('button[data-add="out"]');
+  await until(async () => /Not added/.test(await page.locator('#msg').textContent()));
+  check('network failure: says so, next to the button', await page.locator('#msg').textContent(), "Not added: Couldn't reach the server. Check your connection and try again.");
+  check('network failure: the date stays in the box so it can be retried, and the button works again', [await page.locator('#out-date').inputValue(), await page.locator('button[data-add="out"]').isDisabled()], [plus(20), false]);
   worker.failNext = 'You can watch up to 12 dates at once. Remove one first.';
-  await page.click('#save');
+  await page.click('button[data-add="out"]');
   await until(async () => /up to 12 dates/.test(await page.locator('#msg').textContent()));
-  check('limit: the Worker\'s message is shown', await page.locator('#msg').textContent(), 'Not saved: You can watch up to 12 dates at once. Remove one first.');
-  check('limit: the date is kept in the form so nothing is lost', await page.locator('#out-chips .chip').count(), 1);
+  check('limit: the Worker\'s message is shown as written', await page.locator('#msg').textContent(), 'Not added: You can watch up to 12 dates at once. Remove one first.');
+  check('limit: the date is still in the box', await page.locator('#out-date').inputValue(), plus(20));
 
-  // 7. Remove.
-  await page.click('button[data-remove]');
-  await until(async () => (await page.locator('#trips .empty-state').count()) === 1);
+  // 7. While adding, the buttons wait; a second tap cannot double up.
+  worker.delayPostMs = 900;
+  const postsBefore = worker.calls.filter((c) => c.method === 'POST').length;
+  await page.click('button[data-add="out"]');
+  await until(async () => await page.locator('button[data-add="out"]').isDisabled());
+  check('adding: the buttons are off while the save is in flight', [await page.locator('button[data-add="out"]').isDisabled(), await page.locator('button[data-add="back"]').isDisabled(), await page.locator('#trips button').first().isDisabled()], [true, true, true]);
+  await until(async () => (await page.locator('#trips .watch-row').count()) === 4);
+  worker.delayPostMs = 0;
+  check('adding: exactly one request was sent', worker.calls.filter((c) => c.method === 'POST').length - postsBefore, 1);
+
+  // 8. Remove one date.
+  await page.locator('#trips .watch-row button').first().click();
+  await until(async () => (await page.locator('#trips .watch-row').count()) === 3);
   const del = worker.calls.find((c) => c.method === 'DELETE');
-  check('remove: asks the Worker to remove that trip', new URL(del.url).searchParams.get('id'), 'f1');
+  const q = new URL(del.url).searchParams;
+  check('remove: asks the Worker to remove that one date', [q.get('leg'), q.get('date')], ['out', o1]);
+  check('remove: a confirmation right under the Watching heading', /^Stopped watching/.test(await page.locator('#trips-msg').textContent()), true);
 
-  // 7b. A friend with a cap of 4, the personal-link note and no passport reminder.
+  // 9. A friend with a cap of 4, the personal-link note and no passport reminder.
   worker.profile = { passport: false, note: true, maxDates: 4 };
   await page.reload({ waitUntil: 'networkidle' });
   await until(async () => await page.locator('#personal-note').isVisible());
-  check('friend: the personal-link note is shown, first on the page', (await page.locator('#personal-note').textContent()), 'This is your personal link. It\'s yours alone, like a toothbrush, so please don\'t share it.');
+  check('friend: the personal-link note is shown, first on the page', await page.locator('#personal-note').textContent(), "This is your personal link. It's yours alone, like a toothbrush, so please don't share it.");
   check('friend: no passport reminder', await page.locator('#passport-note').isHidden(), true);
-  check('friend: the cap of 4 is shown', await page.locator('#cap-note').textContent(), 'You can watch up to 4 dates at once (0 used).');
+  check('friend: the cap of 4 and how many are used', await page.locator('#cap-note').textContent(), 'You can watch up to 4 dates at once (3 used).');
 
-  // 8. The key stops working (revoked): the page says so and forgets it.
+  // 10. The key stops working (revoked): the page says so and forgets it.
   worker.rejectKey = true;
   await page.reload({ waitUntil: 'networkidle' });
   await until(async () => await page.locator('#no-key').isVisible());

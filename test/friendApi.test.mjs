@@ -1,7 +1,8 @@
 // test/friendApi.test.mjs -- run with: node test/friendApi.test.mjs
 // The Worker's friend API (cron-worker/src/friend.js) against a FAKE private
-// repo. The point of these tests: a friend's key can manage trips on their own
-// channel and NOTHING else (no sight of other trips, no removing them, limits
+// repo. A friend adds a date and it is saved at once; all of a friend's dates
+// live in ONE trip. The point of these tests: a key can manage dates on its own
+// channel and NOTHING else (no sight of other dates, no removing them, limits
 // enforced, unknown keys refused).
 
 import { handleFriend } from '../cron-worker/src/friend.js';
@@ -32,22 +33,29 @@ globalThis.fetch = async (url, opts = {}) => {
   return json({ content: { sha: files[name].sha } }, 201);
 };
 
-const env = { GITHUB_TOKEN: 't', NTFY_TRAINS_TOPIC: 'T-trains', FRIEND_KEYS: JSON.stringify({
-  'PIERRE-KEY-0123456789': { channel: 'pierre', name: 'Pierre', passport: true },
-  'MARIE-KEY-0123456789': 'marie',
-  'ZELIE-KEY-0123456789': { channel: 'zelie', name: 'Zélie', maxDates: 4, note: true },
-  'GAB-KEY-0123456789': { channel: 'gab', name: 'Gabrielle', maxDates: 4, note: true },
-  'BIG-KEY-0123456789': { channel: 'big', maxDates: 99 },
-  'ODD-KEY-0123456789': { channel: 'odd', maxDates: 'lots' },
-}) };
+const env = {
+  GITHUB_TOKEN: 't',
+  NTFY_TRAINS_TOPIC: 'T-trains',
+  FRIEND_KEYS: JSON.stringify({
+    'PIERRE-KEY-0123456789': { channel: 'pierre', name: 'Pierre', passport: true },
+    'MARIE-KEY-0123456789': 'marie',
+    'ZELIE-KEY-0123456789': { channel: 'zelie', name: 'Zélie', maxDates: 4, note: true },
+    'GAB-KEY-0123456789': { channel: 'gab', name: 'Gabrielle', maxDates: 4, note: true },
+    'BIG-KEY-0123456789': { channel: 'big', maxDates: 99 },
+    'ODD-KEY-0123456789': { channel: 'odd', maxDates: 'lots' },
+  }),
+};
 const NOW = new Date('2026-10-22T12:00:00Z');
 const PIERRE = 'PIERRE-KEY-0123456789';
+const ZELIE = 'ZELIE-KEY-0123456789';
 const call = (method, key, { query = '', body } = {}) => handleFriend(
   new Request(`https://w.example/friend${query}`, { method, headers: { ...(key ? { Authorization: `Bearer ${key}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined }),
   env,
   NOW,
 );
 const trips = () => JSON.parse(files['snap-trips.json'].text).trips;
+const tripOf = (channel) => trips().filter((t) => t.channel === channel);
+const dates = (b) => [b.out.map((e) => e.date), b.back.map((e) => e.date)];
 
 files['snap-trips.json'] = { sha: 's0', text: JSON.stringify({ trips: [
   { id: 'mine', out: ['2026-11-05'], back: [] },
@@ -57,47 +65,48 @@ files['snap-trips.json'] = { sha: 's0', text: JSON.stringify({ trips: [
 files['snap-state.json'] = { sha: 'st', text: JSON.stringify({ checkedAt: '2026-10-22T11:58:00Z', routes: { 'london-paris': { days: { '2026-11-08': { price: 45, slots: [] }, '2026-11-09': { price: null, slots: [] } } } } }) };
 
 // --- Who is allowed in -----------------------------------------------------
-let body2;
 let r = await call('GET', null);
 check('no key: refused', r.status, 401);
 r = await call('GET', 'not-a-real-key');
 check('wrong key: refused', r.status, 401);
 r = await call('GET', '__proto__');
 check('a key named like an object property: refused', r.status, 401);
-check('refusals do not reveal trips', JSON.stringify(await r.json()).includes('2026'), false);
+check('refusals do not reveal dates', JSON.stringify(await r.json()).includes('2026'), false);
 r = await call('OPTIONS', null);
 check('browser preflight: allowed from the site only', [r.status, r.headers.get('access-control-allow-origin')], [204, 'https://eliettemitschi-ux.github.io']);
 
-// --- Seeing your own trips only ---------------------------------------------
+// --- Seeing your own dates only ---------------------------------------------
 r = await call('GET', PIERRE);
 let body = await r.json();
-check('GET: pierre sees no trips yet (not yours, not marie, not the finished one)', [r.status, body.channel, body.topic, body.trips], [200, 'pierre', 'T-trains-pierre', []]);
+check('GET: pierre sees nothing yet (not your dates, not marie\'s, not his finished one)', [r.status, body.channel, body.topic, body.out, body.back], [200, 'pierre', 'T-trains-pierre', [], []]);
 check('GET: a key with a name returns it', body.name, 'Pierre');
 check('GET: pierre has the passport reminder, no personal-link note, and the default cap', [body.passport, body.note, body.maxDates], [true, false, 12]);
-r = await call('GET', 'ZELIE-KEY-0123456789');
-body2 = await r.json();
-check('GET: a friend with a cap of 4 gets the personal-link note, no passport reminder, and an accented name', [body2.name, body2.passport, body2.note, body2.maxDates, body2.topic], ['Zélie', false, true, 4, 'T-trains-zelie']);
+r = await call('GET', ZELIE);
+let z = await r.json();
+check('GET: a friend with a cap of 4 gets the note, no passport reminder, an accented name', [z.name, z.passport, z.note, z.maxDates, z.topic], ['Zélie', false, true, 4, 'T-trains-zelie']);
+r = await call('GET', 'MARIE-KEY-0123456789');
+check('GET: a key that is just a channel string still works, with no name', [r.status, (await r.json()).name], [200, '']);
 r = await call('GET', 'BIG-KEY-0123456789');
 check('GET: a cap above 12 is brought down to 12', (await r.json()).maxDates, 12);
 r = await call('GET', 'ODD-KEY-0123456789');
 check('GET: a nonsense cap falls back to 12', (await r.json()).maxDates, 12);
-r = await call('GET', PIERRE);
-body = await r.json();
-r = await call('GET', 'MARIE-KEY-0123456789');
-check('GET: a key that is just a channel string still works, with no name', [r.status, (await r.json()).name], [200, '']);
-check('GET: says when the watcher last reported', body.checkedAt, '2026-10-22T11:58:00Z');
+check('GET: says when the watcher last reported', (await (await call('GET', PIERRE)).json()).checkedAt, '2026-10-22T11:58:00Z');
 
-// --- Adding ------------------------------------------------------------------
-r = await call('POST', PIERRE, { body: { out: ['2026-11-09', '2026-11-08'], back: ['2026-11-12'] } });
+// --- Adding one date saves it ---------------------------------------------------
+r = await call('POST', PIERRE, { body: { out: ['2026-11-08'] } });
 body = await r.json();
-check('POST: adds a trip', [r.status, body.trips.length], [200, 1]);
-check('POST: dates sorted, trip tagged with his channel', [body.trips[0].out, body.trips[0].back], [['2026-11-08', '2026-11-09'], ['2026-11-12']]);
-check('POST: shows what the watcher saw for each date', [body.trips[0].seen.out['2026-11-08'], body.trips[0].seen.out['2026-11-09'], body.trips[0].seen.back['2026-11-12']], [{ state: 'tickets', price: 45 }, { state: 'none' }, { state: 'unknown' }]);
-check('POST: saved with channel pierre', trips().find((t) => t.id === body.trips[0].id).channel, 'pierre');
+check('POST: one date is added and answered with the new list', [r.status, dates(body)], [200, [['2026-11-08'], []]]);
+check('POST: the date is saved in the repo, tagged with his channel', tripOf('pierre').map((t) => [t.out, t.back]), [[['2026-11-08'], []]]);
+check('POST: his finished date is tidied away', JSON.stringify(trips()).includes('2020'), false);
 check('POST: your own trip and marie\'s are untouched', [trips().some((t) => t.id === 'mine'), trips().some((t) => t.id === 'marie1')], [true, true]);
-check('POST: finished trips are tidied away', trips().some((t) => t.id === 'old'), false);
-check('GET: the response never includes anyone else\'s trip', JSON.stringify(body).includes('2026-11-20') || JSON.stringify(body).includes('"mine"'), false);
-const pierreTripId = body.trips[0].id;
+const pierreTripId = tripOf('pierre')[0].id;
+r = await call('POST', PIERRE, { body: { out: ['2026-11-09'], back: ['2026-11-12'] } });
+body = await r.json();
+check('POST: more dates are merged into the same single trip, in date order', [dates(body), tripOf('pierre').length, tripOf('pierre')[0].id === pierreTripId], [[['2026-11-08', '2026-11-09'], ['2026-11-12']], 1, true]);
+check('POST: shows what the watcher saw for each date', [body.out[0], body.out[1], body.back[0]], [{ date: '2026-11-08', state: 'tickets', price: 45 }, { date: '2026-11-09', state: 'none' }, { date: '2026-11-12', state: 'unknown' }]);
+r = await call('POST', PIERRE, { body: { out: ['2026-11-08'] } });
+check('POST: adding a date already watched changes nothing', [r.status, dates(await r.json())], [200, [['2026-11-08', '2026-11-09'], ['2026-11-12']]]);
+check('GET: the response never includes anyone else\'s dates', JSON.stringify(body).includes('2026-11-20') || JSON.stringify(body).includes('2026-11-05'), false);
 
 // --- Refusing bad input -----------------------------------------------------
 const before = saves;
@@ -113,42 +122,55 @@ for (const [label, payload, msg] of [
 }
 check('refused requests save nothing', saves, before);
 
-// --- The limit ---------------------------------------------------------------
+// --- The limit (pierre: 12) ----------------------------------------------------
 const many = Array.from({ length: 9 }, (_, i) => `2026-12-${String(i + 1).padStart(2, '0')}`);
 r = await call('POST', PIERRE, { body: { out: [...many, '2026-12-10'] } });
-check('POST: 3 dates already + 10 more would be 13 and is refused', [r.status, /up to 12/.test((await r.json()).error)], [400, true]);
+check('limit 12: 3 dates already + 10 more would be 13 and is refused', [r.status, /up to 12/.test((await r.json()).error)], [400, true]);
 r = await call('POST', PIERRE, { body: { out: many } });
-check('POST: filling up to exactly 12 is allowed', r.status, 200);
+check('limit 12: filling up to exactly 12 is allowed', r.status, 200);
+r = await call('POST', PIERRE, { body: { out: ['2026-12-20'] } });
+check('limit 12: one more is refused', r.status, 400);
+r = await call('POST', PIERRE, { body: { out: ['2026-12-01'] } });
+check('limit 12: re-adding a date already watched is fine even when full', r.status, 200);
 r = await call('POST', 'MARIE-KEY-0123456789', { body: { out: ['2026-11-25'] } });
 check('limits are per friend: marie is not affected by pierre\'s dates', r.status, 200);
 
-// --- A cap-4 friend adding four dates at once, across December and January ---------
-r = await call('POST', 'GAB-KEY-0123456789', { body: { out: ['2026-12-11', '2027-01-15'], back: ['2026-12-13', '2027-01-17'] } });
-body = await r.json();
-check('cap 4: four dates in one go (two in December, two in January) are saved', [r.status, body.trips.length, body.trips[0].out, body.trips[0].back], [200, 1, ['2026-12-11', '2027-01-15'], ['2026-12-13', '2027-01-17']]);
-
-// --- A lower cap for some friends -----------------------------------------------
-const ZELIE = 'ZELIE-KEY-0123456789';
-r = await call('POST', ZELIE, { body: { out: ['2026-11-05', '2026-11-06'], back: ['2026-11-09'] } });
-check('cap 4: three dates are allowed', r.status, 200);
-r = await call('POST', ZELIE, { body: { back: ['2026-11-10', '2026-11-11'] } });
-body = await r.json();
-check('cap 4: a fifth date is refused, saying the cap', [r.status, body.error], [400, 'You can watch up to 4 dates at once. Remove one first.']);
-r = await call('POST', ZELIE, { body: { back: ['2026-11-10'] } });
-check('cap 4: exactly four is allowed', r.status, 200);
+// --- A cap of 4: one date at a time, like the page does --------------------------
+for (const d of ['2026-12-11', '2027-01-15']) await call('POST', ZELIE, { body: { out: [d] } });
+for (const d of ['2026-12-13', '2027-01-17']) r = await call('POST', ZELIE, { body: { back: [d] } });
+z = await r.json();
+check('cap 4: four dates added one by one (two in December, two in January) are all saved', [r.status, dates(z)], [200, [['2026-12-11', '2027-01-15'], ['2026-12-13', '2027-01-17']]]);
 r = await call('POST', ZELIE, { body: { out: ['2026-12-20'] } });
-check('cap 4: a fifth after that is refused too', r.status, 400);
+check('cap 4: a fifth date is refused, saying the cap', [r.status, (await r.json()).error], [400, 'You can watch up to 4 dates at once. Remove one first.']);
+r = await call('POST', ZELIE, { body: { out: ['2026-12-11'] } });
+check('cap 4: re-adding a watched date is not a fifth date', r.status, 200);
+check('cap 4: her four dates are still the only ones', dates(await (await call('GET', ZELIE)).json()), [['2026-12-11', '2027-01-15'], ['2026-12-13', '2027-01-17']]);
+r = await call('POST', 'GAB-KEY-0123456789', { body: { out: ['2026-12-11', '2027-01-15'], back: ['2026-12-13', '2027-01-17'] } });
+check('cap 4: four dates in one request are accepted too', [r.status, dates(await r.json())], [200, [['2026-12-11', '2027-01-15'], ['2026-12-13', '2027-01-17']]]);
 
-// --- Removing ----------------------------------------------------------------
-r = await call('DELETE', PIERRE, { query: '?id=mine' });
-check('DELETE: pierre cannot remove your trip', [r.status, trips().some((t) => t.id === 'mine')], [200, true]);
-r = await call('DELETE', PIERRE, { query: '?id=marie1' });
-check('DELETE: pierre cannot remove marie\'s trip', trips().some((t) => t.id === 'marie1'), true);
-r = await call('DELETE', PIERRE, { query: `?id=${pierreTripId}` });
-body = await r.json();
-check('DELETE: pierre can remove his own trip', [r.status, trips().some((t) => t.id === pierreTripId), body.trips.some((t) => t.id === pierreTripId)], [200, false, false]);
+// --- Removing one date -----------------------------------------------------------
+r = await call('DELETE', ZELIE, { query: '?leg=out&date=2027-01-15' });
+z = await r.json();
+check('DELETE: removes just that date and leaves the others', [r.status, dates(z)], [200, [['2026-12-11'], ['2026-12-13', '2027-01-17']]]);
+r = await call('POST', ZELIE, { body: { out: ['2026-12-20'] } });
+check('DELETE: frees a place under the cap', r.status, 200);
+r = await call('DELETE', ZELIE, { query: '?leg=back&date=2026-12-11' });
+check('DELETE: the right direction matters (that date is only London to Paris)', dates(await r.json())[0].includes('2026-12-11'), true);
+r = await call('DELETE', PIERRE, { query: '?leg=out&date=2026-11-05' });
+check('DELETE: pierre cannot remove a date from your own trip', [r.status, trips().some((t) => t.id === 'mine' && t.out.includes('2026-11-05'))], [200, true]);
+r = await call('DELETE', PIERRE, { query: '?leg=out&date=2026-11-20' });
+check('DELETE: pierre cannot remove a date from marie\'s trip', trips().some((t) => t.id === 'marie1' && t.out.includes('2026-11-20')), true);
+check('DELETE: gab\'s dates are separate from zélie\'s even on the same days', dates(await (await call('GET', 'GAB-KEY-0123456789')).json()), [['2026-12-11', '2027-01-15'], ['2026-12-13', '2027-01-17']]);
 r = await call('DELETE', PIERRE);
-check('DELETE: needs to say which trip', r.status, 400);
+check('DELETE: needs to say which date', r.status, 400);
+r = await call('DELETE', PIERRE, { query: '?leg=sideways&date=2026-11-08' });
+check('DELETE: needs a real direction', r.status, 400);
+r = await call('DELETE', PIERRE, { query: '?leg=out&date=whenever' });
+check('DELETE: needs a real date', r.status, 400);
+for (const d of ['2026-11-09', '2026-11-08']) await call('DELETE', PIERRE, { query: `?leg=out&date=${d}` });
+r = await call('DELETE', PIERRE, { query: '?leg=back&date=2026-11-12' });
+for (const d of many) await call('DELETE', PIERRE, { query: `?leg=out&date=${d}` });
+check('DELETE: removing a friend\'s last date removes their trip entirely', tripOf('pierre').length, 0);
 r = await call('PUT', PIERRE);
 check('other methods are refused', r.status, 405);
 

@@ -459,4 +459,8 @@ input:focus { outline: none; border-color: var(--accent); }
 .form-msg { margin: 10px 0 0; font-size: 0.92rem; color: var(--muted); min-height: 1.2em; }
 .form-msg.error { color: var(--sold-out); font-weight: 600; }
 .form-msg.ok { color: var(--available); }
-.pending-note { margin: 10px 0 0; font-size: 0.88rem; color: var(--gold); }
+.watch-row { align-items: center; justify-content: space-between; }
+.watch-row .owner-row-main { flex: 1; }
+#trips .owner-list { margin-bottom: 8px; }
+.trip-date-row .chip { background: var(--accent); border-color: var(--accent); color: #0b0f1a; font-weight: 600; }
+.trip-date-row .chip:disabled { opacity: 0.5; }
