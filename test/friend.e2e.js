@@ -9,7 +9,10 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { chromium } = require('playwright');
+const { chromium, webkit, devices } = require('playwright');
+
+// BROWSER=webkit runs the same checks in Safari's engine with an iPhone profile.
+const SAFARI = process.env.BROWSER === 'webkit';
 
 const ROOT = path.resolve(__dirname, '..', 'docs');
 const PORT = 4189;
@@ -75,9 +78,9 @@ function fakeWorker() {
 
 (async () => {
   await new Promise((r) => server.listen(PORT, r));
-  const browser = await chromium.launch();
+  const browser = await (SAFARI ? webkit : chromium).launch();
   const worker = fakeWorker();
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext(SAFARI ? devices['iPhone 13'] : { viewport: { width: 390, height: 844 } });
   await context.route(`${API}**`, worker.handler);
   const page = await context.newPage();
   const pageErrors = [];
