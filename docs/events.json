@@ -15,28 +15,28 @@
       {
         "label": "21 Nov 2026, 5pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:35.150Z",
+        "lastChecked": "2026-10-24T01:05:40.559Z",
         "lastChanged": "2026-10-23T01:53:36.689Z",
         "snippet": "Sold out"
       },
       {
         "label": "21 Nov 2026, 8.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:35.150Z",
+        "lastChecked": "2026-10-24T01:05:40.559Z",
         "lastChanged": "2026-10-23T01:53:36.689Z",
         "snippet": "Sold out"
       },
       {
         "label": "22 Nov 2026, 2pm",
         "state": "available",
-        "lastChecked": "2026-10-24T01:03:35.150Z",
+        "lastChecked": "2026-10-24T01:05:40.559Z",
         "lastChanged": "2026-10-23T15:30:46.022Z",
         "snippet": "Not marked sold out"
       }
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-24T01:03:35.150Z",
+      "lastChecked": "2026-10-24T01:05:40.559Z",
       "lastChanged": "2026-10-23T15:30:46.022Z",
       "lastError": null,
       "snippet": "22 Nov 2026, 2pm: Not marked sold out"
@@ -430,35 +430,35 @@
       {
         "label": "29 Nov 2026, 1pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:35.756Z",
+        "lastChecked": "2026-10-24T01:05:40.708Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:35.756Z",
+        "lastChecked": "2026-10-24T01:05:40.708Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 3pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:35.756Z",
+        "lastChecked": "2026-10-24T01:05:40.708Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 4pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:35.756Z",
+        "lastChecked": "2026-10-24T01:05:40.708Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-24T01:03:35.756Z",
+      "lastChecked": "2026-10-24T01:05:40.708Z",
       "lastChanged": null,
       "lastError": null,
       "snippet": "4 performances checked"
@@ -1046,9 +1046,9 @@
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-24T01:03:38.276Z",
+      "lastChecked": "2026-10-24T01:05:41.675Z",
       "lastChanged": "2026-10-23T17:55:41.412Z",
-      "lastError": null,
+      "lastError": "request to https://ticketing.sohoplace.org/api/consumer/eventinventory/2020523?promoCode=WAC failed, reason: read ECONNRESET",
       "snippet": "27 Oct 2026, 7pm: Real seats available, from £32.5"
     }
   },
@@ -1073,21 +1073,21 @@
       {
         "label": "24 Oct 2026, 1.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:39.248Z",
+        "lastChecked": "2026-10-24T01:05:42.737Z",
         "lastChanged": "2026-10-04T16:22:22.353Z",
         "snippet": "Sold out"
       },
       {
         "label": "24 Oct 2026, 6.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-24T01:03:39.248Z",
+        "lastChecked": "2026-10-24T01:05:42.737Z",
         "lastChanged": "2026-10-18T08:57:25.638Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-24T01:03:39.248Z",
+      "lastChecked": "2026-10-24T01:05:42.737Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
       "snippet": "2 performances checked"
