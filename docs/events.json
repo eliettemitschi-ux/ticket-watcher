@@ -15,28 +15,28 @@
       {
         "label": "21 Nov 2026, 5pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:11.557Z",
+        "lastChecked": "2026-10-26T15:51:05.103Z",
         "lastChanged": "2026-10-23T01:53:36.689Z",
         "snippet": "Sold out"
       },
       {
         "label": "21 Nov 2026, 8.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:11.557Z",
+        "lastChecked": "2026-10-26T15:51:05.103Z",
         "lastChanged": "2026-10-25T20:07:20.178Z",
         "snippet": "Sold out"
       },
       {
         "label": "22 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:11.557Z",
+        "lastChecked": "2026-10-26T15:51:05.103Z",
         "lastChanged": "2026-10-25T11:25:46.659Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-26T15:46:11.557Z",
+      "lastChecked": "2026-10-26T15:51:05.103Z",
       "lastChanged": "2026-10-25T20:07:20.178Z",
       "lastError": null,
       "snippet": "3 performances checked"
@@ -430,35 +430,35 @@
       {
         "label": "29 Nov 2026, 1pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:12.337Z",
+        "lastChecked": "2026-10-26T15:51:05.285Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:12.337Z",
+        "lastChecked": "2026-10-26T15:51:05.285Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 3pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:12.337Z",
+        "lastChecked": "2026-10-26T15:51:05.285Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 4pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-26T15:46:12.337Z",
+        "lastChecked": "2026-10-26T15:51:05.285Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-26T15:46:12.337Z",
+      "lastChecked": "2026-10-26T15:51:05.285Z",
       "lastChanged": null,
       "lastError": null,
       "snippet": "4 performances checked"
@@ -1032,9 +1032,9 @@
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-26T15:46:14.967Z",
+      "lastChecked": "2026-10-26T15:51:21.334Z",
       "lastChanged": "2026-10-24T23:00:52.948Z",
-      "lastError": null,
+      "lastError": "network timeout at: https://ticketing.sohoplace.org/api/consumer/eventinventory/2020525?promoCode=WAC",
       "snippet": "27 Oct 2026, 7pm: Real seats available, from £32.5"
     }
   },
@@ -1059,14 +1059,14 @@
       {
         "label": "Man to Man",
         "state": "unknown",
-        "lastChecked": "2026-10-26T15:47:12.290Z",
+        "lastChecked": "2026-10-26T15:52:19.763Z",
         "lastChanged": "2026-10-24T17:31:40.788Z",
         "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
       }
     ],
     "status": {
       "state": "unknown",
-      "lastChecked": "2026-10-26T15:47:12.290Z",
+      "lastChecked": "2026-10-26T15:52:19.763Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
       "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
