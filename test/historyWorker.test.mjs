@@ -6,6 +6,7 @@
 // route (a gap, never "no tickets"), the six-hour heartbeat, and the size cap.
 
 import { runHistory } from '../cron-worker/src/history.js';
+import worker from '../cron-worker/src/index.js';
 import { addDays } from '../trains/snapParse.js';
 import { MAX_EVENTS } from '../trains/history.js';
 
@@ -27,6 +28,7 @@ const label = (iso) => { const d = new Date(`${iso}T12:00:00Z`); return `${DOW[d
 // What Snap shows right now: price per travel day per route, and which routes are blocked.
 const world = { prices: { 'london-paris': {}, 'paris-london': {} }, blocked: new Set() };
 const snapRequests = [];
+const dispatched = [];
 function pageFor(center, prices) {
   const cells = [-2, -1, 0, 1, 2].map((n) => {
     const d = addDays(center, n);
@@ -58,6 +60,7 @@ globalThis.fetch = async (url, opts = {}) => {
     if (world.blocked.has(route)) return new Response('<html>Access denied</html>', { status: 403 });
     return new Response(pageFor(q.get('outbound'), world.prices[route]), { status: 200 });
   }
+  if (url.includes('/actions/workflows/')) { dispatched.push(url); return new Response(null, { status: 204 }); }
   throw new Error(`unexpected fetch ${url} (the history job must not send notifications)`);
 };
 
@@ -153,6 +156,25 @@ world.prices['london-paris'][day(7)] = 14;
 r = await runHistory(env, at('2026-10-27T12:30:00Z'));
 h = hist();
 check('limit: going over the cap stops recording and says so, rather than growing forever', [r.capped, h.capped, h.events.length], [true, true, MAX_EVENTS - 2]);
+
+// --- 9. Which trigger runs what -----------------------------------------------------------
+// The hourly trigger (7 * * * *) must record history and nothing else; the 5-minute one must
+// keep doing the alerts and must not record history.
+async function fire(cron) {
+  const waits = [];
+  await worker.scheduled({ cron }, { ...env, GITHUB_TOKEN: 't' }, { waitUntil: (p) => waits.push(p) });
+  await Promise.all(waits);
+}
+files['snap-history.json'] = { text: JSON.stringify({ version: 1, since: '2026-10-26T00:00Z', last: {}, blocked: {}, events: [], checkedAt: '2026-10-26T00:00:00.000Z' }), sha: 'h0' };
+files['snap-trips.json'] = { text: JSON.stringify({ trips: [] }), sha: 't0' };
+files['snap-state.json'] = { text: JSON.stringify({ routes: {} }), sha: 's0' };
+saves = [];
+dispatched.length = 0;
+await fire('7 * * * *');
+check('triggers: the hourly one records history and does not start the 5-minute checks', [saves.some((m) => m.startsWith('History')), dispatched.length], [true, 0]);
+saves = [];
+await fire('*/5 * * * *');
+check('triggers: the 5-minute one starts the checks and does not record history', [dispatched.length, saves.some((m) => m.startsWith('History'))], [1, false]);
 
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }
 console.log('\nAll history worker tests passed.');
