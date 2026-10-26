@@ -470,7 +470,7 @@
     const nav = document.createElement('nav');
     nav.id = 'owner-tabs';
     nav.className = 'owner-tabs';
-    nav.innerHTML = '<button type="button" data-tab="watchlist" class="active">Watchlist</button><button type="button" data-tab="scanner">Scanner</button><button type="button" data-tab="trains">Trains</button>';
+    nav.innerHTML = '<button type="button" data-tab="watchlist" class="active">Watchlist</button><button type="button" data-tab="scanner">Scanner</button><button type="button" data-tab="trains">Trains</button><button type="button" data-tab="stats">Stats</button>';
     document.querySelector('header').insertAdjacentElement('afterend', nav);
 
     const section = document.createElement('section');
@@ -523,6 +523,15 @@
       <p class="form-msg" id="trips-msg" role="status" aria-live="polite"></p>
       <section id="trips-list"></section>`;
     section.insertAdjacentElement('afterend', trains);
+
+    const stats = document.createElement('section');
+    stats.id = 'owner-stats';
+    stats.className = 'owner-view';
+    stats.hidden = true;
+    stats.innerHTML = `
+      <p class="form-msg" id="stats-msg" role="status" aria-live="polite"></p>
+      <div id="stats-body"><div class="empty-state">Loading…</div></div>`;
+    trains.insertAdjacentElement('afterend', stats);
     trains.addEventListener('click', onTrainsClick);
     trains.addEventListener('input', (e) => { if (e.target.id === 'trip-channel') renderChannelHint(); });
     trains.addEventListener('change', (e) => { if (e.target.id === 'trip-from') fillTripSelects(); });
@@ -559,12 +568,14 @@
     document.querySelectorAll('#owner-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
     $('owner-view').hidden = name !== 'scanner';
     $('owner-trains').hidden = name !== 'trains';
+    $('owner-stats').hidden = name !== 'stats';
     const note = document.querySelector('.golden-note');
     const main = document.querySelector('main');
     if (note) note.hidden = ownerTab;
     if (main) main.hidden = ownerTab;
     if (name === 'scanner') refresh();
     if (name === 'trains') refreshTrains();
+    if (name === 'stats') refreshStats();
   }
 
   function setMessage(text, isError) {
@@ -639,6 +650,44 @@
       setMessage(`Couldn't save that tick (${err.message}). Nothing was changed.`, true);
     }
     render();
+  }
+
+  // --- The Stats tab --------------------------------------------------------
+  // The maths and the page are in stats.js, loaded the first time this tab opens.
+  // It reads snap-history.json (the hourly price log) from the private repo.
+
+  function loadStatsScript() {
+    if (root.SnapStats) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = './stats.js';
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("couldn't load the stats code"));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function refreshStats() {
+    const msg = $('stats-msg');
+    try {
+      await loadStatsScript();
+      const res = await gh('/contents/snap-history.json', { raw: true });
+      if (res.status === 404) {
+        $('stats-body').innerHTML = '<div class="empty-state">No history yet. The hourly job records its first look within the hour.</div>';
+        msg.textContent = '';
+        return;
+      }
+      if (res.status === 401 || res.status === 403) throw Object.assign(new Error('rejected'), { status: res.status });
+      if (!res.ok) throw new Error(`GitHub said ${res.status}`);
+      $('stats-body').innerHTML = root.SnapStats.html(root.SnapStats.analyse(await res.json(), Date.now()));
+      msg.textContent = '';
+      msg.className = 'form-msg';
+    } catch (err) {
+      msg.className = 'form-msg error';
+      msg.textContent = err.status === 401 || err.status === 403
+        ? 'Your token was rejected. Lock this device and unlock again with a new one.'
+        : `Couldn't load the stats (${err.message}).`;
+    }
   }
 
   // --- The Trains tab -------------------------------------------------------
@@ -790,6 +839,7 @@
     timer = setInterval(() => {
       if (!$('owner-view').hidden) refresh();
       if (!$('owner-trains').hidden) refreshTrains();
+      if (!$('owner-stats').hidden) refreshStats();
     }, REFRESH_MS);
     showTab('scanner');
   }

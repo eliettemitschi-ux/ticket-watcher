@@ -68,7 +68,7 @@ async function until(fn, ms = 8000) {
 
 // Fake GitHub: private repo contents + a log of every request.
 function fakeGitHub() {
-  const gh = { store: null, sha: 0, puts: [], requests: [], rejectAll: false, trips: null, tripPuts: [], snapState: null };
+  const gh = { store: null, sha: 0, puts: [], requests: [], rejectAll: false, trips: null, tripPuts: [], snapState: null, history: null };
   gh.handler = async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -96,6 +96,10 @@ function fakeGitHub() {
       gh.sha += 1;
       gh.puts.push({ saved: JSON.parse(gh.store), sentSha: body.sha || null });
       return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ content: { sha: `sha${gh.sha}` } }) });
+    }
+    if (p === '/contents/snap-history.json') {
+      if (!gh.history) return route.fulfill({ status: 404, headers: cors, body: '{"message":"Not Found"}' });
+      return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(gh.history) });
     }
     if (p === '/contents/snap-state.json') {
       if (!gh.snapState) return route.fulfill({ status: 404, headers: cors, body: '{"message":"Not Found"}' });
@@ -221,7 +225,7 @@ function fakeGitHub() {
   // 5. Persistence: a reload keeps the device unlocked and shows the saved ticks.
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('#owner-tabs');
-  check('reload: the tabs are back without unlocking again', await page.locator('#owner-tabs button').count(), 3);
+  check('reload: the tabs are back without unlocking again', await page.locator('#owner-tabs button').count(), 4);
   await page.click('#owner-tabs button[data-tab="scanner"]');
   await page.waitForSelector('#owner-watching .event-card');
   check('reload: the saved tick is still in Watching', await watchingTitles(), ['Flagged Show', 'Plain Show']);
@@ -316,6 +320,34 @@ function fakeGitHub() {
   await until(async () => /refusing checks/.test(await page.locator('#trains-status').textContent()));
   check('trains: a blocked watcher shows a warning', true, true);
 
+  // 6c. The Stats tab: the hourly price log turned into numbers.
+  await page.click('#owner-tabs button[data-tab="stats"]');
+  await page.waitForSelector('#owner-stats:not([hidden])');
+  await until(async () => /No history yet/.test(await page.locator('#stats-body').textContent()));
+  check('stats: before the first look it says there is no history yet', /No history yet/.test(await page.locator('#stats-body').textContent()), true);
+  check('stats: the other tabs are hidden while it is open', [await page.locator('#owner-trains').isHidden(), await page.locator('#owner-view').isHidden(), await page.locator('main').isHidden()], [true, true, true]);
+  const lp = 'london-paris';
+  const sinceIso = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 16) + 'Z';
+  const apDay = plus(10);
+  gh.history = {
+    since: sinceIso, checkedAt: new Date().toISOString(), blocked: {}, events: [
+      [sinceIso, lp, apDay, null, 'i'],
+      [sinceIso, lp, plus(12), null, 'i'],
+      [new Date(Date.now() - 86400000).toISOString().slice(0, 16) + 'Z', lp, apDay, 60, 'n'],
+      [new Date(Date.now() - 3600000).toISOString().slice(0, 16) + 'Z', lp, apDay, 45, 'c'],
+    ],
+  };
+  await page.click('#owner-tabs button[data-tab="scanner"]');
+  await page.click('#owner-tabs button[data-tab="stats"]');
+  await until(async () => /Collecting since/.test(await page.locator('#stats-body').textContent()));
+  const statsText = await page.locator('#stats-body').textContent();
+  check('stats: it shows how long it has been collecting and how many changes are logged', /Collecting since .* 7 days · 4 changes logged/.test(statsText), true);
+  check('stats: both routes are listed', [statsText.includes('London → Paris'), statsText.includes('Paris → London')], [true, true]);
+  check('stats: when tickets appear, and the price change after', [/11 days before travel/.test(statsText), /1 of 1\s+days \(100%\) changed price/.test(statsText.replace(/\s+/g, ' ')), statsText.includes('Biggest drop')], [true, true, true]);
+  check('stats: small samples are flagged as hints', statsText.includes('few dates, treat as a hint'), true);
+  check('stats: the bars are drawn', await page.locator('#stats-body .stat-bar-row').count() > 0, true);
+  await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-stats.png'), fullPage: true });
+
 
   // 7. A rejected token (expired / revoked).
   gh.rejectAll = true;
@@ -364,7 +396,7 @@ function fakeGitHub() {
   await mobile.fill('#owner-token-input', GOOD);
   await mobile.tap('#owner-token-save');
   await mobile.waitForSelector('#owner-view:not([hidden])');
-  check('touch: unlocking from the phone shows the scanner tab', await mobile.locator('#owner-tabs button').count(), 3);
+  check('touch: unlocking from the phone shows the scanner tab', await mobile.locator('#owner-tabs button').count(), 4);
 
   check('no script errors anywhere', pageErrors, []);
   await browser.close();

@@ -469,3 +469,13 @@ input:focus { outline: none; border-color: var(--accent); }
 .route-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 6px; }
 .route-row .city-pick { flex: 1; min-width: 0; margin-bottom: 0; }
 .swap-btn { flex: none; margin-bottom: 4px; padding: 8px 12px; font-size: 1rem; }
+
+/* --- Owner stats --- */
+.stat-head { font-size: 0.95rem; margin: 18px 0 6px; color: var(--muted); }
+.stat-line { margin: 0 0 10px; font-size: 0.9rem; }
+.stat-thin { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; background: rgba(226,171,76,0.14); color: var(--pending); font-size: 0.72rem; }
+.stat-bars { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 12px; }
+.stat-bar-row { display: grid; grid-template-columns: 7.5rem 1fr 2rem; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--muted); }
+.stat-bar-track { background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
+.stat-bar-fill { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.stat-bar-n { text-align: right; }
