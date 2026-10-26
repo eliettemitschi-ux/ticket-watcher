@@ -667,6 +667,22 @@
     });
   }
 
+  // The "when will tickets appear for my date?" box. The date you pick is kept
+  // when the tab refreshes; it starts two weeks ahead.
+  let estimateDate = '';
+
+  function bindEstimate(stats) {
+    const input = $('est-date');
+    if (!input) return;
+    const today = londonToday();
+    input.min = today;
+    if (!estimateDate) estimateDate = new Date(Date.parse(`${today}T12:00:00Z`) + 14 * 86400000).toISOString().slice(0, 10);
+    input.value = estimateDate;
+    const show = () => { $('est-body').innerHTML = root.SnapStats.estimateHtml(stats, input.value, today); };
+    input.addEventListener('input', () => { estimateDate = input.value; show(); });
+    show();
+  }
+
   async function refreshStats() {
     const msg = $('stats-msg');
     try {
@@ -679,7 +695,12 @@
       }
       if (res.status === 401 || res.status === 403) throw Object.assign(new Error('rejected'), { status: res.status });
       if (!res.ok) throw new Error(`GitHub said ${res.status}`);
-      $('stats-body').innerHTML = root.SnapStats.html(root.SnapStats.analyse(await res.json(), Date.now()));
+      const stats = root.SnapStats.analyse(await res.json(), Date.now());
+      // Don't redraw under your finger while the date box is open.
+      if (!(document.activeElement && document.activeElement.id === 'est-date')) {
+        $('stats-body').innerHTML = root.SnapStats.html(stats);
+        bindEstimate(stats);
+      }
       msg.textContent = '';
       msg.className = 'form-msg';
     } catch (err) {

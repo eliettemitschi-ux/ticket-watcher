@@ -4,7 +4,7 @@
 // UK clocks go back at 01:00 UTC on Sun 25 Oct, so 00:01 UTC is 01:01 London time
 // on 24 and 25 Oct and 00:01 London time from 26 Oct.
 
-const { analyse, html, median, mode } = require('../docs/stats.js');
+const { analyse, html, estimate, estimateHtml, compare, confidenceFor, median, mode } = require('../docs/stats.js');
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -93,6 +93,87 @@ check('page: nothing to warn about when all is well', page.includes('form-msg er
 const warned = html(analyse({ ...history, capped: true, blocked: { [pl]: '2026-10-27T10:00Z' }, checkedAt: '2026-10-26T00:00:00.000Z' }, NOW));
 check('page: warns when the log is full, Snap is blocked, or the job looks stopped', [warned.includes('The log is full'), warned.includes('Snap is not answering for Paris → London'), warned.includes('hours ago, so the hourly job may have stopped')], [true, true, true]);
 check('page: with nothing yet it says so plainly instead of showing empty charts', html(empty).includes('nothing to report yet'), true);
+
+// --- Direction comparison and the estimate for a chosen date ---------------------------------
+// A second history, in winter (so UTC is London time). London to Paris: 20 dates whose tickets
+// appeared 10 days ahead (16), 9 days (2) or 11 days (2) at 00:01. Paris to London: 10 dates, leads
+// [10,10,10,9,11,10,12,8,10,10] at 01:30. The same ten travel days are in both directions.
+const { addDays } = require('../trains/snapParse');
+const day = (n) => addDays('2026-12-10', n);
+const SINCE = '2026-11-01T00:00Z';
+const at = (date, lead, time) => `${addDays(date, -lead)}T${time}Z`;
+const events2 = [];
+const leadsLP = Array.from({ length: 20 }, (_, i) => (i < 16 ? 10 : i < 18 ? 9 : 11));
+const leadsPL = [10, 10, 10, 9, 11, 10, 12, 8, 10, 10];
+leadsLP.forEach((lead, i) => {
+  events2.push([SINCE, lp, day(i), null, 'i'], [at(day(i), lead, '00:01'), lp, day(i), 40 + (i % 5) * 5, 'n']);
+  if (i < 6) events2.push([`${addDays(day(i), -lead + 2)}T09:00Z`, lp, day(i), 35 + (i % 5) * 5, 'c']); // six of them drop by 5
+});
+leadsPL.forEach((lead, i) => events2.push([SINCE, pl, day(i), null, 'i'], [at(day(i), lead, '01:30'), pl, day(i), 35 + (i % 5) * 5, 'n']));
+events2.push([SINCE, lp, '2026-12-30', null, 'i']); // watched, never on sale yet
+events2.push([SINCE, lp, '2026-11-30', 60, 'i'], ['2026-11-20T10:00Z', lp, '2026-11-30', null, 'g']); // on sale when first seen, then gone
+const big = analyse({ since: SINCE, checkedAt: '2026-12-01T00:00:00.000Z', blocked: {}, events: events2 }, Date.parse('2026-12-01T00:30:00Z'));
+const TODAY = '2026-12-01';
+
+// How sure to be.
+const conf = (leads) => confidenceFor(leads).level;
+check('confidence: 20 dates all alike is High', conf(Array(20).fill(10)), 'High');
+check('confidence: 20 dates but only 75% within a day is only Medium', conf([...Array(15).fill(10), ...Array(5).fill(14)]), 'Medium');
+check('confidence: 8 dates with 5 close together is Medium', conf([10, 10, 10, 10, 10, 12, 8, 14]), 'Medium');
+check('confidence: 8 dates scattered is Low', conf([10, 10, 10, 12, 8, 14, 6, 16]), 'Low');
+check('confidence: 5 dates is Low however alike they are, and none is Low too', [conf(Array(5).fill(10)), conf([])], ['Low', 'Low']);
+
+// London to Paris.
+const lpEst = estimate(big.routes[lp], day(10), TODAY);
+check('estimate: a day already on sale says so, with its price, and the usual pattern', [lpEst.kind, lpEst.status, lpEst.price, lpEst.typical, lpEst.usualDate, lpEst.n], ['estimate', 'on', 40, 10, day(0), 20]);
+check('estimate: 90% had appeared by 10 days ahead, and 80% within 9 to 11 days', [lpEst.byLead, lpEst.byDate, lpEst.range, lpEst.earliest, lpEst.latest], [10, day(0), [9, 11], day(-1), day(1)]);
+check('estimate: the usual hour is the most common one, with its share', [lpEst.hourMode, lpEst.hourCount, lpEst.hourN], [0, 20, 20]);
+check('estimate: confidence is High with the numbers behind it', [lpEst.confidence.level, lpEst.confidence.n, lpEst.confidence.within1], ['High', 20, 1]);
+const notYet = estimate(big.routes[lp], '2026-12-30', TODAY);
+check('estimate: a watched day not on sale yet is "not-yet", expected on the usual day', [notYet.status, notYet.usualDate, notYet.daysAway], ['not-yet', '2026-12-20', 29]);
+check('estimate: a day that has gone is "gone"', estimate(big.routes[lp], '2026-11-30', '2026-11-25').status, 'gone');
+check('estimate: a day beyond what is watched is "unwatched"', [estimate(big.routes[lp], '2027-02-01', TODAY).status, estimate(big.routes[lp], '2027-02-01', TODAY).usualDate], ['unwatched', '2027-01-22']);
+check('estimate: a past date and no date are handled', [estimate(big.routes[lp], '2026-11-01', TODAY).kind, estimate(big.routes[lp], '', TODAY).kind], ['past', 'pick']);
+check('estimate: with fewer than 3 appearances it says there is not enough data', [estimate(a.byWeekday ? analyse({ events: history.events.filter((e) => e[1] === pl) }, NOW).routes[pl] : null, '2026-12-01', '2026-11-01').kind], ['thin']);
+
+// Paris to London.
+const plEst = estimate(big.routes[pl], day(5), TODAY);
+check('estimate: Paris to London is its own estimate with its own confidence', [plEst.typical, plEst.confidence.level, plEst.confidence.n, plEst.confidence.within1, plEst.hourMode], [10, 'Medium', 10, 0.8, 1]);
+check('estimate: with 10 dates the range is the full spread, and 90% appeared by 9 days ahead', [plEst.range, plEst.byLead], [[8, 12], 9]);
+
+// The comparison.
+const cmp = compare(big);
+check('compare: typical lead in each direction', [cmp.timing.a.median, cmp.timing.b.median, cmp.timing.enough, cmp.timing.leadDiff], [10, 10, true, 0]);
+check('compare: same-date timing: London to Paris was first on 8 dates, Paris to London on 2, median gap 1.5 hours', cmp.timing.paired, { n: 10, aEarlier: 8, bEarlier: 2, sameTime: 0, medianGapHours: 1.5 });
+check('compare: same-date prices: Paris to London was cheaper on all 10, by £5', cmp.price.paired, { n: 10, aCheaper: 0, bCheaper: 10, equal: 0, medianDiff: -5 });
+check('compare: price changes: London to Paris changed on 6 of 21 priced dates, Paris to London on none (28.6 points apart)', [cmp.changes.a.withChange, cmp.changes.a.n, cmp.changes.b.withChange, cmp.changes.shareDiff], [6, 21, 0, -28.6]);
+const cmpPage = html(big);
+check('compare page: no clear timing difference when the typical leads match', cmpPage.includes('No clear difference in how early tickets appear.'), true);
+check('compare page: says which direction is usually cheaper and by how much', cmpPage.includes('Paris → London is usually cheaper: 10 of 10 dates, by a median of £5.'), true);
+check('compare page: says which direction changes price more often', cmpPage.includes('Prices change more often in London → Paris (28.6 percentage points more).'), true);
+check('compare page: the same-date timing in words', [cmpPage.includes('came first on 8'), cmpPage.includes('Paris → London on 2'), cmpPage.includes('median gap 1.5 hours, London → Paris first')], [true, true, true]);
+check('compare page: the table has a row for each measure', ['Tickets appear', 'Most common hour', 'First price (median)', 'Changed price after appearing', 'Dropped at some point'].every((l) => cmpPage.includes(l)), true);
+const earlyPage = html(analyse({ events: history.events }, NOW));
+check('compare page: with too little data it says too early to tell instead of guessing', [earlyPage.includes('Too early to tell which direction appears earlier. It needs 8+ dates in each direction.'), earlyPage.includes('Too early to tell which direction is cheaper')], [true, true]);
+const lateLead = analyse({ since: SINCE, events: [...events2.filter((e) => e[1] === lp), ...leadsPL.flatMap((lead, i) => [[SINCE, pl, day(i), null, 'i'], [at(day(i), lead + 3, '01:30'), pl, day(i), 35, 'n']])] }, NOW);
+check('compare page: when one direction really appears earlier it says by how many days', html(lateLead).includes('Paris → London tends to appear about 3 days earlier.'), true);
+
+// The calculator.
+const est = (date, today) => estimateHtml(big, date, today);
+const onSalePage = est(day(10), TODAY);
+check('calculator: a day on sale shows its price and the usual pattern for both directions', [onSalePage.includes('On sale now</strong> (from £40)'), onSalePage.includes('about <strong>10 days before travel</strong>'), (onSalePage.match(/event-name/g) || []).length], [true, true, 2]);
+check('calculator: confidence is a label plus the numbers', [onSalePage.includes('Confidence: High'), onSalePage.includes('Based on 20 dates; 100% within a day of the typical 10 days, range 9–11 days.'), onSalePage.includes('Confidence: Medium'), onSalePage.includes('Based on 10 dates; 80% within a day of the typical 10 days, range 8–12 days.')], [true, true, true, true]);
+check('calculator: it gives the day tickets usually appear and the hour', [onSalePage.includes('is around <strong>Thu 10 Dec</strong>'), onSalePage.includes('most often at 00:00–01:00 London time (20 of 20)')], [true, true]);
+check('calculator: a day not on sale yet says so while the usual day is still ahead', est('2026-12-30', TODAY).includes('<strong>Not on sale yet.</strong>'), true);
+check('calculator: and says "later than usual" once 90% of dates would already have had tickets', est('2026-12-30', '2026-12-25').includes('later than usual'), true);
+check('calculator: due about now when the usual day is today', est('2026-12-30', '2026-12-20').includes('due about now'), true);
+check('calculator: a day further ahead than we watch is described as only the usual pattern', est('2027-02-01', TODAY).includes('further ahead than we watch'), true);
+const nearPage = estimateHtml(big, '2026-12-25', '2026-12-15');
+check('calculator: a near date that was never watched says there is no record (not that it is too far ahead); a watched one does not', [(nearPage.match(/No record for this date/g) || []).length, nearPage.includes('further ahead'), nearPage.includes('On sale now')], [1, false, true]);
+check('calculator: a past date and no date give a plain prompt', [est('2026-11-01', TODAY).includes('already gone'), est('', TODAY).includes('Pick a travel date')], [true, true]);
+check('calculator: a day that has gone says so', estimateHtml(big, '2026-11-30', '2026-11-25').includes('have gone'), true);
+check('calculator: not enough data is said plainly', estimateHtml(analyse({ events: history.events.filter((e) => e[1] === pl) }, NOW), '2026-12-01', '2026-11-01').includes('Not enough data yet'), true);
+check('calculator: the page has the date box for it', [cmpPage.includes('id="est-date"'), cmpPage.includes('id="est-body"')], [true, true]);
 
 if (failures > 0) { console.error(`\n${failures} test(s) failed.`); process.exit(1); }
 console.log('\nAll stats tests passed.');

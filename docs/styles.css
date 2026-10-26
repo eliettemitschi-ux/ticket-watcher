@@ -479,3 +479,14 @@ input:focus { outline: none; border-color: var(--accent); }
 .stat-bar-track { background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
 .stat-bar-fill { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
 .stat-bar-n { text-align: right; }
+.cmp-grid { display: flex; flex-direction: column; margin-bottom: 4px; }
+.cmp-row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; align-items: start; }
+.cmp-row:last-child { border-bottom: 0; }
+.cmp-head { font-weight: 600; font-size: 0.78rem; }
+.cmp-label { color: var(--muted); }
+.cmp-cell small { color: var(--muted); }
+.stat-verdict { font-weight: 600; }
+.conf { display: inline-block; margin-right: 6px; padding: 1px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+.conf-high { background: rgba(52,207,133,0.14); color: var(--available); }
+.conf-medium { background: rgba(226,171,76,0.14); color: var(--pending); }
+.conf-low { background: rgba(240,85,92,0.14); color: var(--sold-out); }

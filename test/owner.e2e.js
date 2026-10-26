@@ -346,6 +346,30 @@ function fakeGitHub() {
   check('stats: when tickets appear, and the price change after', [/11 days before travel/.test(statsText), /1 of 1\s+days \(100%\) changed price/.test(statsText.replace(/\s+/g, ' ')), statsText.includes('Biggest drop')], [true, true, true]);
   check('stats: small samples are flagged as hints', statsText.includes('few dates, treat as a hint'), true);
   check('stats: the bars are drawn', await page.locator('#stats-body .stat-bar-row').count() > 0, true);
+  // Direction comparison and the date calculator.
+  check('stats: the comparison table and the date calculator are on the page', [await page.locator('#stats-body h2', { hasText: 'Direction comparison' }).count(), await page.locator('#est-date').count(), (await page.locator('#stats-body .cmp-row').count()) >= 5], [1, 1, true]);
+  check('stats: with so little data the comparison says too early to tell rather than guessing', /Too early to tell which direction appears earlier/.test(await page.locator('#stats-body').textContent()), true);
+  check('stats: the calculator starts two weeks ahead', await page.locator('#est-date').inputValue(), plus(14));
+  check('stats: and with too few appearances says not enough data, for each direction', [(await page.locator('#est-body').textContent()).match(/Not enough data yet/g).length], [2]);
+
+  // Plenty of data: twelve London to Paris days whose tickets appeared 10 days ahead.
+  const longAgo = new Date(Date.now() - 40 * 86400000).toISOString().slice(0, 16) + 'Z';
+  const stamp = (date, lead) => new Date(Date.parse(date + 'T00:01:00Z') - lead * 86400000).toISOString().slice(0, 16) + 'Z';
+  const evs = [];
+  for (let i = 0; i < 12; i++) evs.push([longAgo, lp, plus(i), null, 'i'], [stamp(plus(i), 10), lp, plus(i), 40 + i, 'n']);
+  gh.history = { since: longAgo, checkedAt: new Date().toISOString(), blocked: {}, events: evs };
+  await page.click('#owner-tabs button[data-tab="scanner"]');
+  await page.click('#owner-tabs button[data-tab="stats"]');
+  await until(async () => /Confidence/.test(await page.locator('#est-body').textContent()));
+  const est1 = await page.locator('#est-body').textContent();
+  check('stats: a date with no record is described as the usual pattern, with a confidence label and its numbers', [/No record for this date/.test(est1), /Confidence: Medium/.test(est1), /Based on 12 dates; 100% within a day of the typical 10 days, range 10 days\./.test(est1)], [true, true, true]);
+  await page.fill('#est-date', plus(5));
+  await until(async () => /On sale now/.test(await page.locator('#est-body').textContent()));
+  check('stats: changing the date updates the answer straight away', [/On sale now \(from £45\)/.test(await page.locator('#est-body').textContent()), /about 10 days before travel/.test(await page.locator('#est-body').textContent())], [true, true]);
+  await page.click('#owner-tabs button[data-tab="scanner"]');
+  await page.click('#owner-tabs button[data-tab="stats"]');
+  await until(async () => /Confidence/.test(await page.locator('#est-body').textContent()));
+  check('stats: the date you picked is still there after the tab refreshes', await page.locator('#est-date').inputValue(), plus(5));
   await page.screenshot({ path: path.join(process.env.TEMP || '.', 'owner-stats.png'), fullPage: true });
 
 

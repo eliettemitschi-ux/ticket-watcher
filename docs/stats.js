@@ -119,12 +119,22 @@
     const goneLate = gone.filter((l) => daysBetween(londonDate(l.goneAt), l.date) <= LATE_DAYS);
     const goneEarly = gone.filter((l) => daysBetween(londonDate(l.goneAt), l.date) > LATE_DAYS);
     const lasted = lives.map(hoursOnSale).filter((h) => h !== null);
+    // Per travel day, for the same-date comparison and for saying where a chosen date stands.
+    const appearances = {};
+    for (const l of appeared) appearances[l.date] = ms(l.appearedAt);
+    const firstPrices = {};
+    for (const l of priced) firstPrices[l.date] = l.prices[0].price;
+    const status = {};
+    for (const l of lives) status[l.date] = l.onSale ? { state: 'on', price: l.price } : l.goneAt ? { state: 'gone' } : { state: 'not-yet' };
 
     return {
       tracked: lives.length,
       notOnSaleYet: lives.filter((l) => !l.onSale && !l.goneAt && !l.prices.length).length,
       alreadyOnSale: lives.filter((l) => l.alreadyOnSale).length,
-      appear: { lead: { ...summary(lead), mode: mode(lead), histogram: histogram(lead) }, hour: { n: hours.length, mode: mode(hours), median: median(hours), histogram: histogram(hours) } },
+      appearances,
+      firstPrices,
+      status,
+      appear: { leadValues: sortNum(lead), lead: { ...summary(lead), mode: mode(lead), histogram: histogram(lead) }, hour: { n: hours.length, mode: mode(hours), median: median(hours), histogram: histogram(hours) } },
       byWeekday,
       price: {
         n: priced.length,
@@ -170,6 +180,121 @@
       blocked: (history && history.blocked) || {},
       gapHours: gapHours(events, nowMs),
       routes,
+    };
+  }
+
+  // --- Direction comparison and the estimate for a chosen date ----------------------------
+
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+  const addDaysIso = (iso, n) => new Date(Date.parse(`${iso}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
+  const A_ID = 'london-paris';
+  const B_ID = 'paris-london';
+  const MIN_FOR_ESTIMATE = 3; // fewer than this many appearances and we say there is not enough data
+  const WATCHED_DAYS = 21; // how far ahead the hourly job looks (HORIZON_DAYS in trains/history.js)
+
+  /**
+   * How sure to be about a lead-time estimate. Needs both enough dates and a tight
+   * spread: High is 20+ dates with 80%+ within a day of the typical lead, Medium is
+   * 8+ dates with 60%+, anything else is Low.
+   */
+  function confidenceFor(leads) {
+    const n = leads.length;
+    const med = median(leads);
+    const within1 = n ? leads.filter((x) => Math.abs(x - med) <= 1).length / n : 0;
+    const level = n >= 20 && within1 >= 0.8 ? 'High' : n >= 8 && within1 >= 0.6 ? 'Medium' : 'Low';
+    return { level, n, within1 };
+  }
+
+  /**
+   * When tickets for one travel date usually appear, on one route.
+   * @param {object} route   one route from analyse().routes
+   * @param {string} date    the travel day, YYYY-MM-DD
+   * @param {string} todayIso today in London, YYYY-MM-DD
+   */
+  function estimate(route, date, todayIso) {
+    if (!ISO_DATE.test(date || '')) return { kind: 'pick' };
+    if (date < todayIso) return { kind: 'past' };
+    const status = route.status[date];
+    const out = { daysAway: daysBetween(todayIso, date), status: status ? status.state : 'unwatched', price: status && status.price !== undefined ? status.price : null };
+    const leads = route.appear.leadValues;
+    const n = leads.length;
+    if (n < MIN_FOR_ESTIMATE) return { ...out, kind: 'thin', n };
+    const sorted = sortNum(leads);
+    const typical = Math.round(median(leads));
+    // 90% of dates had appeared by this many days before travel.
+    const byLead = [...sorted].reverse()[Math.ceil(0.9 * n) - 1];
+    const lo = n >= 10 ? sorted[Math.floor(0.1 * (n - 1))] : sorted[0];
+    const hi = n >= 10 ? sorted[Math.ceil(0.9 * (n - 1))] : sorted[n - 1];
+    const hour = route.appear.hour;
+    const hourCount = hour.histogram.find((h) => h.value === hour.mode);
+    return {
+      ...out,
+      kind: 'estimate',
+      n,
+      typical,
+      usualDate: addDaysIso(date, -typical),
+      byLead,
+      byDate: addDaysIso(date, -byLead),
+      earliest: addDaysIso(date, -hi),
+      latest: addDaysIso(date, -lo),
+      range: [lo, hi],
+      hourMode: hour.mode,
+      hourCount: hourCount ? hourCount.count : 0,
+      hourN: hour.n,
+      confidence: confidenceFor(leads),
+    };
+  }
+
+  // The same dates in both directions: who appears first, and who is cheaper.
+  function pairedDates(a, b, pick) {
+    return Object.keys(pick(a)).filter((d) => d in pick(b)).sort();
+  }
+
+  function compare(stats) {
+    const a = stats.routes[A_ID];
+    const b = stats.routes[B_ID];
+    // When tickets appear: overall, and on the dates both directions have.
+    const timingDates = pairedDates(a, b, (r) => r.appearances);
+    const gaps = timingDates.map((d) => (b.appearances[d] - a.appearances[d]) / 3600000); // hours: positive means London → Paris was first
+    const sameTime = gaps.filter((g) => Math.abs(g) <= 1).length;
+    const aEarlier = gaps.filter((g) => g > 1).length; // B - A is positive: London → Paris appeared first
+    const bEarlier = gaps.filter((g) => g < -1).length; // B - A is negative: Paris → London appeared first
+    const leadA = a.appear.lead;
+    const leadB = b.appear.lead;
+    const enough = leadA.n >= THIN && leadB.n >= THIN;
+    const leadDiff = enough ? round1(leadB.median - leadA.median) : null;
+    // Price level: the first price on the same travel dates.
+    const priceDates = pairedDates(a, b, (r) => r.firstPrices);
+    const diffs = priceDates.map((d) => b.firstPrices[d] - a.firstPrices[d]); // negative: Paris → London cheaper
+    const bCheaper = diffs.filter((x) => x < 0).length;
+    const aCheaper = diffs.filter((x) => x > 0).length;
+    const priceEnough = priceDates.length >= THIN;
+    // Price changes after tickets appear.
+    const chA = a.price;
+    const chB = b.price;
+    const chEnough = chA.n >= THIN && chB.n >= THIN;
+    const shareA = chA.n ? chA.withChange / chA.n : null;
+    const shareB = chB.n ? chB.withChange / chB.n : null;
+    return {
+      timing: {
+        a: { n: leadA.n, median: leadA.median, mode: leadA.mode, hourMode: a.appear.hour.mode, hourN: a.appear.hour.n },
+        b: { n: leadB.n, median: leadB.median, mode: leadB.mode, hourMode: b.appear.hour.mode, hourN: b.appear.hour.n },
+        enough,
+        leadDiff, // days: positive means Paris → London appears earlier (a bigger lead)
+        paired: { n: timingDates.length, aEarlier, bEarlier, sameTime, medianGapHours: round1(median(gaps)) },
+      },
+      price: {
+        a: { n: chA.n, median: chA.firstPrice.median },
+        b: { n: chB.n, median: chB.firstPrice.median },
+        paired: { n: priceDates.length, aCheaper, bCheaper, equal: diffs.length - aCheaper - bCheaper, medianDiff: round1(median(diffs)) },
+        enough: priceEnough,
+      },
+      changes: {
+        a: { n: chA.n, withChange: chA.withChange, anyDrop: chA.anyDrop, anyRise: chA.anyRise },
+        b: { n: chB.n, withChange: chB.withChange, anyDrop: chB.anyDrop, anyRise: chB.anyRise },
+        enough: chEnough,
+        shareDiff: chEnough ? round1(100 * (shareB - shareA)) : null, // percentage points
+      },
     };
   }
 
@@ -229,6 +354,99 @@
     return parts.join('');
   }
 
+  // The comparison, in plain words: only says "X is ..." when both directions have enough days.
+  function compareHtml(stats) {
+    const c = compare(stats);
+    const t = c.timing;
+    const p = c.price;
+    const ch = c.changes;
+    const A = ROUTE_NAMES[A_ID];
+    const B = ROUTE_NAMES[B_ID];
+    const cell = (v) => `<span class="cmp-cell">${v}</span>`;
+    const row = (label, x, y) => `<div class="cmp-row"><span class="cmp-label">${label}</span>${cell(x)}${cell(y)}</div>`;
+    const lead = (d) => (d.n ? `${d.median} days ahead <small>(${plural(d.n, 'date', 'dates')})</small>` : 'none seen yet');
+    const hr = (d) => (d.n ? `${hourLabel(d.hourMode)}` : 'n/a');
+    const price = (d) => (d.n ? `${pounds(d.median)} <small>(${plural(d.n, 'date', 'dates')})</small>` : 'none seen yet');
+    const changed = (d) => (d.n ? `${d.withChange} of ${d.n} <small>(${pct(d.withChange, d.n)})</small>` : 'n/a');
+    const dropped = (d) => (d.n ? `${d.anyDrop} of ${d.n} <small>(${pct(d.anyDrop, d.n)})</small>` : 'n/a');
+
+    const verdict = (text) => `<p class="stat-line stat-verdict">${text}</p>`;
+    const early = (what) => `Too early to tell ${what}. It needs ${THIN}+ dates in each direction.`;
+
+    const timingVerdict = !t.enough
+      ? early('which direction appears earlier')
+      : t.leadDiff === 0 || Math.abs(t.leadDiff) < 1 ? 'No clear difference in how early tickets appear.'
+        : `${t.leadDiff > 0 ? B : A} tends to appear about ${Math.abs(t.leadDiff)} ${Math.abs(t.leadDiff) === 1 ? 'day' : 'days'} earlier.`;
+    const pairedTiming = t.paired.n
+      ? `On the ${plural(t.paired.n, 'date', 'dates')} that appeared in both directions, ${A} came first on ${t.paired.aEarlier}, ${B} on ${t.paired.bEarlier}, and they appeared within an hour of each other on ${t.paired.sameTime}${t.paired.n >= 1 ? ` (median gap ${Math.abs(t.paired.medianGapHours)} hours${t.paired.medianGapHours > 0 ? `, ${A} first` : t.paired.medianGapHours < 0 ? `, ${B} first` : ''})` : ''}.${thin(t.paired.n)}`
+      : 'No date has appeared in both directions yet.';
+
+    let priceVerdict;
+    if (!p.enough) priceVerdict = `Too early to tell which direction is cheaper. It needs ${THIN}+ travel dates priced in both (so far ${p.paired.n}).`;
+    else {
+      const most = Math.max(p.paired.aCheaper, p.paired.bCheaper);
+      priceVerdict = most / p.paired.n >= 0.7
+        ? `${p.paired.bCheaper > p.paired.aCheaper ? B : A} is usually cheaper: ${most} of ${p.paired.n} dates, by a median of ${pounds(Math.abs(p.paired.medianDiff))}.`
+        : 'No clear difference in price between the two directions.';
+    }
+    const pairedPrice = p.paired.n
+      ? `On the ${plural(p.paired.n, 'date', 'dates')} priced in both directions, ${B} was cheaper on ${p.paired.bCheaper}, ${A} on ${p.paired.aCheaper}, and they were equal on ${p.paired.equal}.${thin(p.paired.n)}`
+      : 'No date has been priced in both directions yet.';
+
+    const changeVerdict = !ch.enough
+      ? early('which direction changes price more often')
+      : Math.abs(ch.shareDiff) < 15 ? 'No clear difference in how often prices change.'
+        : `Prices change more often in ${ch.shareDiff > 0 ? B : A} (${Math.abs(ch.shareDiff)} percentage points more).`;
+
+    return `<h2 class="section-title">Direction comparison</h2>
+      <div class="event-card"><div class="event-main">
+        <div class="cmp-grid">
+          <div class="cmp-row cmp-head"><span class="cmp-label"></span>${cell(A)}${cell(B)}</div>
+          ${row('Tickets appear', lead(t.a), lead(t.b))}
+          ${row('Most common hour', hr(t.a), hr(t.b))}
+          ${row('First price (median)', price(p.a), price(p.b))}
+          ${row('Changed price after appearing', changed(ch.a), changed(ch.b))}
+          ${row('Dropped at some point', dropped(ch.a), dropped(ch.b))}
+        </div>
+        <h3 class="stat-head">When tickets appear</h3>${verdict(timingVerdict)}<p class="stat-line">${pairedTiming}</p>
+        <h3 class="stat-head">Price level</h3>${verdict(priceVerdict)}<p class="stat-line">${pairedPrice}</p>
+        <h3 class="stat-head">Price changes</h3>${verdict(changeVerdict)}
+      </div></div>`;
+  }
+
+  // The estimate for one travel date, one card per direction. Run again whenever the date changes.
+  function estimateCard(id, e, date, todayIso) {
+    const name = ROUTE_NAMES[id];
+    const parts = [];
+    if (e.kind === 'thin') {
+      parts.push(`<p class="stat-line">Not enough data yet: ${plural(e.n, 'date has', 'dates have')} gone from "not on sale" to "on sale" so far, and it needs ${MIN_FOR_ESTIMATE}.</p>`);
+    } else {
+      const state = e.status === 'on' ? `<strong>On sale now</strong>${e.price !== null ? ` (from ${pounds(e.price)})` : ''}.`
+        : e.status === 'gone' ? '<strong>Tickets for this date have gone</strong> (sold out or the sale closed).'
+          : e.status === 'not-yet' ? (e.usualDate > todayIso ? '<strong>Not on sale yet.</strong>' : e.byDate < todayIso ? '<strong>Not on sale yet, and later than usual</strong>: about 90% of dates had tickets by now.' : '<strong>Not on sale yet, but due about now.</strong>')
+            : e.daysAway > WATCHED_DAYS ? `<strong>${e.daysAway} days away is further ahead than we watch</strong> (${WATCHED_DAYS} days), so this is only the usual pattern.`
+              : '<strong>No record for this date</strong> (collection began after it came into view), so this is only the usual pattern.';
+      parts.push(`<p class="stat-line">${state}</p>`);
+      parts.push(`<p class="stat-line">Tickets usually appear about <strong>${e.typical} days before travel</strong>, which for ${esc(dayLabel(date))} is around <strong>${esc(dayLabel(e.usualDate))}</strong>${e.range[0] === e.range[1] ? '' : `, within ${esc(dayLabel(e.earliest))} to ${esc(dayLabel(e.latest))}`}. About 90% of dates had them by ${e.byLead} days before travel (${esc(dayLabel(e.byDate))}), most often at ${hourLabel(e.hourMode)} London time (${e.hourCount} of ${e.hourN}).</p>`);
+      const c = e.confidence;
+      parts.push(`<p class="stat-line"><span class="conf conf-${c.level.toLowerCase()}">Confidence: ${c.level}</span> Based on ${plural(c.n, 'date', 'dates')}; ${Math.round(100 * c.within1)}% within a day of the typical ${e.typical} days, range ${e.range[0]}${e.range[0] === e.range[1] ? '' : `–${e.range[1]}`} days.${c.level === 'Low' ? (c.n < THIN ? ' Few dates so far.' : ' The timing varies a lot.') : ''}</p>`);
+    }
+    return `<div class="event-card"><div class="event-main"><p class="event-name">${esc(name)}</p>${parts.join('')}</div></div>`;
+  }
+
+  function estimateHtml(stats, date, todayIso) {
+    if (!ISO_DATE.test(date || '')) return '<p class="hint">Pick a travel date above.</p>';
+    if (date < todayIso) return '<p class="hint">That date has already gone. Pick one in the future.</p>';
+    return Object.keys(ROUTE_NAMES).map((id) => estimateCard(id, estimate(stats.routes[id], date, todayIso), date, todayIso)).join('');
+  }
+
+  function estimateShell() {
+    return `<h2 class="section-title">When will tickets appear for my date?</h2>
+      <p class="hint">Pick the travel date you want. This uses every date seen so far and updates as more data comes in.</p>
+      <label class="city-pick" for="est-date">Travel date <input type="date" id="est-date" class="owner-input" aria-label="Travel date to estimate" /></label>
+      <div id="est-body"></div>`;
+  }
+
   function html(stats) {
     const out = [];
     const notes = [];
@@ -238,11 +456,13 @@
     out.push(`<p class="subtitle">Collecting since ${stats.since ? esc(londonFmt({ day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms(stats.since)))) : 'not yet'} · ${stats.daysCollected} days · ${plural(stats.events, 'change', 'changes')} logged · ${stats.gapHours} hours Snap did not answer</p>`);
     for (const n of notes) out.push(`<p class="form-msg error">${esc(n)}</p>`);
     out.push('<p class="hint">Cheapest price per day, checked every hour. Every figure shows how many days it is based on; a few weeks is a small sample, and one month before Christmas may not match the rest of the year.</p>');
+    out.push(compareHtml(stats));
+    out.push(estimateShell());
     for (const id of Object.keys(ROUTE_NAMES)) out.push(routeHtml(id, stats.routes[id]));
     return out.join('');
   }
 
-  const api = { analyse, html, median, mode, ROUTE_NAMES, THIN };
+  const api = { analyse, html, estimate, estimateHtml, compare, confidenceFor, median, mode, ROUTE_NAMES, THIN, MIN_FOR_ESTIMATE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.SnapStats = api;
 })(typeof window !== 'undefined' ? window : globalThis);
