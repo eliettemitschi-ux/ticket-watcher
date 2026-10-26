@@ -19,7 +19,8 @@ main = "src/index.js"
 compatibility_date = "2026-09-01"
 
 [triggers]
-crons = ["*/5 * * * *"]
+# The second trigger records Snap price history once an hour (src/history.js).
+crons = ["*/5 * * * *", "7 * * * *"]
 
 # Where Eurostar Snap alerts go (see src/snap.js). Not a secret: ntfy topics
 # are open to anyone who knows the name.

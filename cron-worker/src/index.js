@@ -18,6 +18,10 @@
 
 import { runSnap } from './snap.js';
 import { handleFriend } from './friend.js';
+import { runHistory } from './history.js';
+
+// Must match the second entry in wrangler.toml.
+const HISTORY_CRON = '7 * * * *';
 
 const OWNER = 'eliettemitschi-ux';
 const REPO = 'ticket-watcher';
@@ -47,6 +51,16 @@ async function triggerCheck(env) {
 
 export default {
   async scheduled(event, env, ctx) {
+    // The hourly trigger only records Snap price history (history.js); everything
+    // else runs on the 5-minute trigger.
+    if (event.cron === HISTORY_CRON) {
+      ctx.waitUntil(
+        runHistory(env)
+          .then((r) => console.log(`History: ${r.routesSeen} route(s) seen, ${r.events} event(s)${r.capped ? ', LOG FULL' : ''}${r.saved ? ', saved' : ''}`))
+          .catch((err) => console.error('History job failed:', err.message))
+      );
+      return;
+    }
     ctx.waitUntil(
       triggerCheck(env)
         .then(() => console.log('Triggered check.yml successfully.'))
@@ -65,12 +79,20 @@ export default {
   async fetch(request, env) {
     // /friend is the personal-key API behind docs/friend.html (see friend.js).
     if (new URL(request.url).pathname === '/friend') return handleFriend(request, env);
+    // /history records one Snap price history look now (counts only in the answer).
+    if (new URL(request.url).pathname === '/history') {
+      try {
+        return Response.json(await runHistory(env));
+      } catch (err) {
+        return new Response(`History failed: ${err.message}\n`, { status: 500 });
+      }
+    }
     // /snap runs one Snap check now. It answers with counts only, so the
     // public URL never reveals which dates you're watching.
     if (new URL(request.url).pathname === '/snap') {
       try {
         const r = await runSnap(env);
-        const dates = r.watched['london-paris'].length + r.watched['paris-london'].length;
+        const dates = Object.values(r.watched).reduce((n, list) => n + list.length, 0);
         return Response.json({ datesWatched: dates, blocked: r.blocked, alertsSent: r.sent });
       } catch (err) {
         return new Response(`Snap failed: ${err.message}\n`, { status: 500 });

@@ -39,13 +39,20 @@ export async function readJson(env, file, fallback) {
   if (res.status === 404) return { data: fallback, sha: null };
   if (!res.ok) throw new Error(`GitHub ${file}: ${res.status}`);
   const meta = await res.json();
-  const bytes = Uint8Array.from(atob(meta.content.replace(/\n/g, '')), (c) => c.charCodeAt(0));
+  // A plain loop, not Uint8Array.from with a callback: about 30 times faster on a large file,
+  // which matters on Cloudflare's free plan (about 10 ms of processing per run).
+  const bin = atob(meta.content.replace(/\n/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return { data: JSON.parse(new TextDecoder().decode(bytes) || 'null') || fallback, sha: meta.sha };
 }
 
-export async function writeJson(env, file, data, sha, message) {
-  const bytes = new TextEncoder().encode(JSON.stringify(data, null, 2) + '\n');
-  const content = btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''));
+// pretty = false writes compact JSON (used for the big, machine-read history file).
+export async function writeJson(env, file, data, sha, message, { pretty = true } = {}) {
+  const bytes = new TextEncoder().encode((pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data)) + '\n');
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  const content = btoa(binary);
   const res = await fetch(`${PRIVATE_API}/${file}`, {
     method: 'PUT',
     headers: { ...ghHeaders(env, false), 'Content-Type': 'application/json' },
@@ -54,7 +61,7 @@ export async function writeJson(env, file, data, sha, message) {
   if (!res.ok) throw new Error(`GitHub save ${file}: ${res.status}`);
 }
 
-async function fetchSearch(route, date) {
+export async function fetchSearch(route, date) {
   const res = await fetch(searchUrl(route, date), { headers: HEADERS, signal: AbortSignal.timeout(20000) });
   const html = await res.text();
   return { status: res.status, parsed: res.ok ? parseSearchHtml(html, date) : null };
