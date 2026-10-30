@@ -15,31 +15,31 @@
       {
         "label": "21 Nov 2026, 5pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.305Z",
+        "lastChecked": "2026-10-30T23:00:58.850Z",
         "lastChanged": "2026-10-30T03:21:13.419Z",
         "snippet": "Sold out"
       },
       {
         "label": "21 Nov 2026, 8.30pm",
-        "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.305Z",
-        "lastChanged": "2026-10-30T22:41:07.899Z",
-        "snippet": "Sold out"
+        "state": "available",
+        "lastChecked": "2026-10-30T23:00:58.850Z",
+        "lastChanged": "2026-10-30T23:00:58.850Z",
+        "snippet": "Not marked sold out"
       },
       {
         "label": "22 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.305Z",
+        "lastChecked": "2026-10-30T23:00:58.850Z",
         "lastChanged": "2026-10-25T11:25:46.659Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
-      "state": "sold_out",
-      "lastChecked": "2026-10-30T22:56:02.305Z",
-      "lastChanged": "2026-10-30T22:41:07.899Z",
+      "state": "available",
+      "lastChecked": "2026-10-30T23:00:58.850Z",
+      "lastChanged": "2026-10-30T23:00:58.850Z",
       "lastError": null,
-      "snippet": "3 performances checked"
+      "snippet": "21 Nov 2026, 8.30pm: Not marked sold out"
     },
     "ntfyTopic": "BARBICAN-1999-haruki-murakami-s-jazz-at-peter-cat-seed"
   },
@@ -430,35 +430,35 @@
       {
         "label": "29 Nov 2026, 1pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.452Z",
+        "lastChecked": "2026-10-30T23:01:00.041Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.452Z",
+        "lastChecked": "2026-10-30T23:01:00.041Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 3pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.452Z",
+        "lastChecked": "2026-10-30T23:01:00.041Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 4pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-30T22:56:02.452Z",
+        "lastChecked": "2026-10-30T23:01:00.041Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-30T22:56:02.452Z",
+      "lastChecked": "2026-10-30T23:01:00.041Z",
       "lastChanged": null,
       "lastError": null,
       "snippet": "4 performances checked"
@@ -990,9 +990,9 @@
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-30T22:56:03.820Z",
+      "lastChecked": "2026-10-30T23:01:01.092Z",
       "lastChanged": "2026-10-30T15:11:23.883Z",
-      "lastError": null,
+      "lastError": "request to https://ticketing.sohoplace.org/api/consumer/eventinventory/2020475?promoCode=WAC failed, reason: read ECONNRESET",
       "snippet": "2 Nov 2026, 7pm: Real seats available, from £32.5"
     }
   },
@@ -1017,14 +1017,14 @@
       {
         "label": "Man to Man",
         "state": "unknown",
-        "lastChecked": "2026-10-30T22:57:01.015Z",
+        "lastChecked": "2026-10-30T23:01:58.301Z",
         "lastChanged": "2026-10-24T17:31:40.788Z",
         "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
       }
     ],
     "status": {
       "state": "unknown",
-      "lastChecked": "2026-10-30T22:57:01.015Z",
+      "lastChecked": "2026-10-30T23:01:58.301Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
       "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
