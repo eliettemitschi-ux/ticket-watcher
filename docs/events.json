@@ -15,28 +15,28 @@
       {
         "label": "21 Nov 2026, 5pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-31T02:41:00.635Z",
+        "lastChecked": "2026-10-31T02:45:59.268Z",
         "lastChanged": "2026-10-30T03:21:13.419Z",
         "snippet": "Sold out"
       },
       {
         "label": "21 Nov 2026, 8.30pm",
         "state": "available",
-        "lastChecked": "2026-10-31T02:41:00.635Z",
+        "lastChecked": "2026-10-31T02:45:59.268Z",
         "lastChanged": "2026-10-31T02:36:05.595Z",
         "snippet": "Not marked sold out"
       },
       {
         "label": "22 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-31T02:41:00.635Z",
+        "lastChecked": "2026-10-31T02:45:59.268Z",
         "lastChanged": "2026-10-25T11:25:46.659Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-31T02:41:00.635Z",
+      "lastChecked": "2026-10-31T02:45:59.268Z",
       "lastChanged": "2026-10-31T02:36:05.595Z",
       "lastError": null,
       "snippet": "21 Nov 2026, 8.30pm: Not marked sold out"
@@ -430,35 +430,35 @@
       {
         "label": "29 Nov 2026, 1pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-31T02:41:00.916Z",
+        "lastChecked": "2026-10-31T02:45:59.505Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-31T02:41:00.916Z",
+        "lastChecked": "2026-10-31T02:45:59.505Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 3pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-31T02:41:00.916Z",
+        "lastChecked": "2026-10-31T02:45:59.505Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 4pm",
         "state": "sold_out",
-        "lastChecked": "2026-10-31T02:41:00.916Z",
+        "lastChecked": "2026-10-31T02:45:59.505Z",
         "lastChanged": "2026-10-15T12:06:57.580Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-10-31T02:41:00.916Z",
+      "lastChecked": "2026-10-31T02:45:59.505Z",
       "lastChanged": null,
       "lastError": null,
       "snippet": "4 performances checked"
@@ -990,9 +990,9 @@
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-10-31T02:41:02.786Z",
+      "lastChecked": "2026-10-31T02:46:15.299Z",
       "lastChanged": "2026-10-30T15:11:23.883Z",
-      "lastError": null,
+      "lastError": "network timeout at: https://ticketing.sohoplace.org/api/consumer/eventinventory/2020475?promoCode=WAC",
       "snippet": "2 Nov 2026, 7pm: Real seats available, from £32.5"
     }
   },
@@ -1017,14 +1017,14 @@
       {
         "label": "Man to Man",
         "state": "unknown",
-        "lastChecked": "2026-10-31T02:42:00.091Z",
+        "lastChecked": "2026-10-31T02:47:12.574Z",
         "lastChanged": "2026-10-24T17:31:40.788Z",
         "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
       }
     ],
     "status": {
       "state": "unknown",
-      "lastChecked": "2026-10-31T02:42:00.091Z",
+      "lastChecked": "2026-10-31T02:47:12.574Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
       "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
