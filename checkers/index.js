@@ -16,10 +16,11 @@ const { checkHtmlInstances } = require('./htmlInstancesChecker');
 const { checkIntercept } = require('./interceptChecker');
 const { checkSohoplace } = require('./sohoplaceChecker');
 const { checkRoyalCourt } = require('./royalCourtChecker');
+const { checkTodaytix } = require('./todaytixChecker');
 
 // Recipe modes that read a plain HTTP API and so don't need a browser launched
 // for them (callers retry with a browser only if the API check itself errors).
-const BROWSERLESS_MODES = new Set(['api', 'html-instances', 'sohoplace-api', 'royal-court-api']);
+const BROWSERLESS_MODES = new Set(['api', 'html-instances', 'sohoplace-api', 'royal-court-api', 'todaytix-page']);
 
 function wrapSingle(result, label) {
   if (result.state === 'error') return result;
@@ -81,6 +82,12 @@ async function checkEvent(event, opts = {}) {
     const fallback = await checkRender(event.url, opts.browser, event.name);
     if (fallback.state === 'error') return fallback;
     return fallback.map((p) => ({ ...p, note: `royal-court-api recipe failed (${result.error}), used render fallback` }));
+  }
+
+  if (recipe.mode === 'todaytix-page') {
+    // No render fallback: TodayTix's rendered page carries no usable
+    // per-date status text, so an error is more honest than a guess.
+    return checkTodaytix(recipe);
   }
 
   if (recipe.mode === 'intercept-api') {
