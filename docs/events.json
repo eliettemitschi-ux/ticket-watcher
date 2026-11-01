@@ -1017,5 +1017,44 @@
       "lastError": null,
       "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
     }
+  },
+  {
+    "id": "0d220386",
+    "name": "The Lives of Others",
+    "venue": "Adelphi Theatre",
+    "url": "https://www.atgtickets.com/shows/the-lives-of-others-at-adelphi-theatre/adelphi-theatre/",
+    "recipe": {
+      "mode": "api",
+      "apiUrl": "https://customer-profile-service.atgtickets.com/graphql",
+      "method": "POST",
+      "jsonPath": "errors[0].extensions.originalAuthStatus",
+      "availableWhen": {
+        "type": "gt",
+        "value": 0
+      }
+    },
+    "ntfyTopic": null,
+    "timeFilter": null,
+    "maxPrice": null,
+    "excludeFromMain": false,
+    "archived": false,
+    "archivedAt": null,
+    "addedAt": "2026-11-01T23:32:51.305Z",
+    "performances": [
+      {
+        "label": "29 Oct 2026 – 9 Jan 2027",
+        "state": "available",
+        "lastChecked": "2026-11-01T23:32:55.413Z",
+        "lastChanged": "2026-11-01T23:32:55.413Z",
+        "snippet": "tre Thu 29 Oct 2026 - Sat 9 Jan 2027 This show has an interval Buy Tickets scroll down This show is happening at a venue not operated by ATG Entertainment"
+      }
+    ],
+    "status": {
+      "state": "available",
+      "lastChecked": "2026-11-01T23:32:55.413Z",
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": "29 Oct 2026 – 9 Jan 2027: tre Thu 29 Oct 2026 - Sat 9 Jan 2027 This show has an interval Buy Tickets scroll down This show is happening at a venue not operated by ATG Entertainment"
+    }
   }
 ]
