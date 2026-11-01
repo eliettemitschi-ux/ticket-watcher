@@ -41,7 +41,9 @@
       "lastError": null,
       "snippet": "3 performances checked"
     },
-    "ntfyTopic": "BARBICAN-1999-haruki-murakami-s-jazz-at-peter-cat-seed"
+    "ntfyTopic": "BARBICAN-1999-haruki-murakami-s-jazz-at-peter-cat-seed",
+    "archived": true,
+    "archivedAt": "2026-11-01T23:40:00.000Z"
   },
   {
     "id": "seed-almeida-golden-boy",
