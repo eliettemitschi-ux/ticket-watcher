@@ -43,6 +43,13 @@ function check(name, actual, expected) {
   check('dateAllows: date just after the range, allowed', dateAllows('19 October 2026, 7:00 pm', ranges), true);
   check('dateAllows: unrelated month, allowed', dateAllows('21 November 2026, 5pm', ranges), true);
   check('dateAllows: no parseable date in label, fails open (allowed)', dateAllows('Some Simple Event', ranges), true);
+
+  const eve = [{ start: '2026-11-20', end: '2026-11-21', eveningOnly: true }];
+  check('dateAllows: eveningOnly blocks 7.30pm', dateAllows('20 Nov 2026, 7.30pm', eve), false);
+  check('dateAllows: eveningOnly blocks 5pm', dateAllows('21 Nov 2026, 5pm', eve), false);
+  check('dateAllows: eveningOnly allows 2.30pm matinee', dateAllows('21 Nov 2026, 2.30pm', eve), true);
+  check('dateAllows: eveningOnly allows evening on another day', dateAllows('22 Nov 2026, 7.30pm', eve), true);
+  check('dateAllows: eveningOnly with no readable time fails open', dateAllows('20 Nov 2026', eve), true);
 }
 
 // --- shouldNotify: the three gates combined ---

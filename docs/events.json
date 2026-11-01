@@ -1035,7 +1035,7 @@
     },
     "ntfyTopic": null,
     "timeFilter": null,
-    "maxPrice": null,
+    "maxPrice": 55,
     "excludeFromMain": false,
     "archived": false,
     "archivedAt": null,

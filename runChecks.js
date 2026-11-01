@@ -55,14 +55,30 @@ function priceAllows(perf, maxPrice) {
 // the user can't make those dates. Everything outside the range(s)
 // still notifies normally, and the dashboard still shows the real
 // status either way -- this only gates the alert, same as timeFilter.
+//
+// A range may set eveningOnly: true to block just performances starting
+// at 5pm or later (matinees on those days still notify). A label with no
+// readable time isn't blocked by such a range -- same "don't guess" rule.
+const EVENING_FROM_HOUR = 17;
+const LABEL_TIME_RE = /\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b/i;
+
+function startsInEvening(label) {
+  const m = LABEL_TIME_RE.exec(label || '');
+  if (!m) return false;
+  let hour = Number(m[1]) % 12;
+  if (m[3].toLowerCase() === 'pm') hour += 12;
+  return hour >= EVENING_FROM_HOUR;
+}
+
 function dateAllows(label, blockedDateRanges) {
   if (!blockedDateRanges || blockedDateRanges.length === 0) return true;
   const date = parseDateFromLabel(label);
   if (!date) return true; // no date to check against -- don't block on a guess
-  return !blockedDateRanges.some(({ start, end }) => {
+  return !blockedDateRanges.some(({ start, end, eveningOnly }) => {
     const s = new Date(`${start}T00:00:00Z`);
     const e = new Date(`${end}T23:59:59Z`);
-    return date >= s && date <= e;
+    if (date < s || date > e) return false;
+    return eveningOnly ? startsInEvening(label) : true;
   });
 }
 
