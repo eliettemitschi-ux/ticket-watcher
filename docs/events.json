@@ -432,35 +432,35 @@
       {
         "label": "29 Nov 2026, 1pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:41:20.862Z",
+        "lastChecked": "2026-11-04T05:46:14.075Z",
         "lastChanged": "2026-11-03T15:16:07.507Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 2pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:41:20.862Z",
+        "lastChecked": "2026-11-04T05:46:14.075Z",
         "lastChanged": "2026-11-03T15:16:07.507Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 3pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:41:20.862Z",
+        "lastChecked": "2026-11-04T05:46:14.075Z",
         "lastChanged": "2026-11-03T15:16:07.507Z",
         "snippet": "Sold out"
       },
       {
         "label": "29 Nov 2026, 4pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:41:20.862Z",
+        "lastChecked": "2026-11-04T05:46:14.075Z",
         "lastChanged": "2026-11-03T15:16:07.507Z",
         "snippet": "Sold out"
       }
     ],
     "status": {
       "state": "sold_out",
-      "lastChecked": "2026-11-04T05:41:20.862Z",
+      "lastChecked": "2026-11-04T05:46:14.075Z",
       "lastChanged": null,
       "lastError": null,
       "snippet": "4 performances checked"
@@ -584,243 +584,390 @@
     "addedAt": "2026-09-25T10:52:45.469Z",
     "performances": [
       {
-        "label": "21 September",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "ce from 21 September for a strictly limited run (until"
-      },
-      {
-        "label": "19 December",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "(until 19 December). Don’t miss this explosive theatrical experience. Read More Tickets for Who’s Afraid of Virginia Woolf? are limited, but please check the we"
-      },
-      {
-        "label": "21st September – 19th December, 7pm",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "turday, 7pm Wednesday & Saturday,"
-      },
-      {
-        "label": "21st September – 19th December, 1.30pm",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "turday, 1.30pm @sohoplace has contactless ticketing for every performance. Tickets will be issued electronically 48 hours prior to the performance. Fair access:"
-      },
-      {
-        "label": "24 October, 1.30pm",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "ctober, 1.30pm Audio Described | Saturday 7 November,"
-      },
-      {
-        "label": "7 November, 1.30pm",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "vember, 1.30pm Captioned | Saturday 21 November,"
-      },
-      {
-        "label": "21 November, 1.30pm",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "vember, 1.30pm Upcoming Performances: Sat 7 Nov"
-      },
-      {
-        "label": "7 Nov, 1:30pm",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "t 7 Nov 1:30pm Audio Described Sat 21 Nov"
-      },
-      {
-        "label": "21 Nov, 1:30pm",
+        "label": "4 Nov 2026, 1.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "21 Nov 1:30pm Captioned View All Accessible Performances ❮ November 2026 ❯ Sold Out Last Few Selling Fast Available Mon Tue Wed Thu Fri Sat Sun 1 2"
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
       },
       {
-        "label": "21 Nov, 3\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "Sun 1 2 3 PM"
+        "label": "4 Nov 2026, 7pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
       },
       {
-        "label": "21 Nov, 4\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "2 3 PM 4 PM PM"
+        "label": "5 Nov 2026, 7pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
       },
       {
-        "label": "21 Nov, 5\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM PM 5 PM"
+        "label": "6 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 6\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "M 5 PM 6 PM"
+        "label": "7 Nov 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
       },
       {
-        "label": "21 Nov, 7\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "M 6 PM 7 PM PM 8"
+        "label": "7 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 9\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "M PM 8 9 PM"
+        "label": "9 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 10\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "8 9 PM 10 PM"
+        "label": "10 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 11\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "10 PM 11 PM PM"
+        "label": "11 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £42.5"
       },
       {
-        "label": "21 Nov, 12\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM PM 12 PM"
+        "label": "11 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 13\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "12 PM 13 PM"
+        "label": "12 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
       },
       {
-        "label": "21 Nov, 14\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "13 PM 14 PM PM 15"
+        "label": "13 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 16\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM 15 16 PM"
+        "label": "14 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 17\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "16 PM 17 PM"
+        "label": "14 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 18\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "17 PM 18 PM PM"
+        "label": "16 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 19\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM PM 19 PM"
+        "label": "17 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 20\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "19 PM 20 PM"
+        "label": "18 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 21\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "20 PM 21 PM PM 22"
+        "label": "18 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 23\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM 22 23 PM"
+        "label": "19 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
       },
       {
-        "label": "21 Nov, 24\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "23 PM 24 PM"
+        "label": "20 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 25\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "24 PM 25 PM PM"
+        "label": "21 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 26\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM PM 26 PM"
+        "label": "21 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       },
       {
-        "label": "21 Nov, 27\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "26 PM 27 PM"
+        "label": "23 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 28\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "27 PM 28 PM PM 29"
+        "label": "24 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
       },
       {
-        "label": "21 Nov, 30\n PM",
-        "state": "unknown",
-        "lastChecked": "2026-11-04T05:41:26.400Z",
-        "lastChanged": "2026-11-04T05:41:26.400Z",
-        "snippet": "PM 29 30 PM Photography and recording of any kind is strictly prohibited. The producers cannot guarantee the appearance of any particular artist at any performa"
+        "label": "25 Nov 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "25 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
+      },
+      {
+        "label": "26 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "27 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "28 Nov 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "28 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "30 Nov 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
+      },
+      {
+        "label": "1 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £32.5"
+      },
+      {
+        "label": "2 Dec 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "2 Dec 2026, 7pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "3 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "4 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "5 Dec 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "5 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "7 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "8 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "9 Dec 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "9 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "10 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "11 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "12 Dec 2026, 1.30pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "12 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "14 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "15 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "16 Dec 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "16 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "17 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £37.5"
+      },
+      {
+        "label": "18 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
+      },
+      {
+        "label": "19 Dec 2026, 1.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Sold out (confirmed via live inventory)"
+      },
+      {
+        "label": "19 Dec 2026, 7pm",
+        "state": "available",
+        "lastChecked": "2026-11-04T05:46:17.557Z",
+        "lastChanged": "2026-11-04T05:46:17.557Z",
+        "snippet": "Real seats available, from £47.5"
       }
     ],
     "status": {
-      "state": "unknown",
-      "lastChecked": "2026-11-04T05:41:26.400Z",
+      "state": "available",
+      "lastChecked": "2026-11-04T05:46:17.557Z",
       "lastChanged": "2026-11-03T18:01:11.501Z",
       "lastError": null,
-      "snippet": "33 performances checked"
+      "snippet": "6 Nov 2026, 7pm: Real seats available, from £47.5"
     }
   },
   {
@@ -844,14 +991,14 @@
       {
         "label": "Man to Man",
         "state": "unknown",
-        "lastChecked": "2026-11-04T05:42:23.499Z",
+        "lastChecked": "2026-11-04T05:47:15.587Z",
         "lastChanged": "2026-10-24T17:31:40.788Z",
         "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
       }
     ],
     "status": {
       "state": "unknown",
-      "lastChecked": "2026-11-04T05:42:23.499Z",
+      "lastChecked": "2026-11-04T05:47:15.587Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
       "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
@@ -877,546 +1024,546 @@
       {
         "label": "4 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T19:12:03.853Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "4 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T20:52:25.126Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "5 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "6 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T20:47:04.478Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "7 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T16:42:08.528Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "7 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "9 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "10 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "11 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "11 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T11:47:12.759Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "12 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "13 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T11:47:12.759Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "14 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T17:52:08.699Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "14 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "16 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "17 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "18 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "18 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "19 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "20 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T20:32:11.300Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "21 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "21 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "23 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "24 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "25 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "25 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "26 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "27 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T23:07:02.606Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "28 Nov 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "28 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "30 Nov 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "1 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "2 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "2 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "3 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "4 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "5 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T19:52:26.517Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "5 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "7 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "8 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "9 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T13:37:08.157Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "9 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T15:32:04.414Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "10 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T08:11:58.050Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "11 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T08:42:00.122Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "12 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T18:07:22.289Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "12 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T18:37:16.309Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "14 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "15 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "16 Dec 2026, 2.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "16 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £173"
       },
       {
         "label": "17 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "18 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "19 Dec 2026, 2.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "19 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "21 Dec 2026, 2.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £173"
       },
       {
         "label": "21 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £127"
       },
       {
         "label": "22 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "23 Dec 2026, 2.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £127"
       },
       {
         "label": "23 Dec 2026, 7.30pm",
         "state": "available",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "Regular tickets from £225"
       },
       {
         "label": "24 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "28 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T20:52:25.126Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "28 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "29 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "30 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T01:07:03.274Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "30 Dec 2026, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "31 Dec 2026, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T11:12:10.194Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "2 Jan 2027, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T19:52:26.517Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "2 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "4 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-02T19:42:20.519Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "5 Jan 2027, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "5 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "6 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-03T23:53:11.600Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "7 Jan 2027, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "7 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "8 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "9 Jan 2027, 2.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       },
       {
         "label": "9 Jan 2027, 7.30pm",
         "state": "sold_out",
-        "lastChecked": "2026-11-04T05:42:24.281Z",
+        "lastChecked": "2026-11-04T05:47:15.820Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
         "snippet": "No regular tickets listed"
       }
     ],
     "status": {
       "state": "available",
-      "lastChecked": "2026-11-04T05:42:24.281Z",
+      "lastChecked": "2026-11-04T05:47:15.820Z",
       "lastChanged": "2026-11-03T23:53:11.600Z",
       "lastError": null,
       "snippet": "14 Dec 2026, 7.30pm: Regular tickets from £225"
