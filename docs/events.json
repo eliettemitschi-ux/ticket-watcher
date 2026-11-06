@@ -1383,7 +1383,7 @@
         "state": "available",
         "lastChecked": "2026-11-06T16:20:17.484Z",
         "lastChanged": "2026-11-01T23:52:05.593Z",
-        "snippet": "Regular tickets from £110"
+        "snippet": "Regular tickets from £87"
       },
       {
         "label": "23 Dec 2026, 7.30pm",
@@ -1425,7 +1425,7 @@
         "state": "available",
         "lastChecked": "2026-11-06T16:20:17.484Z",
         "lastChanged": "2026-11-05T13:22:00.461Z",
-        "snippet": "Regular tickets from £110"
+        "snippet": "Regular tickets from £87"
       },
       {
         "label": "30 Dec 2026, 7.30pm",
@@ -1481,7 +1481,7 @@
         "state": "available",
         "lastChecked": "2026-11-06T16:20:17.484Z",
         "lastChanged": "2026-11-05T15:41:19.152Z",
-        "snippet": "Regular tickets from £127"
+        "snippet": "Regular tickets from £173"
       },
       {
         "label": "7 Jan 2027, 2.30pm",
@@ -1524,7 +1524,7 @@
       "lastChecked": "2026-11-06T16:20:17.484Z",
       "lastChanged": "2026-11-06T15:02:04.302Z",
       "lastError": null,
-      "snippet": "25 Nov 2026, 2.30pm: Regular tickets from £69"
+      "snippet": "7 Nov 2026, 2.30pm: Regular tickets from £317"
     }
   }
 ]
