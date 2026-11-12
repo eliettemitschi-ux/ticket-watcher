@@ -1428,5 +1428,39 @@
       "lastError": null,
       "snippet": "18 Nov 2026, 7.30pm: Regular tickets from £317"
     }
+  },
+  {
+    "id": "3db8d5af",
+    "name": "LPFF Opening Night: Who Is Still Alive? Screentalk",
+    "venue": "Barbican",
+    "url": "https://www.barbican.org.uk/whats-on/2026/event/lpff-opening-night-who-is-still-alive-screentalk",
+    "recipe": {
+      "mode": "html-instances",
+      "venue": "barbican",
+      "instancesUrl": "https://www.barbican.org.uk/node/227848/instances"
+    },
+    "ntfyTopic": null,
+    "timeFilter": null,
+    "maxPrice": null,
+    "excludeFromMain": false,
+    "archived": false,
+    "archivedAt": null,
+    "addedAt": "2026-11-12T09:19:53.104Z",
+    "performances": [
+      {
+        "label": "13 Nov 2026, 8pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-12T09:19:53.105Z",
+        "lastChanged": "2026-11-12T09:19:53.105Z",
+        "snippet": "Sold out"
+      }
+    ],
+    "status": {
+      "state": "sold_out",
+      "lastChecked": "2026-11-12T09:19:53.105Z",
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": "Sold out"
+    }
   }
 ]
