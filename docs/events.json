@@ -584,7 +584,42 @@
     "addedAt": "2026-09-25T10:52:45.469Z",
     "performances": [
       {
-        "label": "16 Nov 2026, 7pm",
+        "label": "21 September",
+        "state": "unknown",
+        "lastChecked": "2026-11-16T12:15:13.234Z",
+        "lastChanged": "2026-11-16T12:15:13.234Z",
+        "snippet": "ce from 21 September for a strictly limited run (until"
+      },
+      {
+        "label": "19 December",
+        "state": "unknown",
+        "lastChecked": "2026-11-16T12:15:13.234Z",
+        "lastChanged": "2026-11-16T12:15:13.234Z",
+        "snippet": "(until 19 December). Don’t miss this explosive theatrical experience. Read More Tickets for Who’s Afraid of Virginia Woolf? are limited, but please check the we"
+      },
+      {
+        "label": "21st September – 19th December, 7pm",
+        "state": "unknown",
+        "lastChecked": "2026-11-16T12:15:13.234Z",
+        "lastChanged": "2026-11-16T12:15:13.234Z",
+        "snippet": "turday, 7pm Wednesday & Saturday,"
+      },
+      {
+        "label": "21st September – 19th December, 1.30pm",
+        "state": "unknown",
+        "lastChecked": "2026-11-16T12:15:13.234Z",
+        "lastChanged": "2026-11-16T12:15:13.234Z",
+        "snippet": "turday, 1.30pm @sohoplace has contactless ticketing for every performance. Tickets will be issued electronically 48 hours prior to the performance. Fair access:"
+      },
+      {
+        "label": "7 Nov, 1:30pm",
+        "state": "unknown",
+        "lastChecked": "2026-11-16T12:15:13.234Z",
+        "lastChanged": "2026-11-16T12:15:13.234Z",
+        "snippet": "t 7 Nov 1:30pm Audio Described Sat 21 Nov"
+      },
+      {
+        "label": "21 Nov, 1:30pm",
         "state": "sold_out",
         "lastChecked": "2026-11-16T12:11:13.720Z",
         "lastChanged": "2026-11-16T12:06:15.603Z",
@@ -869,7 +904,7 @@
       "lastChecked": "2026-11-16T12:11:13.720Z",
       "lastChanged": "2026-11-16T11:51:05.991Z",
       "lastError": null,
-      "snippet": "18 Nov 2026, 7pm: Real seats available, from £32.5"
+      "snippet": "19 performances checked"
     }
   },
   {
