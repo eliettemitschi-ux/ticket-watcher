@@ -763,6 +763,13 @@
     "addedAt": "2026-11-01T23:32:51.305Z",
     "performances": [
       {
+        "label": "18 Nov 2026, 2.30pm",
+        "state": "sold_out",
+        "lastChecked": "2026-11-18T14:17:41.325Z",
+        "lastChanged": "2026-11-18T14:17:41.325Z",
+        "snippet": "No regular tickets listed"
+      },
+      {
         "label": "18 Nov 2026, 7.30pm",
         "state": "sold_out",
         "lastChecked": "2026-11-18T14:15:29.059Z",
