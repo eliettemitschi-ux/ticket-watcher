@@ -584,7 +584,35 @@
     "addedAt": "2026-09-25T10:52:45.469Z",
     "performances": [
       {
-        "label": "21 Nov 2026, 1.30pm",
+        "label": "21 September",
+        "state": "unknown",
+        "lastChecked": "2026-11-20T20:22:03.010Z",
+        "lastChanged": "2026-11-20T20:22:03.010Z",
+        "snippet": "ce from 21 September for a strictly limited run (until"
+      },
+      {
+        "label": "19 December",
+        "state": "unknown",
+        "lastChecked": "2026-11-20T20:22:03.010Z",
+        "lastChanged": "2026-11-20T20:22:03.010Z",
+        "snippet": "(until 19 December). Don’t miss this explosive theatrical experience. Read More Tickets for Who’s Afraid of Virginia Woolf? are limited, but please check the we"
+      },
+      {
+        "label": "21st September – 19th December, 7pm",
+        "state": "unknown",
+        "lastChecked": "2026-11-20T20:22:03.010Z",
+        "lastChanged": "2026-11-20T20:22:03.010Z",
+        "snippet": "turday, 7pm Wednesday & Saturday,"
+      },
+      {
+        "label": "21st September – 19th December, 1.30pm",
+        "state": "unknown",
+        "lastChecked": "2026-11-20T20:22:03.010Z",
+        "lastChanged": "2026-11-20T20:22:03.010Z",
+        "snippet": "turday, 1.30pm @sohoplace has contactless ticketing for every performance. Tickets will be issued electronically 48 hours prior to the performance. Fair access:"
+      },
+      {
+        "label": "21 Nov, 1:30pm",
         "state": "sold_out",
         "lastChecked": "2026-11-20T20:19:28.568Z",
         "lastChanged": "2026-11-20T19:26:07.940Z",
@@ -827,7 +855,7 @@
       "lastChecked": "2026-11-20T20:19:28.568Z",
       "lastChanged": "2026-11-20T16:11:03.558Z",
       "lastError": null,
-      "snippet": "25 Nov 2026, 7pm: Real seats available, from £32.5"
+      "snippet": "14 performances checked"
     }
   },
   {
@@ -853,7 +881,7 @@
         "state": "unknown",
         "lastChecked": "2026-11-20T20:19:59.703Z",
         "lastChanged": "2026-10-24T17:31:40.788Z",
-        "snippet": "This website uses cookies We use cookies to optimise site functionality and give you the best possible experience. I Accept CookiesI Do Not Accept CookiesSettin"
+        "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
       }
     ],
     "status": {
@@ -861,7 +889,7 @@
       "lastChecked": "2026-11-20T20:19:59.703Z",
       "lastChanged": "2026-10-18T08:57:25.638Z",
       "lastError": null,
-      "snippet": "This website uses cookies We use cookies to optimise site functionality and give you the best possible experience. I Accept CookiesI Do Not Accept CookiesSettin"
+      "snippet": "Just a moment We're verifying you are human. This may take a few seconds."
     }
   },
   {
