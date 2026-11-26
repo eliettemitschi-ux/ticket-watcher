@@ -56,32 +56,73 @@
 
   // Walks one day's events (oldest first) and notes what happened to it.
   function lifeOf(date, events) {
-    const life = { date, firstSeen: null, appearedAt: null, appearedPrice: null, alreadyOnSale: false, prices: [], changes: [], goneAt: null, returns: 0, onSale: false, price: null };
+    // timeline: every state change in order, price null meaning "not on sale" (gone).
+    const life = { date, firstSeen: null, appearedAt: null, appearedPrice: null, alreadyOnSale: false, prices: [], changes: [], goneAt: null, returns: 0, onSale: false, price: null, timeline: [] };
     let sawNull = false;
     for (const [t, , , price, kind] of events) {
       if (kind === 'i') {
         life.firstSeen = t;
         if (price === null) sawNull = true;
         else { life.alreadyOnSale = true; life.onSale = true; life.price = price; life.prices.push({ t, price }); }
+        life.timeline.push({ t, price });
       } else if (kind === 'n') {
         if (life.appearedAt === null && sawNull) { life.appearedAt = t; life.appearedPrice = price; } else if (life.goneAt) life.returns += 1;
         life.onSale = true; life.price = price; life.prices.push({ t, price });
+        life.timeline.push({ t, price });
       } else if (kind === 'c') {
         const was = life.price;
         life.changes.push({ t, from: was, to: price });
         life.price = price; life.prices.push({ t, price });
+        life.timeline.push({ t, price });
       } else if (kind === 'g') {
         if (life.goneAt === null) life.goneAt = t;
         life.onSale = false; life.price = null;
+        life.timeline.push({ t, price: null });
       }
     }
     return life;
   }
 
+  // --- Wait or buy? ----------------------------------------------------------------
+
+  // Days before travel at which we compare "what you would have faced if you waited".
+  const WAIT_POINTS = [7, 5, 3, 2, 1];
+  // Tickets that appeared this many days (or fewer) before travel were not watched from "not on sale".
+  const EARLY_LEAD = 11;
+
+  const stateAt = (life, atMs) => {
+    let last = null;
+    for (const e of life.timeline) if (ms(e.t) <= atMs) last = e; else break;
+    return last;
+  };
+
+  // For each wait point: of the days that already had tickets at the time of the first price,
+  // what had happened to the ticket and its price k days before travel?
+  function waitStats(lives, nowMs) {
+    return WAIT_POINTS.map((k) => {
+      const diffs = [];
+      let n = 0, gone = 0, higher = 0, lower = 0, same = 0;
+      for (const l of lives) {
+        if (!l.prices.length) continue;
+        const cut = Date.parse(`${l.date}T00:00:00Z`) - k * 86400000;
+        if (cut > nowMs) continue; // that moment has not happened yet
+        const firstT = ms(l.prices[0].t);
+        if (firstT > cut) continue; // tickets were not even on sale by then
+        const st = stateAt(l, cut);
+        n += 1;
+        if (!st || st.price === null) { gone += 1; continue; }
+        const d = st.price - l.prices[0].price;
+        diffs.push(d);
+        if (d > 0) higher += 1; else if (d < 0) lower += 1; else same += 1;
+      }
+      return { k, n, gone, higher, lower, same, diffs };
+    });
+  }
+
   // Hours the tickets stayed on sale, from when they appeared to when they first went.
   const hoursOnSale = (life) => (life.appearedAt && life.goneAt ? (ms(life.goneAt) - ms(life.appearedAt)) / 3600000 : null);
 
-  function analyseRoute(routeEvents) {
+  function analyseRoute(routeEvents, nowMs) {
     const byDate = new Map();
     for (const e of routeEvents) {
       if (!e[2]) continue; // gap markers have no date
@@ -127,7 +168,17 @@
     const status = {};
     for (const l of lives) status[l.date] = l.onSale ? { state: 'on', price: l.price } : l.goneAt ? { state: 'gone' } : { state: 'not-yet' };
 
+    // Will tickets appear? Only days first seen well before the usual release count,
+    // and only once their travel day has passed (so there is a final answer).
+    const todayIso = londonDate(`${new Date(nowMs).toISOString().slice(0, 16)}Z`);
+    const watched = lives.filter((l) => l.firstSeen && l.alreadyOnSale === false && daysBetween(londonDate(l.firstSeen), l.date) >= EARLY_LEAD && l.date <= todayIso);
+    const reliability = { n: watched.length, appeared: watched.filter((l) => l.appearedAt).length };
+    const overdue = lives.filter((l) => !l.onSale && !l.goneAt && !l.prices.length && l.date > todayIso && lead.length && daysBetween(todayIso, l.date) < Math.max(...lead)).length;
+
     return {
+      reliability,
+      overdue,
+      wait: waitStats(lives, nowMs),
       tracked: lives.length,
       notOnSaleYet: lives.filter((l) => !l.onSale && !l.goneAt && !l.prices.length).length,
       alreadyOnSale: lives.filter((l) => l.alreadyOnSale).length,
@@ -167,7 +218,7 @@
   function analyse(history, nowMs) {
     const events = (history && history.events) || [];
     const routes = {};
-    for (const id of Object.keys(ROUTE_NAMES)) routes[id] = analyseRoute(events.filter((e) => e[1] === id));
+    for (const id of Object.keys(ROUTE_NAMES)) routes[id] = analyseRoute(events.filter((e) => e[1] === id), nowMs);
     const sinceMs = history && history.since ? ms(history.since) : nowMs;
     const checkedMs = history && history.checkedAt ? Date.parse(history.checkedAt) : null;
     return {
@@ -447,6 +498,59 @@
       <div id="est-body"></div>`;
   }
 
+  // The three answers up top: when to book, wait or buy, and will tickets appear.
+  function quickHtml(stats) {
+    const ids = Object.keys(ROUTE_NAMES);
+    const rs = ids.map((id) => ({ id, r: stats.routes[id] }));
+    const card = (title, question, body) => `<div class="event-card"><div class="event-main"><p class="event-name">${esc(title)}</p><p class="event-venue">${esc(question)}</p>${body}</div></div>`;
+    const line = (t) => `<p class="stat-line">${t}</p>`;
+
+    // 1. When to book
+    const timing = rs.filter(({ r }) => r.appear.lead.n).map(({ id, r }) => {
+      const l = r.appear.lead;
+      return line(`<strong>${esc(ROUTE_NAMES[id])}:</strong> tickets appear about <strong>${l.median} days before travel</strong> (range ${l.min}–${l.max}), most often <strong>${hourLabel(r.appear.hour.mode)}</strong> London time. ${plural(l.n, 'day', 'days')} seen.${thin(l.n)}`);
+    });
+    const wk = WEEKDAYS.map((name, i) => {
+      const ps = rs.map(({ r }) => r.byWeekday[i].medianFirstPrice).filter((x) => x !== null);
+      return { name, price: ps.length ? ps.reduce((a, b) => a + b, 0) / ps.length : null };
+    }).filter((w) => w.price !== null).sort((a, b) => a.price - b.price);
+    const wkLine = wk.length >= 4
+      ? line(`Cheapest travel days (typical first price): <strong>${wk.slice(0, 2).map((w) => `${w.name} ${pounds(Math.round(w.price))}`).join(', ')}</strong>. Dearest: ${wk.slice(-2).reverse().map((w) => `${w.name} ${pounds(Math.round(w.price))}`).join(', ')}. <span class="stat-thin">only a handful of dates per weekday, treat as a hint</span>`)
+      : '';
+    const q1 = card('1. When should I book?', 'When do tickets show up, and what is cheapest?', (timing.join('') || line('Not enough data yet.')) + wkLine + line('Set a reminder for the day tickets are due and look just after midnight London time.'));
+
+    // 2. Wait or buy now
+    const waitAt = (k) => {
+      const rows = rs.map(({ r }) => r.wait.find((w) => w.k === k));
+      const sum = (key) => rows.reduce((a, w) => a + w[key], 0);
+      const diffs = rows.flatMap((w) => w.diffs);
+      return { k, n: sum('n'), gone: sum('gone'), higher: sum('higher'), lower: sum('lower'), same: sum('same'), medianDiff: median(diffs) };
+    };
+    const w = [7, 5, 3, 1].map(waitAt);
+    const waitLines = w.filter((x) => x.n).map((x) => line(`<strong>Wait until ${x.k} ${x.k === 1 ? 'day' : 'days'} before travel:</strong> ticket gone on ${pct(x.gone, x.n)}, dearer on ${pct(x.higher, x.n)}, same on ${pct(x.same, x.n)}, <strong>cheaper on ${pct(x.lower, x.n)}</strong> (${plural(x.n, 'date', 'dates')}, both directions).`));
+    // The verdict rests on the 3-days-before-travel comparison alone, so the same date is not counted twice.
+    const tot = w.find((x) => x.k === 3);
+    let verdict;
+    if (tot.n < THIN) verdict = 'Too early to tell whether waiting helps.';
+    else if (tot.lower / tot.n < 0.1) verdict = `<strong>Don't wait.</strong> Waiting until 3 days before travel got a lower price on only ${tot.lower} of ${tot.n} dates, and the ticket was gone or dearer on most. Buy when you see a price you are happy with.`;
+    else verdict = `Waiting until 3 days before travel got a lower price on ${pct(tot.lower, tot.n)} of dates but lost the ticket on ${pct(tot.gone, tot.n)}. It is a gamble.`;
+    const q2 = card('2. Ticket available: wait or buy?', 'If I see a ticket, what happens if I wait?', `<p class="stat-line stat-verdict">${verdict}</p>${waitLines.join('')}`);
+
+    // 3. Will tickets appear
+    const rel = rs.reduce((a, { r }) => ({ n: a.n + r.reliability.n, appeared: a.appeared + r.reliability.appeared }), { n: 0, appeared: 0 });
+    const overdue = rs.reduce((a, { r }) => a + r.overdue, 0);
+    const lat = Math.min(...rs.filter(({ r }) => r.appear.lead.n).map(({ r }) => r.appear.lead.min));
+    const q3body = [
+      rel.n >= 1 ? `<p class="stat-line stat-verdict">${rel.appeared === rel.n ? '<strong>Yes, so far every date got tickets.</strong>' : `<strong>${rel.appeared} of ${rel.n} dates got tickets.</strong>`} Of ${plural(rel.n, 'date', 'dates')} we watched from before release (both directions), ${rel.appeared} did.${thin(rel.n / 2)}</p>` : '<p class="stat-line">Not enough data yet.</p>',
+      Number.isFinite(lat) ? line(`The latest any date appeared was <strong>${lat} days before travel</strong>. If a date is closer than that and still not on sale, it is unlikely to appear.`) : '',
+      line(`${overdue === 0 ? 'No date is overdue right now.' : `<strong>${plural(overdue, 'date is', 'dates are')} overdue right now</strong> (inside the usual window but not on sale).`}`),
+      line(`The only dates that never had tickets were ones already in view at our very first look${stats.since ? ` (${esc(londonFmt({ day: 'numeric', month: 'short' }).format(new Date(ms(stats.since))))})` : ''}, before we started watching, so we cannot tell if tickets existed for them.`),
+    ].join('');
+    const q3 = card('3. Will tickets appear?', 'Does every date eventually get tickets?', q3body);
+
+    return `<h2 class="section-title">Quick answers</h2>${q1}${q2}${q3}`;
+  }
+
   function html(stats) {
     const out = [];
     const notes = [];
@@ -455,9 +559,10 @@
     if (stats.hoursSinceCheck !== null && stats.hoursSinceCheck > 7) notes.push(`The last check was ${Math.round(stats.hoursSinceCheck)} hours ago, so the hourly job may have stopped.`);
     out.push(`<p class="subtitle">Collecting since ${stats.since ? esc(londonFmt({ day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms(stats.since)))) : 'not yet'} · ${stats.daysCollected} days · ${plural(stats.events, 'change', 'changes')} logged · ${stats.gapHours} hours Snap did not answer</p>`);
     for (const n of notes) out.push(`<p class="form-msg error">${esc(n)}</p>`);
-    out.push('<p class="hint">Cheapest price per day, checked every hour. Every figure shows how many days it is based on; a few weeks is a small sample, and one month before Christmas may not match the rest of the year.</p>');
-    out.push(compareHtml(stats));
+    out.push(quickHtml(stats));
     out.push(estimateShell());
+    out.push('<h2 class="section-title">Full detail</h2><p class="hint">Cheapest price per day, checked every hour. Every figure shows how many days it is based on; a few weeks is a small sample, and one month before Christmas may not match the rest of the year.</p>');
+    out.push(compareHtml(stats));
     for (const id of Object.keys(ROUTE_NAMES)) out.push(routeHtml(id, stats.routes[id]));
     return out.join('');
   }
