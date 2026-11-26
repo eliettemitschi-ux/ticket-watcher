@@ -17,6 +17,7 @@ const { checkIntercept } = require('./interceptChecker');
 const { checkSohoplace } = require('./sohoplaceChecker');
 const { checkRoyalCourt } = require('./royalCourtChecker');
 const { checkTodaytix } = require('./todaytixChecker');
+const { checkTiquo, isTiquoUrl } = require('./tiquoChecker');
 
 // Recipe modes that read a plain HTTP API and so don't need a browser launched
 // for them (callers retry with a browser only if the API check itself errors).
@@ -111,6 +112,17 @@ async function checkEvent(event, opts = {}) {
   if (!opts.browser) {
     throw new Error(`Event "${event.name}" needs render mode but no browser was provided`);
   }
+  // Tiquo booking pages (e.g. 180 Studios) list each session as its own
+  // card, so read them as sessions instead of one lump of page text. If the
+  // page layout ever changes, fall back to the generic render reading.
+  if (isTiquoUrl(recipe.pageUrl || event.url)) {
+    const tiquo = await checkTiquo(recipe.pageUrl || event.url, opts.browser);
+    if (Array.isArray(tiquo)) return tiquo;
+    const fallback = await checkRender(recipe.pageUrl || event.url, opts.browser, event.name);
+    if (fallback.state === 'error') return fallback;
+    return fallback.map((p) => ({ ...p, note: `tiquo reader failed (${tiquo.error}), used render fallback` }));
+  }
+
   // recipe.pageUrl lets a render-mode event check a different page than the
   // one shown to the user -- e.g. Dua Lipa & Patti Smith: event.url is the
   // venue's own "Book now" link (the right thing for a person to click),

@@ -16,7 +16,7 @@ const { launchBrowser } = require('./browser');
 const store = require('./store');
 const { checkEvent, BROWSERLESS_MODES } = require('./checkers');
 const { normalizeLabel, parseDateFromLabel } = require('./checkers/parseMultiText');
-const { notifyAvailable } = require('./notify');
+const { notifyAvailable, notifyNewSession } = require('./notify');
 
 // Same gating rule everywhere an event has a timeFilter set (e.g.
 // "8.30pm"): only performances whose label contains it are worth waking
@@ -163,6 +163,18 @@ async function runAllChecks(log) {
       // otherwise a degraded check is invisible in the logs.
       const fallbackNote = result.find((p) => p.note);
       if (fallbackNote) logFn(`  note: ${fallbackNote.note}`);
+
+      // Listing pages (e.g. Tiquo): alert when a NEW session title appears.
+      // The first sighting of an event only records a baseline.
+      if (result.some((p) => p.listing)) {
+        const { added, baseline } = store.recordSessions(event.id, result.map((p) => p.label));
+        if (baseline) logFn(`  recorded ${result.length} existing session(s) as the baseline`);
+        for (const label of added) {
+          const outcome = await notifyNewSession(updated, label);
+          notifiedCount += 1;
+          logFn(`  -> NEW SESSION "${label}", notified:`, JSON.stringify(outcome));
+        }
+      }
 
       for (const perf of newlyAvailable) {
         const verdict = shouldNotify(perf, updated, settings);

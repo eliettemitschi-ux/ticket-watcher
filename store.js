@@ -333,7 +333,37 @@ function recordCheckError(id, message) {
   return events[idx];
 }
 
+// For listing pages (e.g. Tiquo) where new sessions get ADDED over time.
+// Keeps event.sessionHistory = [{ label, firstSeen }], a permanent log of
+// every session title ever seen, so "how often are shows added" can be
+// answered later. The first call for an event just records a baseline
+// (everything already listed) and reports nothing new. Later calls return
+// the titles never seen before. A session that disappears stays in the log.
+function recordSessions(id, labels) {
+  const events = readAll();
+  const idx = events.findIndex((e) => e.id === id);
+  if (idx === -1) throw new Error(`No event with id ${id}`);
+  const event = events[idx];
+  const now = new Date().toISOString();
+  const unique = [...new Set(labels)];
+
+  if (!Array.isArray(event.sessionHistory)) {
+    event.sessionHistory = unique.map((label) => ({ label, firstSeen: now, baseline: true }));
+    writeAll(events);
+    return { added: [], baseline: true };
+  }
+
+  const known = new Set(event.sessionHistory.map((s) => normalizeLabel(s.label)));
+  const added = unique.filter((label) => !known.has(normalizeLabel(label)));
+  if (added.length > 0) {
+    for (const label of added) event.sessionHistory.push({ label, firstSeen: now });
+    writeAll(events);
+  }
+  return { added, baseline: false };
+}
+
 module.exports = {
+  recordSessions,
   listEvents,
   getEvent,
   addEvent,
