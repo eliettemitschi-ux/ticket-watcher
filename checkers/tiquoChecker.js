@@ -16,6 +16,8 @@
 
 const NAV_TIMEOUT_MS = 30000;
 const CARD_WAIT_MS = 15000;
+const RECHECK_ROUNDS = 3; // extra looks before believing an "available" reading
+const RECHECK_MS = 5000;
 
 function isTiquoUrl(url) {
   try {
@@ -59,7 +61,17 @@ async function checkTiquo(url, browser) {
     await page.waitForSelector('h3', { timeout: CARD_WAIT_MS }).catch(() => {});
     // Let the rest of the cards and their badges finish rendering.
     await page.waitForTimeout(2000);
-    const cards = await page.evaluate(readCards);
+    let cards = await page.evaluate(readCards);
+    // A card with no "Sold out" badge reads as available. On 27 Nov 02:40 UTC all
+    // six sessions read available for exactly one check and were sold out again at
+    // the next, which looks like the page showing cards before its availability
+    // data had loaded. So before trusting any "available", look again a few times
+    // and only believe it if it holds.
+    for (let round = 0; round < RECHECK_ROUNDS && cards.some((c) => !c.soldOut); round++) {
+      await page.waitForTimeout(RECHECK_MS);
+      const again = await page.evaluate(readCards);
+      if (again.length > 0) cards = again;
+    }
     if (cards.length === 0) return { state: 'error', error: 'no session cards found on the Tiquo page' };
 
     const seen = new Set();
