@@ -1059,5 +1059,32 @@
         "baseline": true
       }
     ]
+  },
+  {
+    "id": "c464e758",
+    "name": "Max Richter: London concert watch",
+    "venue": "London",
+    "url": "https://maxrichtermusic.com/pages/calendar",
+    "recipe": {
+      "mode": "shopify-calendar",
+      "calendarUrl": "https://maxrichtermusic.com/pages/calendar",
+      "alertPattern": "london",
+      "minIntervalMinutes": 120
+    },
+    "ntfyTopic": null,
+    "timeFilter": null,
+    "maxPrice": null,
+    "excludeFromMain": false,
+    "archived": false,
+    "archivedAt": null,
+    "addedAt": "2026-11-28T17:02:05.945Z",
+    "performances": [],
+    "status": {
+      "state": "unknown",
+      "lastChecked": null,
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": null
+    }
   }
 ]

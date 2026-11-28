@@ -9,7 +9,7 @@
     "start": "node server.js",
     "check": "node check.js",
     "discover": "node discover.js",
-    "test": "node test/classifier.test.js && node test/sessions.test.js && node test/statsQuick.test.js && node test/barbicanSeriesChecker.test.js"
+    "test": "node test/classifier.test.js && node test/sessions.test.js && node test/statsQuick.test.js && node test/barbicanSeriesChecker.test.js && node test/shopifyCalendarChecker.test.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

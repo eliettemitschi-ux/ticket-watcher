@@ -19,10 +19,11 @@ const { checkRoyalCourt } = require('./royalCourtChecker');
 const { checkTodaytix } = require('./todaytixChecker');
 const { checkTiquo, isTiquoUrl } = require('./tiquoChecker');
 const { checkBarbicanSeries } = require('./barbicanSeriesChecker');
+const { checkShopifyCalendar } = require('./shopifyCalendarChecker');
 
 // Recipe modes that read a plain HTTP API and so don't need a browser launched
 // for them (callers retry with a browser only if the API check itself errors).
-const BROWSERLESS_MODES = new Set(['api', 'html-instances', 'sohoplace-api', 'royal-court-api', 'todaytix-page', 'barbican-series']);
+const BROWSERLESS_MODES = new Set(['api', 'html-instances', 'sohoplace-api', 'royal-court-api', 'todaytix-page', 'barbican-series', 'shopify-calendar']);
 
 function wrapSingle(result, label) {
   if (result.state === 'error') return result;
@@ -84,6 +85,11 @@ async function checkEvent(event, opts = {}) {
     const fallback = await checkRender(event.url, opts.browser, event.name);
     if (fallback.state === 'error') return fallback;
     return fallback.map((p) => ({ ...p, note: `royal-court-api recipe failed (${result.error}), used render fallback` }));
+  }
+
+  if (recipe.mode === 'shopify-calendar') {
+    // Listing watcher for an artist's own tour page: no render fallback.
+    return checkShopifyCalendar(recipe);
   }
 
   if (recipe.mode === 'barbican-series') {

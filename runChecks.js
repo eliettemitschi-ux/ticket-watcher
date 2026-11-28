@@ -133,6 +133,13 @@ async function runAllChecks(log) {
 
   try {
     for (const event of events) {
+      // recipe.minIntervalMinutes lets a slow-moving watch (e.g. "has a new
+      // date been announced?") run every few hours instead of every 5 minutes.
+      // Judged by the last successful look, so a failed check retries next cycle.
+      const everyMin = event.recipe?.minIntervalMinutes;
+      const lastLook = event.performances?.[0]?.lastChecked;
+      if (everyMin && lastLook && Date.now() - Date.parse(lastLook) < everyMin * 60000) continue;
+
       let result;
       try {
         const mode = event.recipe?.mode;
@@ -170,6 +177,8 @@ async function runAllChecks(log) {
         const { added, baseline } = store.recordSessions(event.id, result.map((p) => p.label));
         if (baseline) logFn(`  recorded ${result.length} existing session(s) as the baseline`);
         for (const label of added) {
+          // A checker can mark rows it logs but does not want alerts for (alert: false).
+          if (result.find((p) => p.label === label)?.alert === false) continue;
           const outcome = await notifyNewSession(updated, label);
           notifiedCount += 1;
           logFn(`  -> NEW SESSION "${label}", notified:`, JSON.stringify(outcome));
