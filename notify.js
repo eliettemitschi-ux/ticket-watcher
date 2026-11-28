@@ -155,7 +155,7 @@ async function notifyAvailable(event, performanceLabel) {
 async function notifyNewSession(event, sessionLabel) {
   const sourceTag = process.env.NOTIFY_SOURCE_TAG ? `[${process.env.NOTIFY_SOURCE_TAG}] ` : '';
   const title = `${sourceTag}New show added: ${sessionLabel}`;
-  const message = `${event.venue ? event.venue + ' — ' : ''}"${sessionLabel}" has just appeared on the ${event.name} booking page.`;
+  const message = `${event.venue ? event.venue + ' — ' : ''}"${sessionLabel}" has just been added to ${event.name}.`;
 
   const results = {};
   try {

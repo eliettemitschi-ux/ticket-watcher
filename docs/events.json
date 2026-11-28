@@ -971,5 +971,30 @@
         "baseline": true
       }
     ]
+  },
+  {
+    "id": "70386767",
+    "name": "Barbican ScreenTalks (new announcements)",
+    "venue": "Barbican",
+    "url": "https://www.barbican.org.uk/whats-on/series/screentalks",
+    "recipe": {
+      "mode": "barbican-series",
+      "seriesUrl": "https://www.barbican.org.uk/whats-on/series/screentalks"
+    },
+    "ntfyTopic": null,
+    "timeFilter": null,
+    "maxPrice": null,
+    "excludeFromMain": false,
+    "archived": false,
+    "archivedAt": null,
+    "addedAt": "2026-11-28T16:48:22.529Z",
+    "performances": [],
+    "status": {
+      "state": "unknown",
+      "lastChecked": null,
+      "lastChanged": null,
+      "lastError": null,
+      "snippet": null
+    }
   }
 ]
